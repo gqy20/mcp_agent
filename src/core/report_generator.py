@@ -141,7 +141,7 @@ class MCPReportGenerator:
         elif str(type(obj)).startswith("<class 'numpy."):  # NumPy types
             try:
                 return obj.item() if hasattr(obj, "item") else obj.tolist()
-            except:
+            except Exception:
                 return str(obj)
         else:
             return obj
@@ -163,7 +163,7 @@ class MCPReportGenerator:
             and hasattr(report.tool_info, "lobehub_evaluate")
             and report.tool_info.lobehub_evaluate
         ):
-            lobehub_section = f"""
+            lobehub_section = """
 <h2>LobeHub 评分</h2>
 <div class="stats">
 <div class="stat"><div>质量等级</div><div>{report.tool_info.lobehub_evaluate}</div></div>
@@ -173,7 +173,7 @@ class MCPReportGenerator:
 </div>
 {f'<p>📱 <a href="{report.tool_info.lobehub_url}" target="_blank">LobeHub 页面</a></p>' if report.tool_info.lobehub_url else ''}"""
 
-        html_content = f"""<!DOCTYPE html>
+        html_content = """<!DOCTYPE html>
 <html><head><meta charset="UTF-8"><title>{report.tool_name} 测试报告</title>
 <style>body{{font-family:sans-serif;margin:40px;}}
 .header{{background:#667eea;color:white;padding:20px;border-radius:8px;}}
@@ -203,7 +203,7 @@ a{{color:#667eea;text-decoration:none;}} a:hover{{text-decoration:underline;}}
 
         # 生成测试结果表格 - 统一处理
         for test in report.test_results:
-            html_content += f"""<tr>
+            html_content += """<tr>
 <td>{test.test_name}</td>
 <td class="{'success' if test.success else 'failure'}">{'✅' if test.success else '❌'}</td>
 <td>{test.duration:.2f}s</td>

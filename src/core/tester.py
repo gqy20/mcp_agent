@@ -12,7 +12,6 @@ MCP 测试核心逻辑 - 简洁版
 版本: 2.0.0 (简洁版)
 """
 
-import asyncio
 import time
 from dataclasses import dataclass
 from typing import List, Optional, Tuple

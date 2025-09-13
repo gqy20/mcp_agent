@@ -52,7 +52,7 @@ def validate_environment():
 
     if missing_vars:
         print(f"  ❌ 缺失环境变量: {', '.join(missing_vars)}")
-        print(f"  💡 请检查 .env 文件是否配置正确")
+        print("  💡 请检查 .env 文件是否配置正确")
         return False
 
     return True
@@ -69,16 +69,16 @@ def validate_supabase_connection():
 
         # 测试连接
         response = connector.client.table("mcp_tools").select("count").execute()
-        print(f"  ✅ 连接成功! 数据库可访问")
+        print("  ✅ 连接成功! 数据库可访问")
         return True
 
     except ImportError as e:
         print(f"  ❌ 导入错误: {e}")
-        print(f"  💡 请确保已安装 supabase 依赖: uv add supabase")
+        print("  💡 请确保已安装 supabase 依赖: uv add supabase")
         return False
     except Exception as e:
         print(f"  ❌ 连接失败: {e}")
-        print(f"  💡 请检查 URL 和密钥是否正确")
+        print("  💡 请检查 URL 和密钥是否正确")
         return False
 
 
@@ -116,10 +116,10 @@ def validate_database_schema():
                 print(f"  ❌ 表 {table} 不存在")
 
         if missing_tables:
-            print(f"\n  💡 需要初始化数据库: uv run python src/tools/db_migrate.py init")
+            print("\n  💡 需要初始化数据库: uv run python src/tools/db_migrate.py init")
             return False
 
-        print(f"\n  🎉 所有表都已正确创建!")
+        print("\n  🎉 所有表都已正确创建!")
         return True
 
     except Exception as e:

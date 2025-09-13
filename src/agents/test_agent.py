@@ -17,7 +17,6 @@ from typing import Any, Dict, List, Optional
 
 try:
     import agentscope
-    from agentscope.agents import ReActAgent
     from agentscope.message import Msg
     from dotenv import load_dotenv
 except ImportError as e:

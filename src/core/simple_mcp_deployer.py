@@ -9,7 +9,6 @@
 """
 
 import json
-import os
 import platform
 import queue
 import shutil
@@ -329,7 +328,7 @@ class SimpleMCPDeployer:
                 runtime_info["runtime_path"] = self.platform_info["uvx_path"]
                 runtime_info["available"] = True
             else:
-                print(f"⚠️ uvx不可用，fallback到npx")
+                print("⚠️ uvx不可用，fallback到npx")
                 runtime_info["runtime_type"] = "npx"
 
         if runtime_info["runtime_type"] == "npx":
@@ -561,7 +560,7 @@ class SimpleMCPDeployer:
             if "process" in locals():
                 try:
                     process.terminate()
-                except:
+                except Exception:
                     pass
             return None
 

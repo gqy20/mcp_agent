@@ -132,7 +132,7 @@ class MCPReportGenerator:
         success_rate = (passed / total * 100) if total > 0 else 0
 
         # 生成HTML - 单一模板，无条件分支
-        html_content = f"""<!DOCTYPE html>
+        html_content = """<!DOCTYPE html>
 <html><head><meta charset="UTF-8"><title>{report.tool_name} 测试报告</title>
 <style>body{{font-family:sans-serif;margin:40px;}}
 .header{{background:#667eea;color:white;padding:20px;border-radius:8px;}}
@@ -159,7 +159,7 @@ class MCPReportGenerator:
 
         # 生成测试结果表格 - 统一处理
         for test in report.test_results:
-            html_content += f"""<tr>
+            html_content += """<tr>
 <td>{test.test_name}</td>
 <td class="{'success' if test.success else 'failure'}">{'✅' if test.success else '❌'}</td>
 <td>{test.duration:.2f}s</td>

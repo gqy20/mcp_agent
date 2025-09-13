@@ -12,9 +12,8 @@
 from __future__ import annotations
 
 import asyncio
-import json
 import time
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 
 class AsyncMCPClient:
@@ -28,7 +27,12 @@ class AsyncMCPClient:
     def __init__(self, communicator) -> None:
         self._comm = communicator
 
-    async def _send(self, method: str, params: Optional[Dict[str, Any]] = None, timeout: float = 30.0) -> Dict[str, Any]:
+    async def _send(
+        self,
+        method: str,
+        params: Optional[Dict[str, Any]] = None,
+        timeout: float = 30.0,
+    ) -> Dict[str, Any]:
         """在线程池中调用同步 send_request，返回原始结构。"""
         loop = asyncio.get_running_loop()
         request = {
@@ -49,18 +53,29 @@ class AsyncMCPClient:
         try:
             res = await self._send("tools/list", None, timeout=timeout)
             if not res.get("success"):
-                return {"success": False, "tools": [], "error": res.get("error", "unknown error")}
+                return {
+                    "success": False,
+                    "tools": [],
+                    "error": res.get("error", "unknown error"),
+                }
 
             data = res.get("data")
             tools = []
             if isinstance(data, dict):
                 # 期望 JSON-RPC {result: {tools: [...]}}
-                tools = data.get("result", {}).get("tools", []) if "result" in data else []
+                tools = (
+                    data.get("result", {}).get("tools", []) if "result" in data else []
+                )
             return {"success": True, "tools": tools, "raw": data}
         except Exception as e:
             return {"success": False, "tools": [], "error": str(e)}
 
-    async def call_tool(self, name: str, arguments: Optional[Dict[str, Any]] = None, timeout: float = 60.0) -> Dict[str, Any]:
+    async def call_tool(
+        self,
+        name: str,
+        arguments: Optional[Dict[str, Any]] = None,
+        timeout: float = 60.0,
+    ) -> Dict[str, Any]:
         """调用指定工具并规范化结构。"""
         try:
             params = {"name": name, "arguments": arguments or {}}
@@ -76,7 +91,11 @@ class AsyncMCPClient:
                 if "error" in data:
                     # JSON-RPC 错误
                     try:
-                        error = data["error"].get("message") if isinstance(data["error"], dict) else str(data["error"])
+                        error = (
+                            data["error"].get("message")
+                            if isinstance(data["error"], dict)
+                            else str(data["error"])
+                        )
                     except Exception:
                         error = str(data["error"])  # 保底
                 elif "result" in data:

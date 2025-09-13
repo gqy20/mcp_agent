@@ -12,7 +12,6 @@ MCP CLI 命令处理器 - 简洁版
 版本: 2.0.0 (简洁版)
 """
 
-import asyncio
 import time
 from pathlib import Path
 from typing import List, Optional
@@ -52,7 +51,7 @@ class CLIHandler:
                     supabase_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
                     if supabase_url and supabase_key:
                         supabase_client = create_client(supabase_url, supabase_key)
-                except:
+                except Exception:
                     pass
 
             for tool in tools:
@@ -70,7 +69,9 @@ class CLIHandler:
                         "final_comprehensive_score", final_score
                     )
                     rprint(
-                        f"[green]✅ 评估完成: {tool.name} - GitHub评分: {final_score}/100, 综合评分: {comprehensive_score}/100[/green]"
+                        f"[green]✅ 评估完成: {tool.name} - "
+                        f"GitHub评分: {final_score}/100, "
+                        f"综合评分: {comprehensive_score}/100[/green]"
                     )
                     if db_export:
                         self._export_evaluation_to_database(
@@ -162,7 +163,7 @@ class CLIHandler:
                         supabase_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
                         if supabase_url and supabase_key:
                             supabase_client = create_client(supabase_url, supabase_key)
-                    except:
+                    except Exception:
                         pass
 
                 evaluation_result = evaluate_full_repository_with_comprehensive_score(
@@ -234,7 +235,7 @@ class CLIHandler:
                         supabase_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
                         if supabase_url and supabase_key:
                             supabase_client = create_client(supabase_url, supabase_key)
-                    except:
+                    except Exception:
                         pass
 
                 evaluation_result = evaluate_full_repository_with_comprehensive_score(
@@ -422,7 +423,6 @@ class CLIHandler:
         try:
             rprint("[blue]🗄️ 导出结果到数据库...[/blue]")
 
-            import json
             import os
             from datetime import datetime
 

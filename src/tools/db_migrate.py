@@ -9,7 +9,6 @@
 版本: 1.0.0
 """
 
-import asyncio
 import os
 from pathlib import Path
 from typing import Optional

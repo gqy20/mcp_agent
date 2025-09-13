@@ -61,7 +61,6 @@ class MCPDataParser:
         将mcp.csv的字段名标准化为期望的字段名
         这样可以统一处理两种CSV格式，消除特殊情况
         """
-        import json
 
         # mcp.csv -> expected field mapping
         field_mapping = {

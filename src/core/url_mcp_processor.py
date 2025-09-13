@@ -8,15 +8,13 @@ URL-MCP 智能对接处理器
 日期: 2025-08-15
 """
 
-import asyncio
 import json
-import os
 import time
 import uuid
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 try:
     from rich import print as rprint
@@ -464,7 +462,7 @@ class URLMCPProcessor:
             }
             server_info.communicator.send_request(tools_request, timeout=5)
             metrics["avg_response_time"] = time.time() - start
-        except:
+        except Exception:
             metrics["avg_response_time"] = -1
 
         return metrics
@@ -539,7 +537,7 @@ class URLMCPProcessor:
         total_tests = len(report.test_results)
         success_rate = (success_count / total_tests * 100) if total_tests > 0 else 0
 
-        html = f"""
+        html = """
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -636,7 +634,7 @@ class URLMCPProcessor:
             success_class = "" if test.get("success", False) else "test-failed"
             status_icon = "✅" if test.get("success", False) else "❌"
 
-            html += f"""
+            html += """
             <div class="test-item {success_class}">
                 <strong>{status_icon} {test.get('name', '未命名测试')}</strong><br>
                 <span class="timestamp">响应时间: {test.get('response_time', 0):.3f}s</span>
@@ -680,7 +678,7 @@ class URLMCPProcessor:
             success_rate = (success_count / total_tests * 100) if total_tests > 0 else 0
 
             # 创建摘要面板
-            summary_text = f"""
+            summary_text = """
 🎯 URL: {report.url}
 📦 工具: {report.tool_info.name if report.tool_info else '未知'}
 ⏱️ 耗时: {duration:.2f}秒

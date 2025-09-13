@@ -9,18 +9,16 @@
 日期: 2025-08-15
 """
 
-import asyncio
 import json
 import os
 import time
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 try:
     import agentscope
-    from agentscope.agents import ReActAgent
     from agentscope.message import Msg
     from dotenv import load_dotenv
 except ImportError as e:
@@ -275,7 +273,7 @@ class ValidationAgent:
                 return self._basic_result_analysis(test_case, response, execution_time)
 
             # 构建分析提示
-            analysis_prompt = f"""
+            analysis_prompt = """
 请分析以下MCP工具测试结果:
 
 测试用例名称: {test_case.name}
@@ -292,14 +290,14 @@ class ValidationAgent:
 请分析这个测试是否通过，并提供详细分析。
 """
 
-            print(f"🤖 正在调用AI代理分析测试结果...")
+            print("🤖 正在调用AI代理分析测试结果...")
             print("📡 发送请求到大模型API...")
 
             # 调用分析代理 - 真实的大模型调用
             user_msg = Msg("user", analysis_prompt, role="user")
             agent_response = self.agent(user_msg)
 
-            print(f"🎯 大模型分析完成")
+            print("🎯 大模型分析完成")
 
             # 解析代理响应
             return self._parse_analysis_response(agent_response.content)
@@ -375,7 +373,7 @@ class ValidationAgent:
         failed = len([r for r in results if r.status == TestResultStatus.FAIL])
         errors = len([r for r in results if r.status == TestResultStatus.ERROR])
 
-        print(f"\n📊 测试执行摘要:")
+        print("\n📊 测试执行摘要:")
         print(f"   总计: {total}")
         print(f"   通过: {passed} ✅")
         print(f"   失败: {failed} ❌")
