@@ -26,7 +26,7 @@ uv run python -m src.main batch-test --input data/test.csv
 ## 支持的文件格式
 
 - CSV: 员工数据、销售记录
-- Excel: 多工作表财务数据  
+- Excel: 多工作表财务数据
 - JSON: 配置文件、API响应
 - PDF: 报告文档
 - PowerPoint: 演示文稿

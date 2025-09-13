@@ -88,7 +88,7 @@ Context7 MCP工具评估结果:
 ```sql
 -- 基础测试字段
 test_success BOOLEAN
-deployment_success BOOLEAN  
+deployment_success BOOLEAN
 communication_success BOOLEAN
 
 -- GitHub评估字段

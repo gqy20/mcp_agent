@@ -264,20 +264,20 @@ uv run python -m src.main batch-test --input data/test.csv
 
 ## ❓ 常见问题
 
-**Q: 测试失败怎么办？**  
+**Q: 测试失败怎么办？**
 A: 检查 Node.js 是否安装，运行 `uv run python -m src.main init-env` 诊断
 
-**Q: 没有 API Key 可以使用吗？**  
+**Q: 没有 API Key 可以使用吗？**
 A: 可以！基础测试功能无需 API Key，AI 智能测试功能才需要
 
-**Q: 支持哪些 MCP 工具？**  
+**Q: 支持哪些 MCP 工具？**
 A: 支持 5000+ 工具，使用 `list-tools` 命令查看
 
 ## 🎉 完成！
 
 你现在可以：
 - 测试任何 GitHub 上的 MCP 工具
-- 使用 AI 自动生成测试用例  
+- 使用 AI 自动生成测试用例
 - 生成详细的测试报告
 - 批量测试多个工具
 

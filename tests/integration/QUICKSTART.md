@@ -62,7 +62,7 @@ python test_crossplatform_mcp.py --tool context7
 
 ### 准备工作
 - [ ] 检查Node.js安装: `node --version`
-- [ ] 检查npx可用: `npx --version` 
+- [ ] 检查npx可用: `npx --version`
 - [ ] 配置.env文件: `OPENAI_API_KEY`, `OPENAI_BASE_URL`, `OPENAI_MODEL`
 
 ### 验证步骤
@@ -91,7 +91,7 @@ python test_crossplatform_mcp.py --tool context7
 ```
 **解决**: 从 https://nodejs.org 安装最新LTS版本
 
-### 环境变量问题  
+### 环境变量问题
 ```
 ❌ 缺少环境变量: OPENAI_API_KEY
 ```
@@ -105,6 +105,6 @@ python test_crossplatform_mcp.py --tool context7
 
 ---
 
-**更新日期**: 2025年8月14日  
-**框架版本**: v2.0.0  
+**更新日期**: 2025年8月14日
+**框架版本**: v2.0.0
 **兼容平台**: Windows/Linux/macOS

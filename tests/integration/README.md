@@ -36,7 +36,7 @@ cp .env.example .env
 # 测试Context7工具
 python test_single_mcp_tool.py context7
 
-# 测试YouTube工具  
+# 测试YouTube工具
 python test_single_mcp_tool.py youtube
 
 # 详细输出模式
@@ -70,7 +70,7 @@ python test_crossplatform_mcp.py --tool context7
 
 ### 跨平台兼容
 - ✅ Windows (PowerShell/CMD)
-- ✅ Linux (Bash/Zsh)  
+- ✅ Linux (Bash/Zsh)
 - ✅ macOS (Bash/Zsh)
 
 ### 核心功能
@@ -103,7 +103,7 @@ python test_crossplatform_mcp.py --tool context7
 uv run python tests/tools/test_agentscope_basic.py
 ```
 
-### `test_agentscope_react_verification.py` 
+### `test_agentscope_react_verification.py`
 
 **已验证的ReActAgent工具调用验证** - 使用 ReActAgent 验证真实的工具调用。
 
@@ -122,7 +122,7 @@ uv run python tests/tools/test_agentscope_basic.py
 
 3. **测试场景覆盖**
    - 时间戳获取测试
-   - 引用生成测试  
+   - 引用生成测试
    - 数学计算测试
    - 系统状态测试
 
@@ -136,7 +136,7 @@ uv run python tests/tools/test_agentscope_react_verification.py
 ✅ 测试 1 通过: 时间戳获取
 📊 工具调用统计:
    总调用次数: 1
-   成功调用: 1  
+   成功调用: 1
    调用工具: get_current_timestamp
    验证标识: 发现唯一标识符 CALL_123abc_1692123456
 ```
@@ -191,7 +191,7 @@ uv run python tests/tools/test_agentscope_react_verification.py
 # 基础功能验证
 uv run python tests/tools/test_agentscope_basic.py
 
-# 工具调用验证（推荐）  
+# 工具调用验证（推荐）
 uv run python tests/tools/test_agentscope_react_verification.py
 
 # 基于CSV的简化MCP工具验证（最新）
@@ -435,7 +435,7 @@ print(response.content)
    ```python
    # ❌ 错误的属性访问
    len(toolkit.tools)  # AttributeError
-   
+
    # ✅ 正确的属性访问
    len(toolkit.service_funcs)  # 服务函数数量
    len(toolkit.json_schemas)   # JSON Schema 数量

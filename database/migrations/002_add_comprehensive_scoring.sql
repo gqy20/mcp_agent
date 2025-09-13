@@ -1,5 +1,5 @@
 -- Add comprehensive scoring columns to mcp_test_results
--- 
+--
 -- 遵循Linus的"好品味"原则：
 -- - 统一数据结构，一个表存储所有评分信息
 -- - 消除分表查询的特殊情况
@@ -8,53 +8,53 @@
 -- 日期: 2025-08-24
 
 -- 在 mcp_test_results 表中添加GitHub仓库评估相关字段
-ALTER TABLE mcp_test_results 
+ALTER TABLE mcp_test_results
 ADD COLUMN IF NOT EXISTS github_evaluation_score INTEGER DEFAULT NULL;
 
-ALTER TABLE mcp_test_results 
+ALTER TABLE mcp_test_results
 ADD COLUMN IF NOT EXISTS sustainability_score INTEGER DEFAULT NULL;
 
-ALTER TABLE mcp_test_results 
+ALTER TABLE mcp_test_results
 ADD COLUMN IF NOT EXISTS popularity_score INTEGER DEFAULT NULL;
 
 -- 添加综合评分字段 (测试成功率1 + GitHub评分2 的加权平均)
-ALTER TABLE mcp_test_results 
+ALTER TABLE mcp_test_results
 ADD COLUMN IF NOT EXISTS comprehensive_score INTEGER DEFAULT NULL;
 
 -- 添加计算方法字段
-ALTER TABLE mcp_test_results 
+ALTER TABLE mcp_test_results
 ADD COLUMN IF NOT EXISTS calculation_method VARCHAR(50) DEFAULT NULL;
 
 -- 添加评估详细信息 (JSONB格式)
-ALTER TABLE mcp_test_results 
+ALTER TABLE mcp_test_results
 ADD COLUMN IF NOT EXISTS evaluation_details JSONB DEFAULT NULL;
 
 -- 添加计算时间戳
-ALTER TABLE mcp_test_results 
+ALTER TABLE mcp_test_results
 ADD COLUMN IF NOT EXISTS evaluation_timestamp TIMESTAMP WITH TIME ZONE DEFAULT NULL;
 
 -- 添加约束检查 (使用DO块处理IF NOT EXISTS逻辑)
-DO $$ 
+DO $$
 BEGIN
     -- 添加GitHub评估分数约束
     IF NOT EXISTS (
-        SELECT 1 FROM information_schema.table_constraints 
-        WHERE constraint_name = 'check_github_evaluation_score' 
+        SELECT 1 FROM information_schema.table_constraints
+        WHERE constraint_name = 'check_github_evaluation_score'
         AND table_name = 'mcp_test_results'
     ) THEN
-        ALTER TABLE mcp_test_results 
-        ADD CONSTRAINT check_github_evaluation_score 
+        ALTER TABLE mcp_test_results
+        ADD CONSTRAINT check_github_evaluation_score
         CHECK (github_evaluation_score IS NULL OR (github_evaluation_score >= 0 AND github_evaluation_score <= 100));
     END IF;
-    
+
     -- 添加综合评分约束
     IF NOT EXISTS (
-        SELECT 1 FROM information_schema.table_constraints 
-        WHERE constraint_name = 'check_comprehensive_score' 
+        SELECT 1 FROM information_schema.table_constraints
+        WHERE constraint_name = 'check_comprehensive_score'
         AND table_name = 'mcp_test_results'
     ) THEN
-        ALTER TABLE mcp_test_results 
-        ADD CONSTRAINT check_comprehensive_score 
+        ALTER TABLE mcp_test_results
+        ADD CONSTRAINT check_comprehensive_score
         CHECK (comprehensive_score IS NULL OR (comprehensive_score >= 0 AND comprehensive_score <= 100));
     END IF;
 END $$;

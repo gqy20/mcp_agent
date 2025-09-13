@@ -1,0 +1,170 @@
+name: 🔍 Code Quality Check
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  code-quality:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.12"]
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install UV
+      run: |
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+    - name: Install dependencies
+      run: |
+        uv sync
+        uv add --dev pre-commit black isort flake8 mypy bandit safety
+
+    - name: Cache pre-commit
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/pre-commit
+        key: pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}
+
+    - name: Run pre-commit hooks
+      run: |
+        uv run pre-commit run --all-files --show-diff-on-failure
+
+    - name: Run type checking with mypy
+      run: |
+        uv run mypy src/ --ignore-missing-imports --no-strict-optional
+
+    - name: Run security checks with bandit
+      run: |
+        uv run bandit -r src/ -f json -o bandit-report.json || true
+        if [ -f bandit-report.json ]; then
+          echo "Bandit security report:"
+          cat bandit-report.json
+        fi
+
+    - name: Check dependency vulnerabilities
+      run: |
+        uv run safety check --json --output safety-report.json || true
+        if [ -f safety-report.json ]; then
+          echo "Safety vulnerability report:"
+          cat safety-report.json
+        fi
+
+    - name: Generate code quality report
+      if: always()
+      run: |
+        echo "# 🔍 Code Quality Report" > code-quality-report.md
+        echo "" >> code-quality-report.md
+        echo "**Workflow Run**: [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> code-quality-report.md
+        echo "**Python Version**: ${{ matrix.python-version }}" >> code-quality-report.md
+        echo "**Commit**: ${{ github.sha }}" >> code-quality-report.md
+        echo "" >> code-quality-report.md
+
+        if [ -f bandit-report.json ]; then
+          echo "## 🛡️ Security Issues" >> code-quality-report.md
+          echo "Check bandit-report.json for detailed security analysis" >> code-quality-report.md
+          echo "" >> code-quality-report.md
+        fi
+
+        if [ -f safety-report.json ]; then
+          echo "## 🔒 Dependency Vulnerabilities" >> code-quality-report.md
+          echo "Check safety-report.json for dependency vulnerability analysis" >> code-quality-report.md
+          echo "" >> code-quality-report.md
+        fi
+
+        echo "## ✅ Quality Checks Completed" >> code-quality-report.md
+        echo "- [x] Pre-commit hooks" >> code-quality-report.md
+        echo "- [x] Code formatting (Black)" >> code-quality-report.md
+        echo "- [x] Import sorting (isort)" >> code-quality-report.md
+        echo "- [x] Linting (flake8)" >> code-quality-report.md
+        echo "- [x] Type checking (mypy)" >> code-quality-report.md
+        echo "- [x] Security scanning (bandit)" >> code-quality-report.md
+        echo "- [x] Dependency safety check" >> code-quality-report.md
+
+    - name: Upload quality reports
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: code-quality-reports
+        path: |
+          bandit-report.json
+          safety-report.json
+          code-quality-report.md
+        retention-days: 30
+
+    - name: Comment PR
+      if: github.event_name == 'pull_request' && always()
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const report = fs.readFileSync('code-quality-report.md', 'utf8');
+
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: report
+          });
+
+  test:
+    runs-on: ubuntu-latest
+    needs: code-quality
+    strategy:
+      matrix:
+        python-version: ["3.12"]
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install UV
+      run: |
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+    - name: Install dependencies
+      run: uv sync
+
+    - name: Run unit tests
+      run: |
+        uv run pytest tests/unit/ -v --tb=short --cov=src --cov-report=xml
+
+    - name: Run integration tests
+      run: |
+        uv run pytest tests/integration/ -v --tb=short -m "not slow"
+
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@v4
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+
+    - name: Test Summary
+      if: always()
+      run: |
+        echo "# 🧪 Test Summary" > test-summary.md
+        echo "" >> test-summary.md
+        echo "**Unit Tests**: Completed" >> test-summary.md
+        echo "**Integration Tests**: Completed" >> test-summary.md
+        echo "**Coverage Report**: Available in codecov" >> test-summary.md
+        cat test-summary.md

@@ -88,7 +88,7 @@ postgresql://postgres:[密码]@db.vmikqjfxbdvfpakvwoab.supabase.co:5432/postgres
     },
     {
       "test_name": "工具调用测试: resolve-library-id",
-      "success": true, 
+      "success": true,
       "duration": 0.456,
       "error_message": null
     }
@@ -318,10 +318,10 @@ data = response.json()
 def export_all_test_data():
     """导出所有测试数据为JSON文件"""
     all_data = client.table('mcp_test_results').select('*').execute()
-    
+
     with open('mcp_test_export.json', 'w', encoding='utf-8') as f:
         json.dump(all_data.data, f, ensure_ascii=False, indent=2, default=str)
-    
+
     print(f"已导出 {len(all_data.data)} 条记录")
     return all_data.data
 
@@ -334,18 +334,18 @@ exported_data = export_all_test_data()
 def monitor_new_tests():
     """监控新的测试结果"""
     last_check = datetime.now()
-    
+
     while True:
         new_tests = client.table('mcp_test_results')\
             .select('*')\
             .gte('test_timestamp', last_check.isoformat())\
             .order('test_timestamp', desc=True)\
             .execute()
-        
+
         for test in new_tests.data:
             status = "✅ 成功" if test['test_success'] else "❌ 失败"
             print(f"新测试: {test['tool_name']} - {status}")
-        
+
         last_check = datetime.now()
         time.sleep(60)  # 每分钟检查一次
 ```
@@ -363,15 +363,15 @@ def validate_data_integrity():
         .select('test_id, tool_identifier, test_success')\
         .is_('tool_identifier', 'null')\
         .execute()
-    
+
     if incomplete.data:
         print(f"发现 {len(incomplete.data)} 条不完整记录")
-    
+
     # 检查时间戳一致性
     time_issues = client.table('mcp_test_results')\
         .select('test_id, test_timestamp, created_at')\
         .execute()
-    
+
     for record in time_issues.data:
         test_time = datetime.fromisoformat(record['test_timestamp'].replace('Z', '+00:00'))
         created_time = datetime.fromisoformat(record['created_at'].replace('Z', '+00:00'))
@@ -385,12 +385,12 @@ def validate_data_integrity():
 def cleanup_old_data(days_to_keep=90):
     """清理旧数据（保留最近90天）"""
     cutoff_date = datetime.now() - timedelta(days=days_to_keep)
-    
+
     old_records = client.table('mcp_test_results')\
         .delete()\
         .lt('test_timestamp', cutoff_date.isoformat())\
         .execute()
-    
+
     print(f"已清理 {len(old_records.data)} 条旧记录")
 ```
 

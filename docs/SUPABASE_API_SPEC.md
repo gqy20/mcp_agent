@@ -4,9 +4,9 @@
 
 本规范定义了如何通过标准化方式访问MCP测试结果数据库，遵循Linus的"好品味"原则：简洁、高效、无特殊情况。
 
-**作者**: AI Assistant (Linus式设计)  
-**版本**: 1.0.0  
-**更新**: 2025-08-21  
+**作者**: AI Assistant (Linus式设计)
+**版本**: 1.0.0
+**更新**: 2025-08-21
 
 ---
 
@@ -49,29 +49,29 @@ CREATE TABLE mcp_test_results (
     -- 主键和时间戳
     test_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     test_timestamp TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    
+
     -- 工具标识 (核心信息)
     tool_identifier TEXT NOT NULL,  -- URL或package name
     tool_name TEXT,
-    tool_author TEXT, 
+    tool_author TEXT,
     tool_category TEXT,
-    
+
     -- 测试状态 (布尔值，无条件分支)
     test_success BOOLEAN NOT NULL,
     deployment_success BOOLEAN NOT NULL,
     communication_success BOOLEAN NOT NULL,
-    
+
     -- 性能指标 (核心数据)
     available_tools_count INTEGER DEFAULT 0,
     test_duration_seconds FLOAT NOT NULL,
-    
+
     -- 错误信息
     error_messages TEXT[],
-    
+
     -- 详细信息 (JSONB - 灵活存储)
     test_details JSONB DEFAULT '{}',    -- 详细测试结果
     environment_info JSONB DEFAULT '{}', -- 环境信息
-    
+
     -- 审计信息
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -117,15 +117,15 @@ def get_tests_by_time_range(start_time: str, end_time: str = None):
 def get_success_stats():
     """获取成功率统计"""
     result = client.from_('mcp_test_results').select('test_success', 'deployment_success', 'communication_success').execute()
-    
+
     total = len(result.data)
     if total == 0:
         return {'total': 0}
-    
+
     test_success = sum(1 for r in result.data if r['test_success'])
     deployment_success = sum(1 for r in result.data if r['deployment_success'])
     communication_success = sum(1 for r in result.data if r['communication_success'])
-    
+
     return {
         'total': total,
         'test_success_rate': test_success / total,
@@ -139,14 +139,14 @@ def get_success_stats():
 def get_author_stats():
     """获取作者统计 - 无GROUP BY方式"""
     result = client.from_('mcp_test_results').select('tool_author', 'tool_name').execute()
-    
+
     author_stats = {}
     for record in result.data:
         author = record['tool_author'] or 'Unknown'
         if author not in author_stats:
             author_stats[author] = 0
         author_stats[author] += 1
-    
+
     return sorted(author_stats.items(), key=lambda x: x[1], reverse=True)
 ```
 
@@ -242,7 +242,7 @@ def safe_query(query_func, *args, **kwargs):
             error_code = "AUTH_001"
         elif "invalid" in str(e).lower():
             error_code = "QUERY_001"
-        
+
         return {
             'success': False,
             'error_code': error_code,
@@ -268,26 +268,26 @@ from datetime import datetime, timedelta
 
 class MCPTestDataAccess:
     """MCP测试数据访问类 - 标准化接口"""
-    
+
     def __init__(self, url: str, key: str):
         self.client = create_client(url, key)
-    
+
     def get_daily_summary(self, date: str = None):
         """获取日报摘要"""
         if not date:
             date = datetime.now().strftime('%Y-%m-%d')
-        
+
         start_time = f"{date}T00:00:00Z"
         end_time = f"{date}T23:59:59Z"
-        
+
         tests = self.client.from_('mcp_test_results').select('*').gte('test_timestamp', start_time).lte('test_timestamp', end_time).execute()
-        
+
         if not tests.data:
             return {'date': date, 'total': 0, 'summary': '无测试数据'}
-        
+
         total = len(tests.data)
         successful = sum(1 for t in tests.data if t['test_success'])
-        
+
         return {
             'date': date,
             'total': total,
@@ -295,11 +295,11 @@ class MCPTestDataAccess:
             'success_rate': successful / total,
             'summary': f"{date}: {successful}/{total} 测试成功"
         }
-    
+
     def get_tool_performance_ranking(self, limit=10):
         """获取工具性能排名"""
         result = self.client.from_('mcp_test_results').select('tool_name', 'test_duration_seconds', 'test_success').order('test_duration_seconds').limit(limit).execute()
-        
+
         ranking = []
         for i, record in enumerate(result.data, 1):
             status = "✅" if record['test_success'] else "❌"
@@ -309,9 +309,9 @@ class MCPTestDataAccess:
                 'duration': record['test_duration_seconds'],
                 'status': status
             })
-        
+
         return ranking
-    
+
     def health_check(self):
         """系统健康检查"""
         try:
@@ -335,15 +335,15 @@ if __name__ == "__main__":
         url="https://vmikqjfxbdvfpakvwoab.supabase.co",
         key="your-service-role-key"
     )
-    
+
     # 健康检查
     health = data_access.health_check()
     print(f"系统状态: {health}")
-    
+
     # 获取今日摘要
     summary = data_access.get_daily_summary()
     print(f"今日摘要: {summary}")
-    
+
     # 获取性能排名
     ranking = data_access.get_tool_performance_ranking(5)
     print("性能排名:")

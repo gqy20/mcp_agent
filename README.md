@@ -82,7 +82,7 @@ uv run python -m src.main list-tools --search "github"
 从 v2.1.0 开始，以下功能默认启用：
 
 - **`--smart`**: AI 智能测试，生成真实测试用例
-- **`--db-export`**: 导出结果到 Supabase 数据库  
+- **`--db-export`**: 导出结果到 Supabase 数据库
 - **`--evaluate`**: 代码质量评估 (GitHub 仓库分析)
 
 使用 `--no-smart`、`--no-db-export`、`--no-evaluate` 可禁用对应功能。
@@ -125,7 +125,7 @@ uv run python -m src.main list-tools --search "github"
 启用 `--smart` 参数后，框架将使用 AI 代理执行高级测试：
 
 1. **🧠 智能分析**: AI 分析 MCP 工具的功能和参数
-2. **📋 生成测试用例**: 自动生成 3-5 个针对性测试用例  
+2. **📋 生成测试用例**: 自动生成 3-5 个针对性测试用例
 3. **🔍 执行验证**: 运行测试并收集结果
 4. **📊 智能分析**: AI 分析测试结果并提供改进建议
 
@@ -147,7 +147,7 @@ uv run python -m src.main test-url "https://github.com/example/mcp-tool" --smart
    - **项目健康度**: 开放 Issue 比例和积压情况
 
 2. **📈 流行度评分 (Popularity Score)**:
-   - **GitHub Stars**: 社区认可度 
+   - **GitHub Stars**: 社区认可度
    - **Fork 数量**: 开发者参与度和二次开发活跃程度
 
 3. **🏆 综合评分 (Final Score)**:
@@ -158,7 +158,7 @@ uv run python -m src.main test-url "https://github.com/example/mcp-tool" --smart
 评估结果将保存到数据库的以下字段：
 
 - `final_score`: 最终综合评分 (0-100)
-- `sustainability_score`: 可持续性评分 (0-100)  
+- `sustainability_score`: 可持续性评分 (0-100)
 - `popularity_score`: 流行度评分 (0-100)
 - `sustainability_details`: 可持续性详细分析 (JSONB)
 - `popularity_details`: 流行度详细分析 (JSONB)
@@ -224,7 +224,7 @@ mcp_agent/
 # Context7 文档工具
 uv run python -m src.main test-url "https://github.com/upstash/context7"
 
-# Svelte 文档工具  
+# Svelte 文档工具
 uv run python -m src.main test-url "https://github.com/spences10/mcp-svelte-docs"
 ```
 
@@ -296,7 +296,7 @@ recent_tests = client.from_('mcp_test_results').select('*').order('test_timestam
 
 # 获取成功率统计
 success_stats = client.from_('mcp_test_results').select('test_success').execute()
-```  
+```
 - **控制台输出**: 实时测试进度和结果摘要
 
 ## 🔧 开发和贡献
@@ -324,7 +324,7 @@ uv run python -m src.main init-env
 - **默认启用**: AI智能测试、数据库导出、代码质量评估
 
 ### 压力测试工作流
-- **文件**: `.github/workflows/mcp-stress-test.yml`  
+- **文件**: `.github/workflows/mcp-stress-test.yml`
 - **触发**: 手动触发或每周日自动执行
 - **功能**: 批量测试多个MCP工具，生成压测报告
 - **默认启用**: AI智能测试、数据库导出、代码质量评估

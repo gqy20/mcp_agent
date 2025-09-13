@@ -9,11 +9,11 @@
 日期: 2025-08-15
 """
 
-import os
 import json
-from pathlib import Path
-from typing import Dict, List, Any, Optional
+import os
 from dataclasses import dataclass
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 try:
     import agentscope
@@ -26,9 +26,11 @@ except ImportError as e:
 
 from src.utils.csv_parser import MCPToolInfo
 
+
 @dataclass
 class TestCase:
     """测试用例数据结构"""
+
     name: str
     description: str
     tool_name: str
@@ -37,20 +39,21 @@ class TestCase:
     expected_result: Optional[str] = None
     priority: str = "normal"  # high, normal, low
 
+
 class TestGeneratorAgent:
     """智能测试用例生成代理"""
-    
+
     def __init__(self, model_config: Optional[Dict] = None):
         self.model_config = model_config or self._load_default_config()
         self.agent = None
         self._initialize_agent()
-    
+
     def _load_default_config(self) -> Dict:
         """加载默认模型配置"""
         # 加载环境变量
         env_path = Path(__file__).parent.parent.parent / ".env"
         load_dotenv(env_path)
-        
+
         return {
             "config_name": "test_generator_config",
             "model_type": "openai_chat",
@@ -58,14 +61,11 @@ class TestGeneratorAgent:
             "api_key": os.getenv("OPENAI_API_KEY"),
             "client_args": {
                 "base_url": os.getenv("OPENAI_BASE_URL"),
-                "timeout": 60  # 增加到60秒超时
+                "timeout": 60,  # 增加到60秒超时
             },
-            "generate_args": {
-                "temperature": 0.7,
-                "max_tokens": 1000  # 减少token数量加快响应
-            }
+            "generate_args": {"temperature": 0.7, "max_tokens": 1000},  # 减少token数量加快响应
         }
-    
+
     def _initialize_agent(self):
         """初始化AgentScope代理"""
         try:
@@ -75,42 +75,43 @@ class TestGeneratorAgent:
                 project="MCP_Test_Generator",
                 save_dir="./logs",
                 save_log=True,
-                save_api_invoke=True
+                save_api_invoke=True,
             )
-            
+
             # 创建测试生成代理 - 使用UserAgent替代ReActAgent
             sys_prompt = self._get_test_generator_prompt()
-            
+
             try:
                 from agentscope.agents import DialogAgent
+
                 self.agent = DialogAgent(
                     name="mcp_test_generator",
                     model_config_name=self.model_config["config_name"],
-                    sys_prompt=sys_prompt
+                    sys_prompt=sys_prompt,
                 )
             except TypeError:
                 # 处理AgentScope版本兼容性问题，移除不支持的参数
                 from agentscope.agents import DialogAgent
+
                 self.agent = DialogAgent(
-                    name="mcp_test_generator",
-                    sys_prompt=sys_prompt
+                    name="mcp_test_generator", sys_prompt=sys_prompt
                 )
-            
+
             print("✅ 测试生成代理初始化成功")
-            
+
         except Exception as e:
             print(f"❌ 代理初始化失败: {e}")
             self.agent = None  # 标记为不可用
-    
+
     def _get_test_generator_prompt(self) -> str:
         """获取测试生成代理的系统提示词"""
-        return '''你是一个专业的MCP(Model Context Protocol)工具测试用例生成专家。
+        return """你是一个专业的MCP(Model Context Protocol)工具测试用例生成专家。
 
 你的任务是根据MCP工具的信息生成实用、现实的测试用例，重点验证工具的核心功能是否正常工作。
 
 ## 工具信息输入格式:
 - 工具名称: [name]
-- 作者: [author] 
+- 作者: [author]
 - 描述: [description]
 - 类别: [category]
 - 包名: [package_name]
@@ -158,15 +159,17 @@ class TestGeneratorAgent:
 - "any_response": 只要工具响应且不崩溃即可（用于容错测试）
 - "error": 仅在明确应该失败的情况使用（如恶意输入）
 
-现在请为给定的MCP工具生成实用、容易通过的测试用例。'''
-    
-    def generate_test_cases(self, tool_info: MCPToolInfo, available_tools: List[Dict[str, Any]]) -> List[TestCase]:
+现在请为给定的MCP工具生成实用、容易通过的测试用例。"""
+
+    def generate_test_cases(
+        self, tool_info: MCPToolInfo, available_tools: List[Dict[str, Any]]
+    ) -> List[TestCase]:
         """为指定MCP工具生成测试用例"""
         try:
             if self.agent is None:
                 print("⚠️ 智能代理不可用，使用备选测试用例")
                 return self._generate_fallback_test_cases(tool_info, available_tools)
-            
+
             # 构建工具信息提示
             tool_info_text = f"""
 请为以下MCP工具生成测试用例:
@@ -184,49 +187,57 @@ API密钥列表: {tool_info.api_requirements if tool_info.requires_api_key else 
 
 请生成3-5个最重要的测试用例来验证这个MCP工具的核心功能（严格不要超过5个）。优先选择最具代表性的测试场景。
 """
-            
+
             print(f"🤖 正在为 {tool_info.name} 生成真实测试用例...")
             print("📡 调用大模型API...")
-            
+
             # 调用代理生成测试用例 - 使用真实的大模型API
             user_msg = Msg("user", tool_info_text, role="user")
             response = self.agent(user_msg)
-            
+
             print(f"🎯 大模型响应: {response.content[:200]}...")
-            
+
             # 解析响应并生成测试用例
-            test_cases = self._parse_test_cases_response(response.content, tool_info, available_tools)
-            
+            test_cases = self._parse_test_cases_response(
+                response.content, tool_info, available_tools
+            )
+
             if test_cases:
                 print(f"✅ 成功生成 {len(test_cases)} 个真实测试用例")
                 return test_cases
             else:
                 print("⚠️ 大模型响应解析失败，使用备选测试用例")
                 return self._generate_fallback_test_cases(tool_info, available_tools)
-            
+
         except Exception as e:
             print(f"❌ 生成测试用例失败: {e}")
             print("🔄 回退到基于工具信息的智能推断测试用例")
             # 返回基于真实工具信息的推断测试用例（非模拟）
             return self._generate_fallback_test_cases(tool_info, available_tools)
-    
-    def _parse_test_cases_response(self, response: str, tool_info: MCPToolInfo, available_tools: List[Dict[str, Any]]) -> List[TestCase]:
+
+    def _parse_test_cases_response(
+        self,
+        response: str,
+        tool_info: MCPToolInfo,
+        available_tools: List[Dict[str, Any]],
+    ) -> List[TestCase]:
         """解析代理响应并转换为测试用例"""
         test_cases = []
-        
+
         try:
             # 尝试从响应中提取JSON
             import re
-            json_match = re.search(r'```json\s*(.*?)\s*```', response, re.DOTALL)
+
+            json_match = re.search(r"```json\s*(.*?)\s*```", response, re.DOTALL)
             if json_match:
                 json_str = json_match.group(1)
             else:
                 # 尝试直接解析整个响应
                 json_str = response
-            
+
             # 解析JSON
             data = json.loads(json_str)
-            
+
             if isinstance(data, dict) and "test_cases" in data:
                 for tc_data in data["test_cases"]:
                     test_case = TestCase(
@@ -236,61 +247,69 @@ API密钥列表: {tool_info.api_requirements if tool_info.requires_api_key else 
                         parameters=tc_data.get("parameters", {}),
                         expected_type=tc_data.get("expected_type", "success"),
                         expected_result=tc_data.get("expected_result"),
-                        priority=tc_data.get("priority", "normal")
+                        priority=tc_data.get("priority", "normal"),
                     )
                     test_cases.append(test_case)
-            
+
         except (json.JSONDecodeError, KeyError) as e:
             print(f"⚠️ 解析代理响应失败: {e}")
             # 返回基础测试用例
             return self._generate_fallback_test_cases(tool_info, available_tools)
-        
+
         return test_cases
-    
-    def _generate_fallback_test_cases(self, tool_info: MCPToolInfo, available_tools: List[Dict[str, Any]]) -> List[TestCase]:
+
+    def _generate_fallback_test_cases(
+        self, tool_info: MCPToolInfo, available_tools: List[Dict[str, Any]]
+    ) -> List[TestCase]:
         """生成备选的基础测试用例"""
         test_cases = []
-        
+
         # 基础连通性测试
-        test_cases.append(TestCase(
-            name="基础连通性测试",
-            description="验证MCP工具是否正常响应",
-            tool_name="tools/list",
-            parameters={},
-            expected_type="success",
-            priority="high"
-        ))
-        
+        test_cases.append(
+            TestCase(
+                name="基础连通性测试",
+                description="验证MCP工具是否正常响应",
+                tool_name="tools/list",
+                parameters={},
+                expected_type="success",
+                priority="high",
+            )
+        )
+
         # 为每个可用工具生成基础测试（限制为2个工具以提高速度）
         for tool in available_tools[:2]:  # 限制为前2个工具
             tool_name = tool.get("name", "unknown")
-            test_cases.append(TestCase(
-                name=f"{tool_name}基础调用测试",
-                description=f"测试{tool_name}工具的基础功能",
-                tool_name=tool_name,
-                parameters=self._generate_basic_parameters(tool),
-                expected_type="success",
-                priority="normal"
-            ))
-        
+            test_cases.append(
+                TestCase(
+                    name=f"{tool_name}基础调用测试",
+                    description=f"测试{tool_name}工具的基础功能",
+                    tool_name=tool_name,
+                    parameters=self._generate_basic_parameters(tool),
+                    expected_type="success",
+                    priority="normal",
+                )
+            )
+
         # API密钥测试
         if tool_info.requires_api_key:
-            test_cases.append(TestCase(
-                name="API密钥配置检查",
-                description="验证所需的API密钥是否正确配置",
-                tool_name="config_check",
-                parameters={"api_keys": tool_info.api_requirements},
-                expected_type="success",
-                priority="high"
-            ))
-        
+            test_cases.append(
+                TestCase(
+                    name="API密钥配置检查",
+                    description="验证所需的API密钥是否正确配置",
+                    tool_name="config_check",
+                    parameters={"api_keys": tool_info.api_requirements},
+                    expected_type="success",
+                    priority="high",
+                )
+            )
+
         return test_cases
-    
+
     def _generate_basic_parameters(self, tool: Dict[str, Any]) -> Dict[str, Any]:
         """为工具生成基础参数"""
         # 根据工具描述推断参数
         tool_name = tool.get("name", "").lower()
-        
+
         if "search" in tool_name:
             return {"query": "test"}
         elif "get" in tool_name:
@@ -300,8 +319,10 @@ API密钥列表: {tool_info.api_requirements if tool_info.requires_api_key else 
         else:
             return {}
 
+
 # 全局测试生成器实例
 _test_generator_instance = None
+
 
 def get_test_generator() -> TestGeneratorAgent:
     """获取全局测试生成器实例"""

@@ -1,22 +1,22 @@
 -- 评估相关字段迁移脚本
--- 
+--
 -- 遵循Linus"好品味"原则：添加评估分析相关字段
--- 
+--
 -- 作者: AI Assistant (Linus式设计)
 -- 日期: 2025-08-24
 -- 版本: 1.2.0
 
 -- 添加评估相关列
-ALTER TABLE mcp_test_results 
+ALTER TABLE mcp_test_results
 ADD COLUMN IF NOT EXISTS final_score INTEGER,                    -- 最终综合评分 (0-100)
-ADD COLUMN IF NOT EXISTS sustainability_score INTEGER,           -- 可持续性评分 (0-100)  
+ADD COLUMN IF NOT EXISTS sustainability_score INTEGER,           -- 可持续性评分 (0-100)
 ADD COLUMN IF NOT EXISTS popularity_score INTEGER,               -- 流行度评分 (0-100)
 ADD COLUMN IF NOT EXISTS sustainability_details JSONB,          -- 可持续性详细分析
 ADD COLUMN IF NOT EXISTS popularity_details JSONB,              -- 流行度详细分析
 ADD COLUMN IF NOT EXISTS evaluation_timestamp TIMESTAMP WITH TIME ZONE; -- 评估时间戳
 
 -- 添加约束检查 (确保分数在合理范围内)
-ALTER TABLE mcp_test_results 
+ALTER TABLE mcp_test_results
 ADD CONSTRAINT check_final_score CHECK (final_score >= 0 AND final_score <= 100),
 ADD CONSTRAINT check_sustainability_score CHECK (sustainability_score >= 0 AND sustainability_score <= 100),
 ADD CONSTRAINT check_popularity_score CHECK (popularity_score >= 0 AND popularity_score <= 100);

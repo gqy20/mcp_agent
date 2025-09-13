@@ -126,9 +126,9 @@
         "protocol_version": "2024-11-05",
         "connection_type": "stdio",
         "tools": [
-          "search_works", "search_authors", "search_sources", 
+          "search_works", "search_authors", "search_sources",
           "search_institutions", "search_concepts", "search_publishers",
-          "search_funders", "autocomplete", "classify_text", 
+          "search_funders", "autocomplete", "classify_text",
           "get_entity", "search_entities"
         ]
       },

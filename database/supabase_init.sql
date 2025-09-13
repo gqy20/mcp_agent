@@ -1,7 +1,7 @@
 -- MCP测试结果数据库 - 简洁版 (Linus重构)
--- 
+--
 -- 遵循"好品味"原则：
--- - 一次测试 = 一行记录 
+-- - 一次测试 = 一行记录
 -- - 无需复杂JOIN查询
 -- - 核心信息在列中，详细信息在JSONB中
 --
@@ -16,32 +16,32 @@ CREATE TABLE mcp_test_results (
     -- 主键和时间戳
     test_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     test_timestamp TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    
+
     -- 工具标识 (核心信息)
     tool_identifier TEXT NOT NULL,  -- URL或package name
     tool_name TEXT,
-    tool_author TEXT, 
+    tool_author TEXT,
     tool_category TEXT,
-    
+
     -- 测试状态 (布尔值，无条件分支)
     test_success BOOLEAN NOT NULL,
     deployment_success BOOLEAN NOT NULL,
     communication_success BOOLEAN NOT NULL,
-    
+
     -- 性能指标 (核心数据)
     available_tools_count INTEGER DEFAULT 0,
     test_duration_seconds FLOAT NOT NULL,
-    
+
     -- 错误信息
     error_messages TEXT[],
-    
+
     -- 详细信息 (JSONB - 灵活存储)
     test_details JSONB DEFAULT '{}',    -- 详细测试结果
     environment_info JSONB DEFAULT '{}', -- 环境信息
-    
+
     -- 审计信息
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    
+
     -- 约束检查 (简单验证)
     CHECK (test_duration_seconds >= 0.0),
     CHECK (available_tools_count >= 0)
