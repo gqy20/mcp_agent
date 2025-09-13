@@ -3,7 +3,7 @@ import re
 import statistics
 import time
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Union
 
 import requests
 
@@ -47,7 +47,8 @@ if HUB_TOKEN:
 # --- 辅助函数和API调用 ---
 
 
-def parse_github_url(url):
+def parse_github_url(url: str) -> tuple[Optional[str], Optional[str]]:
+    """解析GitHub URL获取owner和repo"""
     if not isinstance(url, str):
         return None, None
     match = re.search(r"github\.com/([^/]+)/([^/]+)", url)
@@ -57,14 +58,16 @@ def parse_github_url(url):
     return None, None
 
 
-def get_repo_data(owner, repo):
+def get_repo_data(owner: str, repo: str) -> Dict[str, Any]:
+    """获取仓库数据"""
     url = f"{API_URL}/repos/{owner}/{repo}"
     response = requests.get(url, headers=HEADERS)
     response.raise_for_status()
     return response.json()
 
 
-def get_commit_data(owner, repo, limit=100):
+def get_commit_data(owner: str, repo: str, limit: int = 100) -> list[Dict[str, Any]]:
+    """获取提交数据"""
     url = f"{API_URL}/repos/{owner}/{repo}/commits"
     params = {"per_page": limit}
     response = requests.get(url, headers=HEADERS, params=params)
@@ -72,7 +75,9 @@ def get_commit_data(owner, repo, limit=100):
     return response.json()
 
 
-def get_issue_data(owner, repo, state="closed", limit=100):
+def get_issue_data(
+    owner: str, repo: str, state: str = "closed", limit: int = 100
+) -> list[Dict[str, Any]]:
     url = f"{API_URL}/repos/{owner}/{repo}/issues"
     params = {"per_page": limit, "state": state}
     response = requests.get(url, headers=HEADERS, params=params)
@@ -80,7 +85,8 @@ def get_issue_data(owner, repo, state="closed", limit=100):
     return response.json()
 
 
-def get_closed_issues_count(owner, repo):
+def get_closed_issues_count(owner: str, repo: str) -> int:
+    """获取已关闭issue数量"""
     url = f"{API_URL}/search/issues"
     params = {"q": f"repo:{owner}/{repo} is:issue is:closed"}
     response = requests.get(url, headers=HEADERS, params=params)
@@ -92,7 +98,8 @@ def get_closed_issues_count(owner, repo):
 
 
 # === 可持续性分析模块 ===
-def analyze_recency(repo_data):
+def analyze_recency(repo_data: Dict[str, Any]) -> tuple[int, str]:
+    """分析代码活跃度"""
     last_pushed_str = repo_data.get("pushed_at")
     if not last_pushed_str:
         return 0, "无法获取最后更新时间"
@@ -110,7 +117,8 @@ def analyze_recency(repo_data):
     return int(score), reason
 
 
-def analyze_frequency(commit_data):
+def analyze_frequency(commit_data: list[Dict[str, Any]]) -> tuple[int, str]:
+    """分析提交频率"""
     if not commit_data:
         return 0, "没有提交记录"
     ninety_days_ago = datetime.now(timezone.utc) - timedelta(days=90)
@@ -132,7 +140,8 @@ def analyze_frequency(commit_data):
     return int(score), reason
 
 
-def analyze_stability(commit_data):
+def analyze_stability(commit_data: list[Dict[str, Any]]) -> tuple[int, str]:
+    """分析提交稳定性"""
     if len(commit_data) < 5:
         return 0, "提交记录过少 (<5)，无法评估稳定性"
     dates = [

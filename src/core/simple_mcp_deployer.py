@@ -13,13 +13,14 @@ import platform
 import queue
 import shutil
 import subprocess
-import sys
 import threading
 import time
 import uuid
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+
+from src.core.error_handler import DeploymentError, log_error
 
 
 # 简化的通信器类（基于原CrossPlatformMCPCommunicator）
