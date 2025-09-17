@@ -449,6 +449,122 @@ class CLIHandler:
             rprint(f"[red]❌ 报告生成失败: {e}[/red]")
             return {}
 
+    def _get_tool_identifier(self, json_data: dict, tool_info: dict) -> str:
+        """
+        获取工具标识符，确保不为空
+
+        问题分析：
+        1. 在to_concise_dict中，精简的tool_info不包含github_url字段
+        2. 在数据库导出时，当tool_info存在但没有github_url时，返回空字符串
+        3. 应该在这种情况下尝试从test_url或其他方式获取正确的tool_identifier
+
+        解决方案：
+        1. 如果tool_info存在且有github_url，直接使用
+        2. 如果tool_info存在但没有github_url，尝试从CSV中查找完整工具信息
+        3. 如果无法从CSV中找到，尝试从test_url推断GitHub URL
+        4. 如果tool_info不存在，直接使用test_url
+        """
+        # 首先尝试从tool_info获取github_url
+        if tool_info and isinstance(tool_info, dict):
+            tool_identifier = tool_info.get("github_url", "")
+            if tool_identifier:
+                return tool_identifier
+
+        # 如果tool_info中没有github_url，尝试从CSV中查找完整工具信息
+        tool_identifier = self._lookup_github_url_from_csv(json_data)
+        if tool_identifier:
+            return tool_identifier
+
+        # 如果无法从CSV中找到，尝试从test_url推断
+        test_url = json_data.get("test_url", "")
+        tool_identifier = self._infer_github_url_from_test_url(test_url)
+        if tool_identifier:
+            return tool_identifier
+
+        # 如果无法推断，回退到test_url
+        return test_url
+
+    def _lookup_github_url_from_csv(self, json_data: dict) -> str:
+        """
+        从CSV中查找GitHub URL
+        """
+        try:
+            # 获取工具名称
+            tool_name = json_data.get("tool_name", "")
+            test_url = json_data.get("test_url", "")
+
+            if not tool_name and not test_url:
+                return ""
+
+            # 使用CSV解析器查找工具
+            from src.utils.csv_parser import get_mcp_parser
+
+            parser = get_mcp_parser()
+            if not parser.load_data():
+                return ""
+
+            # 尝试多种方式查找工具
+            tool = None
+
+            # 1. 通过工具名称查找
+            if tool_name and tool_name != "Unknown":
+                tools = parser.search_tools(tool_name)
+                if tools:
+                    tool = tools[0]
+
+            # 2. 通过包名查找
+            if not tool and test_url and test_url.startswith("@"):
+                tool = parser.find_tool_by_package(test_url)
+
+            # 3. 通过GitHub URL查找
+            if not tool and test_url and test_url.startswith("https://github.com/"):
+                tool = parser.find_tool_by_url(test_url)
+
+            if tool and tool.github_url:
+                return tool.github_url
+
+        except Exception as e:
+            rprint(f"[yellow]⚠️ 从CSV查找GitHub URL时出错: {e}[/yellow]")
+            pass
+
+        return ""
+
+    def _infer_github_url_from_test_url(self, test_url: str) -> str:
+        """
+        从test_url推断GitHub URL
+        """
+        if not test_url:
+            return ""
+
+        # 如果test_url已经是GitHub URL，直接返回
+        if test_url.startswith("https://github.com/"):
+            return test_url
+
+        # 如果test_url是包名，尝试推断GitHub URL
+        # 例如: @upstash/context7-mcp -> https://github.com/upstash/context7
+        if test_url.startswith("@"):
+            # 移除@符号并分割
+            parts = test_url[1:].split("/")
+            if len(parts) >= 2:
+                owner = parts[0]
+                repo = parts[1].split("@")[0]  # 移除版本号
+                # 特殊处理一些常见的包名映射
+                if owner == "upstash" and "context7" in repo:
+                    return "https://github.com/upstash/context7"
+                elif owner == "modelcontextprotocol":
+                    if "filesystem" in repo:
+                        return "https://github.com/modelcontextprotocol/servers"
+                    elif "sequential-thinking" in repo:
+                        return "https://github.com/modelcontextprotocol/servers"
+                    else:
+                        return f"https://github.com/modelcontextprotocol/{repo}"
+                else:
+                    # 默认映射
+                    return f"https://github.com/{owner}/{repo}"
+
+        # 对于其他情况，无法推断，返回空字符串
+        return ""
+
     def _export_to_database(
         self, json_report_path: str, evaluation_result: Optional[dict] = None
     ):
@@ -508,11 +624,12 @@ class CLIHandler:
             # 获取工具信息（如果存在）
             tool_info = json_data.get("tool_info", {})
 
+            # 修复tool_identifier计算逻辑，确保不为空
+            tool_identifier = self._get_tool_identifier(json_data, tool_info)
+
             record = {
                 "test_timestamp": datetime.now().isoformat(),
-                "tool_identifier": tool_info.get("github_url", "")
-                if tool_info
-                else json_data.get("test_url", ""),
+                "tool_identifier": tool_identifier,
                 "tool_name": tool_info.get("name", "Unknown")
                 if tool_info
                 else json_data.get("tool_name", "Unknown"),
