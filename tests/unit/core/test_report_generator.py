@@ -1,12 +1,12 @@
 """Unit tests for report generator functionality."""
 import json
+from datetime import datetime
 from pathlib import Path
 from unittest.mock import Mock, mock_open, patch
-from datetime import datetime
 
 import pytest
 
-from src.core.report_generator import MCPReportGenerator, TestResult, MCPTestReport
+from src.core.report_generator import MCPReportGenerator, MCPTestReport, TestResult
 from src.utils.csv_parser import MCPToolInfo
 
 
@@ -59,15 +59,17 @@ class TestMCPReportGenerator:
                 actual_response={
                     "success": True,
                     "result": {
-                        "content": [{
-                            "type": "text",
-                            "text": "This is a long response text that should be truncated to 100 characters in the concise version to keep the output clean and readable."
-                        }]
-                    }
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": "This is a long response text that should be truncated to 100 characters in the concise version to keep the output clean and readable.",
+                            }
+                        ]
+                    },
                 },
                 ai_analysis="Test passed successfully",
                 ai_confidence=0.95,
-                test_category="基础功能"
+                test_category="基础功能",
             ),
             TestResult(
                 test_name="Test Error Handling",
@@ -76,8 +78,8 @@ class TestMCPReportGenerator:
                 error_message="This is a long error message that should be truncated to 100 characters in the concise version to maintain readability.",
                 tool_name="test_tool",
                 actual_response={"success": False},  # Add this to test "响应失败" case
-                test_category="容错能力"
-            )
+                test_category="容错能力",
+            ),
         ]
 
     @pytest.fixture
@@ -97,8 +99,8 @@ class TestMCPReportGenerator:
             evaluation_result={
                 "status": "success",
                 "final_comprehensive_score": 88,
-                "test_success_rate": {"success_rate": 85.0}
-            }
+                "test_success_rate": {"success_rate": 85.0},
+            },
         )
 
     @pytest.fixture
@@ -196,7 +198,7 @@ class TestMCPReportGenerator:
             assert concise_path.name.endswith("_concise.json")
 
             # Load and verify content
-            with open(concise_path, 'r', encoding='utf-8') as f:
+            with open(concise_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
 
             # Verify it's concise format
@@ -234,15 +236,10 @@ class TestMCPReportGenerator:
             tool_name="test_tool",
             actual_response={
                 "success": True,
-                "result": {
-                    "content": [{
-                        "type": "text",
-                        "text": "Short response"
-                    }]
-                }
-            }
+                "result": {"content": [{"type": "text", "text": "Short response"}]},
+            },
         )
-        
+
         concise_short = short_response.to_concise_dict()
         assert concise_short["response_summary"] == "Short response"
         assert "..." not in concise_short["response_summary"]
@@ -256,14 +253,13 @@ class TestMCPReportGenerator:
             actual_response={
                 "success": True,
                 "result": {
-                    "content": [{
-                        "type": "text",
-                        "text": "A" * 200  # Very long response
-                    }]
-                }
-            }
+                    "content": [
+                        {"type": "text", "text": "A" * 200}  # Very long response
+                    ]
+                },
+            },
         )
-        
+
         concise_long = long_response.to_concise_dict()
         assert len(concise_long["response_summary"]) <= 103
         assert "..." in concise_long["response_summary"]
@@ -276,9 +272,9 @@ class TestMCPReportGenerator:
             success=False,
             duration=0.5,
             error_message="A" * 200,  # Very long error message
-            tool_name="test_tool"
+            tool_name="test_tool",
         )
-        
+
         concise_error = long_error.to_concise_dict()
         assert "error_summary" in concise_error
         assert len(concise_error["error_summary"]) <= 103
@@ -299,7 +295,7 @@ class TestMCPReportGenerator:
             assert json_path.name.endswith(".json")
 
             # Load and verify content
-            with open(json_path, 'r', encoding='utf-8') as f:
+            with open(json_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
 
             # Verify it contains full data
@@ -326,7 +322,7 @@ class TestMCPReportGenerator:
             assert html_path.name.endswith(".html")
 
             # Load and verify content
-            with open(html_path, 'r', encoding='utf-8') as f:
+            with open(html_path, "r", encoding="utf-8") as f:
                 html_content = f.read()
 
             # Verify HTML structure
@@ -354,7 +350,7 @@ class TestMCPReportGenerator:
             duration=10.5,
             test_results=[],
             error_messages=[],
-            evaluation_result={"status": "success"}
+            evaluation_result={"status": "success"},
         )
 
         # Verify report structure

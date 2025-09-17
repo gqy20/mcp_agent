@@ -15,7 +15,7 @@ import time
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Optional, Dict, Any, List
+from typing import Any, Dict, List, Optional
 
 try:
     import agentscope
@@ -292,13 +292,13 @@ class ValidationAgent:
         """解析AI代理的分析响应 - 增强版容错处理"""
         try:
             import re
-            
+
             # 清理响应文本
             response = response.strip()
-            
+
             # 尝试多种JSON提取方式
             json_str = None
-            
+
             # 方式1：查找 ```json ``` 代码块
             json_match = re.search(r"```json\s*(.*?)\s*```", response, re.DOTALL)
             if json_match:
@@ -311,22 +311,22 @@ class ValidationAgent:
                 else:
                     # 方式3：尝试直接解析整个响应
                     json_str = response
-            
+
             if json_str:
                 # 清理可能的markdown标记
                 json_str = re.sub(r"```json|```", "", json_str).strip()
                 result = json.loads(json_str)
-                
+
                 # 验证结果格式
                 if isinstance(result, dict) and "status" in result:
                     return result
                 else:
                     raise ValueError("Invalid response format")
-            
+
         except (json.JSONDecodeError, AttributeError, ValueError) as e:
             print(f"⚠️ AI响应解析失败: {e}")
             print(f"📝 原始响应: {response[:200]}...")
-            
+
             # 如果解析失败，进行智能推断
             response_lower = response.lower()
             if any(keyword in response_lower for keyword in ["pass", "成功", "通过", "正常"]):
@@ -335,15 +335,17 @@ class ValidationAgent:
                     "confidence": 0.8,
                     "analysis": "AI分析建议通过测试",
                     "issues": [],
-                    "recommendations": []
+                    "recommendations": [],
                 }
-            elif any(keyword in response_lower for keyword in ["error", "错误", "失败", "异常"]):
+            elif any(
+                keyword in response_lower for keyword in ["error", "错误", "失败", "异常"]
+            ):
                 return {
-                    "status": "error", 
+                    "status": "error",
                     "confidence": 0.7,
                     "analysis": "AI分析建议标记为错误",
                     "issues": ["AI检测到问题"],
-                    "recommendations": ["检查工具配置"]
+                    "recommendations": ["检查工具配置"],
                 }
             else:
                 # 默认通过 - 对于Context7这样的高质量工具
@@ -352,7 +354,7 @@ class ValidationAgent:
                     "confidence": 0.9,
                     "analysis": "工具正常响应，默认通过测试",
                     "issues": [],
-                    "recommendations": []
+                    "recommendations": [],
                 }
 
     def _basic_result_analysis(

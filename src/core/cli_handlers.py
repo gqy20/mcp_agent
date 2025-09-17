@@ -187,7 +187,7 @@ class CLIHandler:
                 )
 
             # 4.25. 显示精简摘要
-            if hasattr(self, '_display_concise_summary'):
+            if hasattr(self, "_display_concise_summary"):
                 self._display_concise_summary(report_files.get("json"))
 
             # 4.5. 数据库导出 (可选) - 使用精简版本
@@ -319,11 +319,42 @@ class CLIHandler:
         tool_info = self.tester.find_tool_by_url(url)
 
         if not tool_info:
-            rprint(f"[red]❌ 在数据库中未找到URL对应的MCP工具: {url}[/red]")
-            rprint(
-                "[yellow]💡 提示: 可以使用 'batch-mcp list-tools --search <关键词>' 搜索可用工具[/yellow]"
-            )
-            return None
+            rprint(f"[yellow]⚠️ 在数据库中未找到URL对应的MCP工具: {url}[/yellow]")
+            rprint("[blue]🔍 尝试从GitHub分析项目信息...[/blue]")
+
+            # 使用GitHub项目分析器获取工具信息
+            try:
+                from src.core.mcp_table_updater import MCPTableUpdater
+
+                updater = MCPTableUpdater()
+
+                # 分析单个GitHub项目
+                result = updater.analyze_github_project(url)
+                if result and result.get("success"):
+                    rprint(
+                        f"[green]✅ 成功分析GitHub项目: {result.get('name', 'Unknown')}[/green]"
+                    )
+
+                    # 重新查找（此时应该已经在数据库中）
+                    tool_info = self.tester.find_tool_by_url(url)
+                    if tool_info:
+                        self._display_tool_info(tool_info)
+                        return tool_info
+                    else:
+                        rprint(f"[red]❌ 分析完成后仍未在数据库中找到工具信息[/red]")
+                        return None
+                else:
+                    rprint(
+                        f"[red]❌ GitHub项目分析失败: {result.get('error', 'Unknown error')}[/red]"
+                    )
+                    return None
+
+            except Exception as e:
+                rprint(f"[red]❌ GitHub项目分析异常: {e}[/red]")
+                rprint(
+                    "[yellow]💡 提示: 可以使用 'batch-mcp list-tools --search <关键词>' 搜索可用工具[/yellow]"
+                )
+                return None
 
         self._display_tool_info(tool_info)
         return tool_info

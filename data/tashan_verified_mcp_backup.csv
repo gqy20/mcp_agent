@@ -1,0 +1,314 @@
+﻿工具名称,工具作者,他山评分,实用性评分,可持续性评分,受欢迎度评分,可用工具数量,github_url
+Playwright MCP,Microsoft Corporation,94.63,92.5,97,98.67,21,https://github.com/microsoft/playwright-mcp
+Context7 MCP - 最新代码文档适用于任何提示,upstash,92.03,92.5,84,98.67,2,https://github.com/upstash/context7
+Mobile Next - 移动开发与自动化的 MCP 服务器,mobile-next,88.7,92.5,78,87.98,18,https://github.com/mobile-next/mobile-mcp
+BlenderMCP - Blender 模型上下文协议集成,ahujasid,86.03,92.5,54,98.67,17,https://github.com/ahujasid/blender-mcp
+Excel MCP Server,haris,85.83,92.5,59,92.67,25,https://github.com/haris-musa/excel-mcp-server
+12306-mcp,Joooook,84.97,92.5,63,84.33,8,https://github.com/Joooook/12306-mcp
+Mindpilot MCP,abrinsmead,83.14,92.5,81,57.18,2,https://github.com/abrinsmead/mindpilot-mcp
+Agent Communication MCP Server,mkXultra,81.34,92.5,72,57.18,10,https://github.com/mkXultra/agent-communication-mcp
+@prismicio/mcp-server,prismicio,80.94,92.5,70,57.18,1,https://github.com/prismicio/prismic-mcp-server
+MCP 文档服务器,andrea9293,80.74,82.5,84,72.2,9,https://github.com/andrea9293/mcp-documentation-server
+HiGHS MCP 服务器,Wilfred Springer,80.54,92.5,68,57.18,1,https://github.com/wspringer/highs-mcp
+MCP Feedback Enhanced,Minidoracat,79.53,80.0,65,92.67,2,https://github.com/Minidoracat/mcp-feedback-enhanced
+Log Reader Mcp,hassansaadfr,78.74,92.5,59,57.18,1,https://github.com/hassansaadfr/log-reader-mcp
+Netlify MCP Server,netlify,78.34,87.5,72,57.18,6,https://github.com/netlify/netlify-mcp
+mcp-installer - 用于安装 MCP 服务器的 MCP 服务器,anaisbetts,78.3,92.5,26,87.98,2,https://github.com/anaisbetts/mcp-installer
+Cursor IDE 的 PubNub 模型上下文协议（MCP）服务器,pubnub,77.74,87.5,69,57.18,11,https://github.com/pubnub/pubnub-mcp-server
+MCP DuckDB 知识图谱内存服务器,IzumiSy,77.74,92.5,54,57.18,8,https://github.com/IzumiSy/mcp-duckdb-memory-server
+地理编码 MCP 服务器,geocoding-ai,76.94,92.5,50,57.18,2,https://github.com/geocoding-ai/mcp
+interactive-mcp,ttommyth,76.74,92.5,34,72.2,5,https://github.com/ttommyth/interactive-mcp
+@just-every/mcp-read-website-fast,just-every,76.54,82.5,78,57.18,1,https://github.com/just-every/mcp-read-website-fast
+MCP iOS 模拟器截图,yorifuji,76.14,92.5,46,57.18,1,https://github.com/yorifuji/mcp-ios-simulator-screenshot
+AniList MCP 服务器,yuna0x0,75.34,92.5,42,57.18,44,https://github.com/yuna0x0/anilist-mcp
+Jina AI MCP 工具,PsychArch,75.34,92.5,42,57.18,2,https://github.com/PsychArch/jina-mcp-tools
+@stackzero-labs/mcp,stackzero-labs,75.34,92.5,42,57.18,12,https://github.com/stackzero-labs/mcp
+测试代码生成器 MCP 服务器,fyuuki0jp,75.34,92.5,42,57.18,1,https://github.com/fyuuki0jp/testing-mcp-vitest
+Superset MCP 服务器,Winding2020,75.14,82.5,71,57.18,28,https://github.com/Winding2020/superset-mcp
+@hyperweb/mcp-server,hyperweb-io,74.54,92.5,38,57.18,8,https://github.com/hyperweb-io/mcp
+Hacker News MCP 服务器,devabdultech,74.54,92.5,38,57.18,9,https://github.com/devabdultech/hn-mcp
+SVN MCP 服务器,gcorroto,74.54,92.5,38,57.18,14,https://github.com/gcorroto/mcp-svn
+Claude文本编辑器MCP服务器,bhouston,74.54,92.5,38,57.18,1,https://github.com/bhouston/mcp-server-text-editor
+Time MCP Server,yokingma,74.54,92.5,38,57.18,6,https://github.com/yokingma/time-mcp
+markdown2pdf-mcp,serendipity-ai,74.54,92.5,38,57.18,1,https://github.com/Serendipity-AI/markdown2pdf-mcp
+Deepwiki MCP 服务器,regenrek,74.37,92.5,10,84.33,1,https://github.com/regenrek/deepwiki-mcp
+Bazi MCP（八字 MCP）由 Cantian AI 提供,cantian-ai,74.34,92.5,22,72.2,5,https://github.com/cantian-ai/bazi-mcp/tree/dev
+Memory Pickle MCP,Justar96,74.14,82.5,66,57.18,13,https://github.com/Justar96/memory-pickle-mcp
+IzmirMCP,halilcengel,73.94,92.5,35,57.18,17,https://github.com/halilcengel/IzmirMCP
+apifox-mcp MCP 服务器,Juzisuan965,73.94,92.5,35,57.18,1,https://github.com/Juzisuan965/apifox-mcp
+Cursor 与 Figma 的 MCP 通信,ysocrius,73.94,92.5,35,57.18,38,https://github.com/ysocrius/Talk-to-Figma-Cursor
+Memory Bank MCP,hoppo-chan,73.94,92.5,35,57.18,3,https://github.com/MCP-Mirror/hoppo-chan_memory-bank-mcp
+VSCode MCP,MCP-Mirror,73.94,92.5,35,57.18,9,https://github.com/MCP-Mirror/block_vscode-mcp
+@dealx/mcp-server,dealexpress,73.94,92.5,35,57.18,1,https://github.com/DealExpress/mcp-server
+HAL (HTTP API 层),DeanWard,73.94,92.5,35,57.18,8,https://github.com/DeanWard/HAL
+WebDriverIO MCP 服务器,Winify,73.94,92.5,35,57.18,13,https://github.com/Winify/webdriverio-mcp
+Cucumber Studio MCP 服务器,HeroSizy,73.74,92.5,34,57.18,1,https://github.com/HeroSizy/cucumberstudio-mcp
+Knowledge MCP Server,sven-borkert,73.64,80.0,71,57.18,27,https://github.com/sven-borkert/knowledge-mcp
+即梦AI多模态MCP,freeleepm,73.14,92.5,31,57.18,4,https://github.com/freeleepm/jimeng-ai-mcp
+VWO 功能管理与实验（FME）MCP 服务器,wingify,73.14,92.5,31,57.18,18,https://github.com/wingify/vwo-fme-mcp
+Meta Mind MCP 服务器,snapspecter,73.14,92.5,31,57.18,18,https://github.com/snapspecter/mcp-meta-mind
+资产价格 MCP 服务器,mk965,72.94,92.5,30,57.18,1,https://github.com/mk965/asset-price-mcp
+mcp-devcontainers,crunchloop,72.94,92.5,30,57.18,3,https://github.com/crunchloop/mcp-devcontainers
+MultiversX MCP 服务器,multiversx,72.94,92.5,30,57.18,14,https://github.com/multiversx/mx-mcp
+Mobile Xray MCP,CultivX,72.94,92.5,30,57.18,3,https://github.com/CultivX/mobile-xray-mcp
+MCP Rand,turlockmike,72.94,92.5,30,57.18,7,https://github.com/turlockmike/mcp-rand
+Pushover MCP,AshikNesin,72.94,92.5,30,57.18,1,https://github.com/AshikNesin/pushover-mcp
+VSCode MCP,block,72.94,92.5,30,57.18,9,https://github.com/block/vscode-mcp
+Xmind Generator MCP Server,BangyiZhang,72.94,92.5,30,57.18,1,https://github.com/BangyiZhang/xmind-generator-mcp
+MCP Vertica,nolleh,72.94,92.5,30,57.18,6,https://github.com/nolleh/mcp-vertica
+@reapi/mcp-openapi,reapi-com,72.94,92.5,30,57.18,7,https://github.com/ReAPI-com/mcp-openapi
+Prompt Book 服务器,cardinalblue,72.14,92.5,26,57.18,16,https://github.com/cardinalblue/prompt-book-mcp-server
+Astra DB MCP 服务器,datastax,72.14,92.5,26,57.18,16,https://github.com/datastax/astra-db-mcp
+Quick Chart MCP 服务器,DataWorks,72.14,92.5,26,57.18,1,https://github.com/datafe/quick-chart-mcp
+mcp-server-nodejs-api-docs,lirantal,71.84,80.0,62,57.18,2,https://github.com/lirantal/mcp-server-nodejs-api-docs
+KnowledgeGraph MCP 服务器,n-r-w,71.74,82.5,54,57.18,11,https://github.com/n-r-w/knowledgegraph-mcp
+mcp-installer - 用于安装 MCP 服务器的 MCP 服务器,zncou,71.54,92.5,23,57.18,2,https://github.com/ZNCOU/mcp-installer
+shell-mcp,kevinwatt,71.54,92.5,23,57.18,20,https://github.com/kevinwatt/shell-mcp
+Deliberate Reasoning Engine (DRE),haasonsaas,71.54,92.5,23,57.18,5,https://github.com/haasonsaas/deliberate-reasoning-engine
+MCP OpenAI 服务器,mzxrai,71.54,92.5,23,57.18,1,https://github.com/mzxrai/mcp-openai
+shadow-cljs-mcp,Bigsy,71.54,92.5,23,57.18,1,https://github.com/Bigsy/shadow-cljs-mcp
+i18next MCP 服务器,gtrias,71.54,92.5,23,57.18,14,https://github.com/gtrias/i18next-mcp-server
+mcp-micromanage,yodakeisuke,71.54,92.5,23,57.18,3,https://github.com/Durable-Technology/mcp-micromanage-your-agent
+MCP 终端服务器,dillip285,71.54,92.5,23,57.18,1,https://github.com/dillip285/mcp-terminal
+Strapi MCP 服务器,bschauer,71.34,92.5,22,57.18,5,https://github.com/misterboe/strapi-mcp-server
+MCP 虚拟旅行机器人环境,mfukushim,71.04,80.0,58,57.18,8,https://github.com/mfukushim/map-traveler-mcp
+npm 包 README MCP 服务器,elchika-inc,70.94,87.5,35,57.18,3,https://github.com/elchika-inc/npm-package-readme-mcp-server
+CPAN 包 README MCP 服务器,elchika-inc,70.94,87.5,35,57.18,3,https://github.com/elchika-inc/cpan-package-readme-mcp-server
+Composer 包 README MCP 服务器,elchika-inc,70.94,87.5,35,57.18,3,https://github.com/elchika-inc/composer-package-readme-mcp-server
+ModelContextProtocol,NishantKJani,70.94,87.5,35,57.18,22,https://github.com/NishantKJani/ModelContextProtocol
+Genesys Cloud MCP 服务器,MakingChatbots,70.94,82.5,50,57.18,8,https://github.com/MakingChatbots/genesys-cloud-mcp-server
+Google Tasks MCP 服务器,alvinjchoi,70.74,92.5,19,57.18,6,https://github.com/alvinjchoi/gtasks-mcp
+MCP PostgreSQL 服务器,antonorlov,70.74,92.5,19,57.18,6,https://github.com/antonorlov/mcp-postgres-server
+钉钉 MCP 服务器,darrenyao,70.74,92.5,19,57.18,3,https://github.com/darrenyao/dingtalk-mcp-server
+ArXiv 论文 MCP,yzfly,70.74,92.5,19,57.18,4,https://github.com/yzfly/Arxiv-Paper-MCP
+OpenAlex MCP 服务器,reetp14,70.74,92.5,19,57.18,11,https://github.com/reetp14/openalex-mcp
+LAPRAS MCP 服务器,lapras-inc,70.74,92.5,19,57.18,10,https://github.com/lapras-inc/lapras-mcp-server
+Date-time Tools MCP,Abhishek Mehandiratta,70.14,87.5,31,57.18,3,https://github.com/abhi12299/date-time-tools
+magicpod-mcp-server,Magic-Pod,70.14,82.5,46,57.18,24,https://github.com/Magic-Pod/magicpod-mcp-server
+EdgeOne Pages MCP,TencentEdgeOne,70.04,80.0,38,72.2,2,https://github.com/TencentEdgeOne/edgeone-pages-mcp
+bash-mcp,tinywind,69.94,92.5,15,57.18,4,https://github.com/tinywind/bash-mcp
+MCP媒体处理服务器,maoxiaoke,69.94,87.5,30,57.18,10,https://github.com/maoxiaoke/mcp-media-processor
+MyMCPSpace MCP 服务器,glifxyz,69.94,87.5,30,57.18,5,https://github.com/glifxyz/mymcpspace-mcp-server
+mcp-server-ghibli MCP 服务器,MichaelYangjson,69.74,92.5,14,57.18,3,https://github.com/MichaelYangjson/mcp-ghibli-video
+Divide and Conquer MCP Server,Landice Fu,69.74,92.5,14,57.18,15,https://github.com/landicefu/divide-and-conquer-mcp-server
+Square 模型上下文协议服务器,square,69.74,92.5,14,57.18,3,https://github.com/square/square-mcp-server
+Pinecone Developer MCP Server,pinecone-io,69.74,92.5,14,57.18,1,https://github.com/pinecone-io/pinecone-mcp
+TypeScript 迁移器 MCP,LiangYingC,69.64,75.0,66,57.18,1,https://github.com/LiangYingC/typescript-migrator-mcp
+Apple Shortcuts MCP 服务器,recursechat,69.44,80.0,35,72.2,2,https://github.com/recursechat/mcp-server-apple-shortcuts
+Railway MCP 服务器,jason-tan-swe,68.94,92.5,10,57.18,38,https://github.com/jason-tan-swe/railway-mcp
+OpenRPC MCP 服务器,user-attachments,68.94,92.5,10,57.18,2,https://github.com/shanejonas/openrpc-mpc-server
+frontend-review-mcp,zueai,68.54,87.5,23,57.18,1,https://github.com/zueai/frontend-review-mcp
+Windows CLI MCP 服务器（增强版）,s2005,68.54,72.5,68,57.18,5,https://github.com/s2005/wcli0
+mcp-cli-exec MCP 服务器,jakenuts,68.54,87.5,23,57.18,2,https://github.com/jakenuts/mcp-cli-exec
+Gem Package README MCP 服务器,elchika-inc,68.54,87.5,23,57.18,3,https://github.com/elchika-inc/gem-package-readme-mcp-server
+MCP网页研究服务器,mzxrai,68.34,92.5,7,57.18,3,https://github.com/PhialsBasement/mcp-webresearch-stealthified
+VisionCraft MCP 服务器,augmentedstartups,68.34,92.5,7,57.18,1,https://github.com/augmentedstartups/VisionCraft-MCP-Server
+AGS MCP 服务器,wilson-lilburne,68.24,75.0,59,57.18,11,https://github.com/wilson-lilburne/ags-mcp-server
+Expo 文档 MCP 服务器,ah2-io,67.94,82.5,35,57.18,5,https://github.com/ah2-io/expo-docs-mcp
+mmnt-mcp-server,zbkm,67.84,80.0,42,57.18,2,https://github.com/zbkm/mmnt-mcp-server
+_itcoin & Lightning Network MCP 服务器,AbdelStark,67.84,80.0,42,57.18,7,https://github.com/AbdelStark/bitcoin-mcp
+认知增强 MCP 服务器,waldzellai,67.54,67.5,78,57.18,1,https://github.com/peragus-dev/model-enhancement-servers
+Crawl-MCP 服务器,wutongci,67.04,80.0,38,57.18,2,https://github.com/wutongci/crawl-mcp
+PM-MCP（进程管理器 MCP）,patrickjm,66.94,87.5,15,57.18,8,https://github.com/patrickjm/pm-mcp
+mcp-screenshot-website-fast,just-every,66.94,72.5,60,57.18,3,https://github.com/just-every/mcp-screenshot-website-fast
+Sequential Thinking MCP Server,Swan-and-Co-Innovations,66.94,87.5,15,57.18,1,https://github.com/Swan-and-Co-Innovations/MCP
+mcp-servers,HakanUcaar,66.94,87.5,15,57.18,1,https://github.com/HakanUcaar/mcp-servers
+MCP 测试项目,tanliulei,66.94,87.5,15,57.18,21,https://github.com/tanliulei/mcp-test
+Chess FEN MCP Server,bigsy,66.94,87.5,15,57.18,1,https://github.com/Bigsy/chess-FEN-mcp
+腾讯云代码分析（TCA）MCP 服务器,TCATools,66.94,87.5,15,57.18,5,https://github.com/TCATools/tca-mcp-server
+vv-mcp,arrow2nd,66.94,82.5,30,57.18,4,https://github.com/arrow2nd/vv-mcp
+Untun MCP - 本地服务器的安全隧道,Oliver Montes,66.74,87.5,14,57.18,3,https://github.com/minte-app/untun-mcp
+Crypto Exchange SDK Documentation MCP,flytam,66.64,75.0,51,57.18,12,https://github.com/flytam/exchange-sdk-mcp
+Image Tools MCP,kshern,66.24,80.0,34,57.18,2,https://github.com/kshern/image-tools-mcp
+MCP Server Kubernetes,Flux159,66.1,52.5,85,87.98,22,https://github.com/Flux159/mcp-server-kubernetes
+__ 趋势中心,baranwang,65.64,75.0,31,72.2,21,https://github.com/baranwang/mcp-trends-hub
+mcp-server-diff-typescript MCP 服务器,tatn,65.44,80.0,30,57.18,1,https://github.com/tatn/mcp-server-diff-typescript
+ENS MCP 服务器,JustaName-id,65.34,87.5,7,57.18,8,https://github.com/JustaName-id/ens-mcp-server
+Noves MCP 服务器,noves,64.94,77.5,35,57.18,9,https://github.com/Noves-Inc/noves-mcp
+Pega DX MCP Server,MarcoLooy,64.94,62.5,80,57.18,63,https://github.com/marco-looy/pega-dx-mcp
+Vuetify MCP,vuetifyjs,64.94,72.5,50,57.18,9,https://github.com/vuetifyjs/mcp
+CRAN 包 README MCP 服务器,elchika-inc,64.94,77.5,35,57.18,3,https://github.com/elchika-inc/cran-package-readme-mcp-server
+mcp-knowledge-graph,shaneholloman,64.77,72.5,22,84.33,9,https://github.com/shaneholloman/mcp-knowledge-graph
+mcp-memory-libsql,spences10,64.74,82.5,19,57.18,6,https://github.com/joleyline/mcp-memory-libsql
+网站转 Markdown MCP 服务器,your-username,64.54,87.5,3,57.18,12,https://github.com/SunZhi-Will/website-to-markdown-mcp
+Folderr MCP 服务器,folderr-tech,64.54,87.5,3,57.18,7,https://github.com/folderr-tech/folderr-mcp-server
+@orbit-logistics/notion-mcp-server,orbit-logistics,64.54,87.5,3,57.18,21,https://github.com/orbit-logistics/notion-mcp-server
+Whois MCP,modelcontextprotocol-servers,64.54,87.5,3,57.18,4,https://github.com/modelcontextprotocol-servers/whois-mcp
+Notion MCP 服务器,makenotion,64.43,62.5,42,92.67,19,https://github.com/makenotion/notion-mcp-server
+MCP Firebird,PuroDelphi,64.14,72.5,46,57.18,16,https://github.com/PuroDelphi/mcpFirebird
+Deep Directory Tree MCP,andredezzy,64.04,80.0,23,57.18,1,https://github.com/andredezzy/deep-directory-tree-mcp
+NotifyMeMaybe,keoy7am,63.94,82.5,15,57.18,15,https://github.com/keoy7am/NotifyMeMaybe
+通胜 MCP 服务,baranwang,63.74,82.5,14,57.18,1,https://github.com/baranwang/mcp-tung-shing
+pickapicon-mcp,Leee62,63.74,82.5,14,57.18,3,https://github.com/Leee62/pickapicon-mcp
+mcp-server-fetch-typescript MCP 服务器,tatn,63.74,82.5,14,57.18,4,https://github.com/tatn/mcp-server-fetch-typescript
+Playwright MCP 服务器,ExecuteAutomation,63.63,62.5,38,92.67,32,https://github.com/executeautomation/mcp-playwright
+Cargo Package README MCP 服务器,elchika-inc,63.44,75.0,35,57.18,3,https://github.com/elchika-inc/cargo-package-readme-mcp-server
+NuGet 包 README MCP 服务器,elchika-inc,63.44,75.0,35,57.18,3,https://github.com/elchika-inc/nuget-package-readme-mcp-server
+Helm 包 README MCP 服务器,elchika-inc,63.44,75.0,35,57.18,3,https://github.com/elchika-inc/helm-package-readme-mcp-server
+pip 包 README MCP 服务器,elchika-inc,63.44,75.0,35,57.18,3,https://github.com/elchika-inc/pip-package-readme-mcp-server
+MCP Hello World - MCP服务器模拟测试,lobehub,63.24,80.0,19,57.18,3,https://github.com/lobehub/mcp-hello-world
+Currents MCP 服务器,currents-dev,63.24,75.0,34,57.18,3,https://github.com/currents-dev/currents-mcp
+Gemini MCP 工具,jamubc,63.07,55.0,66,84.33,6,https://github.com/jamubc/gemini-mcp-tool
+ElevenLabs MCP 服务器,elevenlabs,62.5,67.5,22,87.98,0,https://github.com/elevenlabs/elevenlabs-mcp
+MCP 加密货币价格追踪服务器,deerajd,62.44,80.0,15,57.18,1,https://github.com/deerajd/CryptoPriceTracker-MCP
+PRD 创建器 MCP 服务器,Saml1211,62.34,82.5,7,57.18,21,https://github.com/Saml1211/PRD-MCP-Server
+ESA MCP 服务器,aliyun,62.14,62.5,66,57.18,42,https://github.com/aliyun/mcp-server-esa
+Siri Shortcuts MCP 服务器,dvcrn,61.94,62.5,50,72.2,3,https://github.com/dvcrn/mcp-server-siri-shortcuts
+WebP 转换 MCP 服务器,xoy8n,61.74,77.5,19,57.18,2,https://github.com/xoy8n/webp-converter
+模型上下文协议（MCP）,gibsonai,61.64,75.0,26,57.18,0,https://github.com/GibsonAI/mcp
+全能 MCP 服务器,dazeb,61.54,82.5,3,57.18,11,https://github.com/dazeb/mcp-everything
+Tavily MCP,tavily-ai,61.5,52.5,62,87.98,4,https://github.com/tavily-ai/tavily-mcp
+CircleCI MCP 服务器,CircleCI-Public,61.24,55.0,84,57.18,16,https://github.com/CircleCI-Public/mcp-server-circleci
+Planfix MCP Server,popstas,61.14,57.5,76,57.18,21,https://github.com/popstas/planfix-mcp-server
+Cisco Support MCP 服务器,sieteunoseis,60.94,62.5,60,57.18,13,https://github.com/sieteunoseis/mcp-cisco-support
+Android-Preference-Editor MCP 服务器,charlesmuchene,60.84,55.0,82,57.18,7,https://github.com/charlesmuchene/pref-editor-mcp-server
+科学论文采集器 MCP 服务器,futurelab-studio,60.14,57.5,71,57.18,6,https://github.com/benedict2310/Scientific-Papers-MCP
+MCP Advisor,istarwyh,60.14,62.5,56,57.18,2,https://github.com/istarwyh/mcpadvisor
+Hyperliquid MCP 服务器,mektigboy,60.04,80.0,3,57.18,3,https://github.com/mektigboy/server-hyperliquid
+RSS3的MCP服务器,RSS3-Network,60.04,80.0,3,57.18,43,https://github.com/RSS3-Network/mcp-server-rss3
+Lightning Tools MCP 服务器,getAlby,59.34,77.5,7,57.18,3,https://github.com/getAlby/lightning-tools-mcp-server
+Testplane MCP,gemini-testing,58.14,62.5,46,57.18,13,https://github.com/gemini-testing/testplane-mcp
+Zeplin MCP 服务器：AI 辅助 UI 开发,zeplin,58.14,62.5,46,57.18,4,https://github.com/zeplin/mcp-server
+Puppeteer,jwaldor,57.94,67.5,30,57.18,7,https://github.com/jwaldor/mcp-scrape-copilot
+SignalK MCP 服务器,tonybentley,57.94,67.5,30,57.18,7,https://github.com/tonybentley/signalk-mcp-server
+Armor Crypto MCP,Armor Wallet,57.94,62.5,30,72.2,37,https://github.com/armorwallet/armor-crypto-mcp
+A11y MCP 服务器,priyankark,57.74,72.5,14,57.18,2,https://github.com/priyankark/a11y-mcp
+思维策略 MCP 服务器,aaronsb,57.34,62.5,42,57.18,3,https://github.com/aaronsb/think-strategies
+知识图谱内存服务器,yodakeisuke,57.04,75.0,3,57.18,9,https://github.com/yodakeisuke/mcp-memory-domain-knowledge
+iOS 模拟器 MCP 服务器,joshuayoes,56.57,42.5,71,84.33,10,https://github.com/joshuayoes/ios-simulator-mcp
+RAD Security MCP 服务器,rad-security,56.54,62.5,38,57.18,37,https://github.com/rad-security/mcp-server
+Kibana MCP 服务器,TocharinOU,56.54,62.5,38,57.18,6,https://github.com/TocharianOU/mcp-server-kibana
+YouTube 信息 MCP 服务器,Limecooler,56.54,67.5,23,57.18,1,https://github.com/Limecooler/yt-video-info
+Excel MCP Server,zhiwei5576,56.54,62.5,38,57.18,8,https://github.com/zhiwei5576/excel-mcp-server
+IEEE 2030.5 MCP 服务器,prandogabriel,56.44,63.33333333333333,35,57.18,1,https://github.com/prandogabriel/ieee2030.5-mcp
+Pulumi MCP 服务器,pulumi,56.14,52.5,66,57.18,11,https://github.com/pulumi/mcp-server
+KnBn MCP 服务器,mattbalmer,55.94,62.5,35,57.18,21,https://github.com/mattbalmer/knbn-mcp
+Fetcher MCP,jae-jae,55.17,52.5,34,84.33,2,https://github.com/jae-jae/fetcher-mcp
+Atlas Docs MCP 服务器,CartographAI,54.94,62.5,30,57.18,5,https://github.com/CartographAI/atlas-docs-mcp
+ITerm MCP 服务器,rishabkoul,54.94,62.5,30,57.18,5,https://github.com/rishabkoul/iTerm-MCP-Server
+Prompt Ops MCP,heyjustinai,54.94,67.5,15,57.18,1,https://github.com/heyjustinai/prompt-ops-mcp
+Plex MCP 服务器,vyb1ng,54.54,42.5,88,57.18,22,https://github.com/vyb1ng/plex-mcp
+Graphlit 平台的模型上下文协议（MCP）服务器,graphlit,53.94,42.5,70,72.2,71,https://github.com/graphlit/graphlit-mcp-server
+dartpoint-mcp,dartpointai,53.74,52.5,54,57.18,22,https://github.com/dartpointai/dartpoint-mcp
+@f4ww4z/mcp-mysql-server,f4ww4z,53.54,62.5,23,57.18,5,https://github.com/Atomzzm/mcp-mysql-server
+HeyReach MCP 服务器,bcharleson,53.54,62.5,23,57.18,12,https://github.com/bcharleson/heyreach-mcp
+Memory Custom,BRO3886,53.44,60.0,30,57.18,10,https://github.com/BRO3886/mcp-memory-custom
+MCP网页研究服务器,mzxrai,53.44,55.0,30,72.2,3,https://github.com/mzxrai/mcp-webresearch
+Allyson MCP 服务器,allyson,52.84,55.0,42,57.18,1,https://github.com/isaiahbjork/allyson-mcp
+Authenticator App MCP 服务器,FirstOrder.AI,52.84,55.0,42,57.18,3,https://github.com/firstorderai/authenticator_mcp
+MCP YouTube Transcript Server,sinco-lab,52.74,62.5,19,57.18,1,https://github.com/lnmunhoz/mcp-youtube-transcript
+代码审查 MCP 工具,Orcus2021,52.24,50.0,54,57.18,7,https://github.com/Orcus2021/code-review-mcp-server
+any-cli-mcp-server,eirikb,52.04,55.0,38,57.18,2,https://github.com/eirikb/any-cli-mcp-server
+Audiense Insights MCP Server,AudienseCo,51.74,62.5,14,57.18,8,https://github.com/AudienseCo/mcp-audiense-insights
+Roblox Studio MCP 服务器,boshyxd,51.74,42.5,74,57.18,24,https://github.com/boshyxd/robloxstudio-mcp
+HotNews MCP 服务器,hanweiit007,51.44,55.0,35,57.18,1,https://github.com/hanweiit007/mcp-hotnews-server
+Variflight MCP 服务器,variflight,51.34,57.5,27,57.18,8,https://github.com/variflight/variflight-mcp
+Specifai MCP 服务器,presidio-oss,51.24,55.0,34,57.18,13,https://github.com/presidio-oss/specifai-mcp-server
+CodingBaby-Browser-MCP,buyitsydney,51.14,57.5,26,57.18,14,https://github.com/buyitsydney/CodingBaby-Browser-MCP
+Git Mob MCP 服务器,Mubashwer,50.94,42.5,70,57.18,10,https://github.com/Mubashwer/git-mob-mcp-server
+加密货币价格与市场分析 MCP 服务器,truss44,50.74,52.5,39,57.18,3,https://github.com/truss44/mcp-crypto-price
+MCP Miro 服务器,k-jarzyna,50.44,55.0,30,57.18,97,https://github.com/k-jarzyna/mcp-miro
+G-Search MCP,jae-jae,50.34,52.5,22,72.2,1,https://github.com/jae-jae/g-search-mcp
+MCP 漫威对决,AImaginationLab,50.34,57.5,22,57.18,14,https://github.com/AImaginationLab/marvel-rivals-mcp
+Phaser Editor v5 的 MCP 服务器,phaserjs,50.14,37.5,81,57.18,58,https://github.com/phaserjs/editor-mcp-server
+PostgreSQL MCP 服务器,daitasu,49.94,52.5,35,57.18,3,https://github.com/daitasu/postgres-mcp
+Bruno MCP 服务器,hungthai1401,49.84,50.0,42,57.18,1,https://github.com/hungthai1401/bruno-mcp
+股票新闻搜索 MCP 服务器,Cognitive-Stack,49.74,57.5,19,57.18,2,https://github.com/Cognitive-Stack/search-stock-news-mcp
+拆包OpenAPI MCP服务器,auto-browse,49.64,55.0,26,57.18,2,https://github.com/auto-browse/unbundle_openapi_mcp
+Ankr API MCP 服务器,akki91,49.54,62.5,3,57.18,1,https://github.com/akki91/ankr-mcp
+tone MCP Server,tone-task,49.54,37.5,78,57.18,16,https://github.com/tone-task/mcp
+monday.com MCP,mondaycom,49.14,42.5,46,72.2,22,https://github.com/mondaycom/mcp
+mcp-server-flomo MCP 服务器,chatmcp,49.04,55.0,23,57.18,1,https://github.com/chatmcp/mcp-server-flomo
+HireBase MCP 服务器,jhgaylor,49.04,55.0,23,57.18,2,https://github.com/jhgaylor/hirebase-mcp
+ai-agent-playwright,SujitNepal1000,48.94,57.5,15,57.18,21,https://github.com/SujitNepal1000/ai-agent-playwright
+GroundDocs,grounddocs,48.94,52.5,30,57.18,2,https://github.com/GroundDocs/grounddocs
+Shopify MCP服务器,GeLi2001,48.94,52.5,30,57.18,8,https://github.com/GeLi2001/shopify-mcp
+shannon-thinking,olaservo,48.84,55.0,22,57.18,1,https://github.com/olaservo/shannon-thinking
+MCP TTS VOICEVOX,kajidog,48.54,42.5,58,57.18,6,https://github.com/kajidog/mcp-tts-voicevox
+HexDocs MCP,Bradley Golden,48.54,42.5,58,57.18,2,https://github.com/bradleygolden/hexdocs-mcp
+Docker Hub README MCP 服务器,elchika-inc,48.44,50.0,35,57.18,3,https://github.com/elchika-inc/docker-hub-readme-mcp-server
+Swift Package README MCP 服务器,elchika-inc,48.44,50.0,35,57.18,3,https://github.com/elchika-inc/swift-package-readme-mcp-server
+TaskWarrior MCP 服务器,awwaiid,48.14,52.5,26,57.18,3,https://github.com/awwaiid/mcp-server-taskwarrior
+OneSearch MCP 服务器：网页搜索、爬取、抓取与内容提取,yokingma,48.14,52.5,26,57.18,4,https://github.com/yokingma/one-search-mcp
+Runbook MCP 服务器,qloba,47.74,42.5,54,57.18,9,https://github.com/qloba/runbook-mcp-server
+iterm-mcp,Ferris Lucas,47.54,42.5,38,72.2,3,https://github.com/ferrislucas/iterm-mcp
+MCP 文档提供器,YassineTk,47.44,50.0,30,57.18,1,https://github.com/YassineTk/mcp-docs-provider
+ADB MCP 服务器,srmorete,47.34,52.5,22,57.18,8,https://github.com/srmorete/adb-mcp
+mcp-graphql,blurrah,46.94,42.5,35,72.2,2,https://github.com/blurrah/mcp-graphql
+ASKME-CLI,rhyspenn,46.94,42.5,50,57.18,1,https://github.com/rhyspenn/askme-cli
+Sonatype MCP 服务器,brianveltman,46.74,52.5,19,57.18,17,https://github.com/brianveltman/sonatype-mcp
+Salesforce MCP服务器,surajadsul02,46.74,52.5,19,57.18,7,https://github.com/usama-dtc/salesforce_mcp
+Shopify MCP服务器,sudip358,46.74,52.5,19,57.18,19,https://github.com/sudip358/Shopify-MCP-Tools
+MCP Perforce 服务器,Cocoon-AI,46.74,52.5,19,57.18,24,https://github.com/Cocoon-AI/mcp-perforce
+MasterGo Magic MCP,mastergo-design,46.34,37.5,47,72.2,5,https://github.com/mastergo-design/mastergo-magic-mcp
+Togello MCP 服务器,Toru-Takagi,46.14,47.5,31,57.18,10,https://github.com/Toru-Takagi/togello-mcp-server
+AWS 知识库检索 MCP 服务器,sammcj,46.04,50.0,23,57.18,1,https://github.com/sammcj/mcp-aws-kb
+SearXNG MCP 服务器,ihor-sokoliuk,45.94,42.5,30,72.2,2,https://github.com/ihor-sokoliuk/mcp-searxng
+MySQL MCP 服务器,CarlosMS12,45.94,52.5,15,57.18,6,https://github.com/CarlosMS12/mysql-mcp-server
+Figma MCP 服务器,1yhy,45.94,47.5,30,57.18,5,https://github.com/1yhy/Figma-Context-MCP
+Serper MCP 服务器,garylab,45.94,47.5,30,57.18,13,https://github.com/garylab/serper-mcp-server
+1Panel MCP 服务器,ruibaby,45.84,55.0,7,57.18,1,https://github.com/ruibaby/1Panel-mcp
+Open Crawler MCP 服务器,elchika-inc,45.74,37.5,59,57.18,2,https://github.com/elchika-inc/open-crawler-mcp-server
+21st.dev Magic AI Agent,21st-dev,45.43,37.5,22,92.67,4,https://github.com/21st-dev/magic-mcp
+StatelyDB MCP 服务器,StatelyCloud,45.34,42.5,42,57.18,6,https://github.com/StatelyCloud/statelydb-mcp-server
+NextBillion.ai MCP 服务器,nextbillion-ai,45.34,42.5,42,57.18,7,https://github.com/nextbillion-ai/nbai-mcp
+Recraft AI MCP 服务器,recraft-ai,45.34,42.5,42,57.18,9,https://github.com/recraft-ai/mcp-recraft-server
+Octodet Elasticsearch MCP 服务器,Octodet,45.34,42.5,42,57.18,16,https://github.com/Octodet/elasticsearch-mcp
+iterm-mcp,lite,45.34,42.5,42,57.18,3,https://github.com/lite/iterm-mcp
+@scrapezy/mcp MCP 服务器,scrapezy,45.34,42.5,42,57.18,1,https://github.com/Scrapezy/mcp
+Argo CD MCP 服务器,Akuity,45.14,42.5,26,72.2,13,https://github.com/akuity/argocd-mcp
+HotNews MCP 服务器,wopal-cn,45.04,50.0,3,72.2,1,https://github.com/wopal-cn/mcp-hotnews-server
+Gmail MCP,shinzo-labs,44.54,42.5,38,57.18,64,https://github.com/shinzo-labs/gmail-mcp
+webdev-mcp,zueai,44.54,54.166666666666664,3,57.18,0,https://github.com/zueai/webdev-mcp
+Maton 代理工具包,maton-ai,44.34,52.5,7,57.18,16,https://github.com/maton-ai/agent-toolkit
+MongoDB 兼容 - MCP 服务器,sourabhfb,43.94,42.5,35,57.18,10,https://github.com/sourabhfb/mongodb-mcp-that-works
+Lattice HQ MCP 服务器,cyrilnoah1,43.94,42.5,35,57.18,16,https://github.com/cyrilnoah1/lattice-hq-mcp
+环境署洪水监测 MCP 服务器,Dwain Barnes,43.94,42.5,35,57.18,11,https://github.com/dwain-barnes/mcp-server-environment-agency
+SuperCollider MCP 服务器,Makotyo,43.94,42.5,35,57.18,2,https://github.com/MCP-Mirror/Synohara_supercollider-mcp
+Frame0 MCP Server,niklauslee,43.74,42.5,34,57.18,28,https://github.com/niklauslee/frame0-mcp-server
+Figma MCP 服务器,MatthewDailey,43.74,37.5,34,72.2,5,https://github.com/MatthewDailey/figma-mcp
+Zoom MCP 服务器,JavaProgrammerLB,43.74,42.5,34,57.18,4,https://github.com/JavaProgrammerLB/zoom-mcp-server
+MCP Server Playwright,Automata-Labs-team,43.74,42.5,19,72.2,10,https://github.com/Automata-Labs-team/MCP-Server-Playwright
+yt-dlp-mcp,gtvar,43.14,42.5,31,57.18,4,https://github.com/Gtvar/yt-dlp-mcp
+MCP Force：用于将 Salesforce API 作为 AI 代理工具的 MCP 服务器,rupertbarrowtm,43.14,37.5,46,57.18,78,https://github.com/RapidoCloud/mcp-force
+MCP ts-morph 重构工具,SiroSuzume,42.94,42.5,30,57.18,5,https://github.com/SiroSuzume/mcp-ts-morph
+MCP 客户端配置服务器,landicefu,42.94,42.5,30,57.18,6,https://github.com/landicefu/mcp-client-configuration-server
+MCP 截图,kazuph,42.94,42.5,30,57.18,1,https://github.com/kazuph/mcp-screenshot
+Azure TableStore MCP Server,dkmaker,42.94,42.5,30,57.18,3,https://github.com/dkmaker/mcp-azure-tablestorage
+Memory Server MCP,hridaya423,42.94,47.5,15,57.18,12,https://github.com/hridaya423/memory-mcp
+表情包 MCP 服务器,haltakov,42.94,42.5,30,57.18,1,https://github.com/haltakov/meme-mcp
+交互反馈 MCP,noopstudios,42.4,30.0,34,87.98,0,https://github.com/noopstudios/interactive-feedback-mcp
+MCP Deep Research,baranwang,42.34,37.5,42,57.18,1,https://github.com/baranwang/mcp-deep-research
+Ecomm MCP 服务器,Redtri-git,42.34,37.5,42,57.18,1,https://github.com/Redtri-git/Ecomm-MCP
+mcp-graphql,kailashg101,42.14,42.5,26,57.18,2,https://github.com/kailashAppDev/graphql-mcp-toolkit
+MySQL MCP 服务器,kevinwatt,42.14,42.5,26,57.18,4,https://github.com/kevinwatt/mysql-mcp
+Clay MCP 服务器,clay-inc,41.54,37.5,38,57.18,11,https://github.com/clay-inc/clay-mcp
+Bankless Onchain MCP Server,Bankless,41.54,37.5,38,57.18,10,https://github.com/Bankless/onchain-mcp
+xcode-mcp,devyhan,41.54,42.5,23,57.18,9,https://github.com/devyhan/xcode-mcp
+mcp-mysql-server,malove86,41.54,42.5,23,57.18,4,https://github.com/Malove86/mcp-mysql-server
+mcp-idb,noahlozevski,41.54,42.5,23,57.18,1,https://github.com/noahlozevski/mcp-idb
+MCP LinkedIn,adhikasp,41.34,37.5,22,72.2,2,https://github.com/adhikasp/mcp-linkedin
+MariaDB / MySQL数据库访问MCP服务器,rjsalgado,41.34,42.5,22,57.18,4,https://github.com/rjsalgado/mariadb-mcp-server
+Datadog MCP 服务器,GeLi2001,40.74,42.5,19,57.18,10,https://github.com/GeLi2001/datadog-mcp-server
+Inkdrop MCP 服务器,inkdropapp,40.74,42.5,19,57.18,11,https://github.com/inkdropapp/mcp-server
+Celp MCP,empowerlocal,40.14,37.5,31,57.18,4,https://github.com/CelpAI/celp-mcp
+Keycloak模型上下文协议服务器,M0-AR,39.94,42.5,15,57.18,85,https://github.com/M0-AR/keycloak-mcp-server
+掘金MCP服务器,h7ml,39.94,37.5,30,57.18,34,https://github.com/h7ml/juejin-mcp-server
+Amazon Bedrock MCP 服务器,zxkane,39.74,42.5,14,57.18,1,https://github.com/zxkane/mcp-server-amazon-bedrock
+Google 可编程搜索引擎（PSE）MCP 服务器,rendyfebry,39.74,42.5,14,57.18,1,https://github.com/rendyfebry/google-pse-mcp
+mcp-image-compression,InhiblabCore,39.74,42.5,14,57.18,1,https://github.com/InhiblabCore/mcp-image-compression
+MemoryMesh,CheMiguel23,39.24,30.0,34,72.2,44,https://github.com/CheMiguel23/MemoryMesh
+VictoriaMetrics MCP 服务器,yincongcyincong,39.14,37.5,26,57.18,6,https://github.com/yincongcyincong/VictoriaMetrics-mcp-server
+API-MARKET MCP 服务器,Noveum,38.94,42.5,10,57.18,34,https://github.com/Noveum/api-market-mcp-server
+Readwise MCP,readwiseio,38.34,42.5,7,57.18,1,https://github.com/readwiseio/readwise-mcp
+Octodet Keycloak MCP Server,Octodet,37.84,30.0,42,57.18,7,https://github.com/Octodet/keycloak-mcp
+mcp-uuidv7-generator,pomazanbohdan,37.84,30.0,42,57.18,0,https://github.com/pomazanbohdan/mcp-uuidv7-generator
+agently-mcp：Agently 代理的模型上下文协议服务器,sloikod,37.74,37.5,19,57.18,1,https://github.com/sloikod/agently-mcp
+Structurize-MCP,pcliu,36.94,37.5,15,57.18,1,https://github.com/pcliu/structurize-mcp
+GitHub MCP 服务器,ildunari,36.94,37.5,15,57.18,11,https://github.com/ildunari/Github-MCP
+OpenAPI MCP 桥接,ephrin,36.44,30.0,35,57.18,0,https://github.com/ephrin/openapi-mcp-bridge
+AgentMail MCP 服务器,agentmail-to,35.34,37.5,7,57.18,14,https://github.com/agentmail-to/agentmail-mcp
+Search Intent MCP,captainChaozi,34.54,37.5,3,57.18,1,https://github.com/captainChaozi/search-intent-mcp
+mcp-scholarly MCP 服务器,ywwAHU,33.24,30.0,19,57.18,0,https://github.com/ywwAHU/mcp-scholarly
+Danger Zone MCP,koinunopochi,30.04,30.0,3,57.18,0,https://github.com/koinunopochi/danger-zone-mcp
+article-mcp MCP,gqy20,20.07,20.06,30.03,10.13,5,https://github.com/gqy20/article-mcp

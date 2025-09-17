@@ -13,7 +13,7 @@ import uuid
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, Dict, Any, List
+from typing import Any, Dict, List, Optional
 
 try:
     from rich import print as rprint

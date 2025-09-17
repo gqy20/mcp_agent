@@ -12,7 +12,7 @@ import json
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional, List, Any, Dict
+from typing import Any, Dict, List, Optional
 
 import pandas as pd
 from rich.console import Console

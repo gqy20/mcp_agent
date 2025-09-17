@@ -14,7 +14,7 @@ MCP 测试核心逻辑 - 简洁版
 
 import time
 from dataclasses import dataclass
-from typing import Optional, Tuple, List, Dict, Any
+from typing import Any, Dict, List, Optional, Tuple
 
 from src.core.report_generator import TestResult
 from src.utils.csv_parser import MCPToolInfo
@@ -229,7 +229,7 @@ class MCPTester:
                     test_category = "边界情况"
                 elif "实际使用" in r.test_case.name:
                     test_category = "实际使用场景"
-                
+
                 test_results.append(
                     TestResult(
                         test_name=r.test_case.name,

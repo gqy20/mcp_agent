@@ -279,7 +279,7 @@ API密钥列表: {tool_info.api_requirements if tool_info.requires_api_key else 
         for tool in available_tools:
             tool_name = tool.get("name", "unknown")
             tool_description = tool.get("description", "")
-            
+
             # 生成基础功能测试用例
             test_cases.append(
                 TestCase(
@@ -291,7 +291,7 @@ API密钥列表: {tool_info.api_requirements if tool_info.requires_api_key else 
                     priority="high",
                 )
             )
-            
+
             # 生成实际使用场景测试用例
             test_cases.append(
                 TestCase(
@@ -303,7 +303,7 @@ API密钥列表: {tool_info.api_requirements if tool_info.requires_api_key else 
                     priority="normal",
                 )
             )
-            
+
             # 生成容错能力测试用例
             test_cases.append(
                 TestCase(
@@ -315,7 +315,7 @@ API密钥列表: {tool_info.api_requirements if tool_info.requires_api_key else 
                     priority="normal",
                 )
             )
-            
+
             # 生成边界情况测试用例
             test_cases.append(
                 TestCase(
@@ -344,7 +344,9 @@ API密钥列表: {tool_info.api_requirements if tool_info.requires_api_key else 
         # 确保测试用例数量合理（限制最多15个）
         if len(test_cases) > 15:
             # 保留高优先级的测试用例
-            test_cases = sorted(test_cases, key=lambda x: (x.priority != "high", x.priority != "normal"))
+            test_cases = sorted(
+                test_cases, key=lambda x: (x.priority != "high", x.priority != "normal")
+            )
             test_cases = test_cases[:15]
 
         return test_cases
@@ -357,7 +359,9 @@ API密钥列表: {tool_info.api_requirements if tool_info.requires_api_key else 
         # 根据工具类型生成基础参数
         if any(keyword in tool_name for keyword in ["search", "find", "query"]):
             return {"query": "test"}
-        elif any(keyword in tool_name for keyword in ["get", "fetch", "retrieve", "read"]):
+        elif any(
+            keyword in tool_name for keyword in ["get", "fetch", "retrieve", "read"]
+        ):
             return {"id": "test"}
         elif any(keyword in tool_name for keyword in ["create", "add", "new", "make"]):
             return {"name": "test"}
@@ -381,7 +385,9 @@ API密钥列表: {tool_info.api_requirements if tool_info.requires_api_key else 
         if any(keyword in tool_name for keyword in ["search", "find", "query"]):
             # 常见搜索词
             return {"query": "react", "limit": 10}
-        elif any(keyword in tool_name for keyword in ["get", "fetch", "retrieve", "read"]):
+        elif any(
+            keyword in tool_name for keyword in ["get", "fetch", "retrieve", "read"]
+        ):
             # 常见ID格式
             if "library" in tool_description:
                 return {"context7CompatibleLibraryID": "/facebook/react"}
@@ -411,7 +417,9 @@ API密钥列表: {tool_info.api_requirements if tool_info.requires_api_key else 
         # 根据工具类型生成边界参数
         if any(keyword in tool_name for keyword in ["search", "find", "query"]):
             return {"query": "", "limit": 0}  # 空查询
-        elif any(keyword in tool_name for keyword in ["get", "fetch", "retrieve", "read"]):
+        elif any(
+            keyword in tool_name for keyword in ["get", "fetch", "retrieve", "read"]
+        ):
             return {"id": "nonexistent-id-12345"}  # 不存在的ID
         elif any(keyword in tool_name for keyword in ["create", "add", "new", "make"]):
             return {"name": "", "data": None}  # 空数据
@@ -429,7 +437,9 @@ API密钥列表: {tool_info.api_requirements if tool_info.requires_api_key else 
         # 根据工具类型生成边界参数
         if any(keyword in tool_name for keyword in ["search", "find", "query"]):
             return {"query": "a", "limit": 1}  # 最小值
-        elif any(keyword in tool_name for keyword in ["get", "fetch", "retrieve", "read"]):
+        elif any(
+            keyword in tool_name for keyword in ["get", "fetch", "retrieve", "read"]
+        ):
             return {"id": "a"}  # 最短ID
         elif any(keyword in tool_name for keyword in ["create", "add", "new", "make"]):
             return {"name": "a"}  # 最短名称

@@ -17,7 +17,7 @@ import platform
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, List, Dict
+from typing import Dict, List, Optional
 
 # 导入工具信息类型
 try:
@@ -43,7 +43,7 @@ class TestResult:
     success: bool
     duration: float
     error_message: Optional[str] = None
-    
+
     # 新增：详细测试信息
     tool_name: Optional[str] = None
     parameters: Optional[Dict] = None
@@ -61,25 +61,33 @@ class TestResult:
             "tool_name": self.tool_name,
             "test_category": self.test_category or "未知",
         }
-        
+
         # 添加响应摘要
         if self.actual_response and self.actual_response.get("success"):
             content = self.actual_response.get("result", {}).get("content", [])
             if content and isinstance(content, list) and len(content) > 0:
                 text_content = content[0].get("text", "")
                 # 截取前100个字符作为摘要
-                result["response_summary"] = text_content[:100] + "..." if len(text_content) > 100 else text_content
+                result["response_summary"] = (
+                    text_content[:100] + "..."
+                    if len(text_content) > 100
+                    else text_content
+                )
             else:
                 result["response_summary"] = "响应成功但无内容"
         elif self.actual_response:
             result["response_summary"] = "响应失败"
         else:
             result["response_summary"] = "无响应"
-            
+
         # 添加错误信息
         if self.error_message:
-            result["error_summary"] = self.error_message[:100] + "..." if len(self.error_message) > 100 else self.error_message
-            
+            result["error_summary"] = (
+                self.error_message[:100] + "..."
+                if len(self.error_message) > 100
+                else self.error_message
+            )
+
         return result
 
 
@@ -115,7 +123,7 @@ class MCPTestReport:
         passed = sum(1 for t in self.test_results if t.success)
         total = len(self.test_results)
         success_rate = (passed / total * 100) if total > 0 else 0
-        
+
         # 精简工具信息
         concise_tool_info = None
         if self.tool_info:
@@ -123,18 +131,24 @@ class MCPTestReport:
                 "name": self.tool_info.name,
                 "author": self.tool_info.author,
                 "category": self.tool_info.category,
-                "description": self.tool_info.description[:100] + "..." if len(self.tool_info.description) > 100 else self.tool_info.description,
+                "description": self.tool_info.description[:100] + "..."
+                if len(self.tool_info.description) > 100
+                else self.tool_info.description,
             }
-        
+
         # 精简评估结果
         concise_evaluation = None
         if self.evaluation_result:
             concise_evaluation = {
-                "final_score": self.evaluation_result.get("final_comprehensive_score", 0),
-                "test_success_rate": self.evaluation_result.get("test_success_rate", {}).get("success_rate", 0),
+                "final_score": self.evaluation_result.get(
+                    "final_comprehensive_score", 0
+                ),
+                "test_success_rate": self.evaluation_result.get(
+                    "test_success_rate", {}
+                ).get("success_rate", 0),
                 "status": self.evaluation_result.get("status", "unknown"),
             }
-        
+
         return {
             "tool_name": self.tool_name,
             "test_url": self.test_url,
@@ -149,7 +163,9 @@ class MCPTestReport:
                 "total_tests": total,
                 "passed_tests": passed,
                 "success_rate": f"{success_rate:.1f}%",
-                "final_score": concise_evaluation["final_score"] if concise_evaluation else 0,
+                "final_score": concise_evaluation["final_score"]
+                if concise_evaluation
+                else 0,
             },
             "evaluation": concise_evaluation,
         }
@@ -228,25 +244,29 @@ class MCPReportGenerator:
     def print_concise_summary(self, report: MCPTestReport):
         """打印精简摘要到控制台"""
         concise = report.to_concise_dict()
-        
+
         print(f"\n🎯 {concise['tool_name']} 测试完成")
         print(f"⏱️  耗时: {concise['test_duration_seconds']}s")
-        print(f"📊 测试结果: {concise['summary']['passed_tests']}/{concise['summary']['total_tests']} 通过 ({concise['summary']['success_rate']})")
+        print(
+            f"📊 测试结果: {concise['summary']['passed_tests']}/{concise['summary']['total_tests']} 通过 ({concise['summary']['success_rate']})"
+        )
         print(f"🔧 部署状态: {'✅' if concise['deployment_success'] else '❌'}")
         print(f"📡 通信状态: {'✅' if concise['communication_success'] else '❌'}")
         print(f"🛠️  可用工具: {concise['available_tools_count']} 个")
-        
-        if concise['evaluation']:
+
+        if concise["evaluation"]:
             print(f"⭐ 综合评分: {concise['evaluation']['final_score']}")
-        
+
         print(f"\n📋 详细结果:")
-        for i, result in enumerate(concise['test_results'], 1):
-            status = "✅" if result['success'] else "❌"
+        for i, result in enumerate(concise["test_results"], 1):
+            status = "✅" if result["success"] else "❌"
             print(f"  {i}. {status} {result['test_name']} ({result['duration']}s)")
-            if result.get('response_summary'):
+            if result.get("response_summary"):
                 print(f"     → {result['response_summary']}")
-        
-        print(f"\n📄 报告文件: mcp_test_{report.test_time.strftime('%Y%m%d_%H%M%S')}_concise.json")
+
+        print(
+            f"\n📄 报告文件: mcp_test_{report.test_time.strftime('%Y%m%d_%H%M%S')}_concise.json"
+        )
 
     def _convert_numpy_types(self, obj):
         """递归转换NumPy类型和其他类型为Python原生类型"""
@@ -372,10 +392,10 @@ def generate_test_report(
         files["json"] = str(_generator.save_json(report))
         # 自动生成精简版本
         files["concise"] = str(_generator.save_concise_json(report))
-        
+
         # 显示精简摘要
         _generator.print_concise_summary(report)
-        
+
     if "html" in formats:
         files["html"] = str(_generator.save_html(report))
 

@@ -1,6 +1,5 @@
 ﻿工具名称,工具作者,他山评分,实用性评分,可持续性评分,受欢迎度评分,可用工具数量,github_url
 Playwright MCP,Microsoft Corporation,94.63,92.5,97,98.67,21,https://github.com/microsoft/playwright-mcp
-Context7 MCP - 最新代码文档适用于任何提示,upstash,92.03,92.5,84,98.67,2,https://github.com/upstash/context7
 Mobile Next - 移动开发与自动化的 MCP 服务器,mobile-next,88.7,92.5,78,87.98,18,https://github.com/mobile-next/mobile-mcp
 BlenderMCP - Blender 模型上下文协议集成,ahujasid,86.03,92.5,54,98.67,17,https://github.com/ahujasid/blender-mcp
 Excel MCP Server,haris,85.83,92.5,59,92.67,25,https://github.com/haris-musa/excel-mcp-server
@@ -311,3 +310,4 @@ AgentMail MCP 服务器,agentmail-to,35.34,37.5,7,57.18,14,https://github.com/ag
 Search Intent MCP,captainChaozi,34.54,37.5,3,57.18,1,https://github.com/captainChaozi/search-intent-mcp
 mcp-scholarly MCP 服务器,ywwAHU,33.24,30.0,19,57.18,0,https://github.com/ywwAHU/mcp-scholarly
 Danger Zone MCP,koinunopochi,30.04,30.0,3,57.18,0,https://github.com/koinunopochi/danger-zone-mcp
+article-mcp MCP,gqy20,20.07,20.06,30.03,10.13,5,https://github.com/gqy20/article-mcp

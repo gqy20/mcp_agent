@@ -8,7 +8,7 @@
 import functools
 import logging
 import traceback
-from typing import Optional, Dict, Any, Type, Callable, Union
+from typing import Any, Callable, Dict, Optional, Type, Union
 
 from rich import print as rprint
 
