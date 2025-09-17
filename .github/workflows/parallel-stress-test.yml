@@ -18,6 +18,44 @@ on:
         required: false
         default: '120'
         type: string
+      deployment_method:
+        description: '部署方式筛选 (all/npx/uvx/cargo/python/docker)'
+        required: false
+        default: 'all'
+        type: string
+      tech_stack:
+        description: '技术栈筛选 (all/nodejs/python/rust/go/java/typescript)'
+        required: false
+        default: 'all'
+        type: string
+      search_keywords:
+        description: '搜索关键词 (逗号分隔)'
+        required: false
+        default: ''
+        type: string
+      quality_filter:
+        description: '质量等级筛选 (all/优质/良好/一般)'
+        required: false
+        default: 'all'
+        type: string
+      require_api_key:
+        description: 'API Key要求 (exclude/include/only)'
+        required: false
+        default: 'exclude'
+        type: string
+      min_stars:
+        description: '最小星数'
+        required: false
+        default: '0'
+        type: string
+      exclude_browser:
+        description: '排除浏览器工具'
+        required: false
+        default: 'true'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
 
 jobs:
   # 生成测试目标列表
@@ -68,13 +106,37 @@ jobs:
       run: |
         TEST_COUNT="${{ github.event.inputs.test_count || '20' }}"
 
-        echo "� 筛选简单可靠的MCP工具进行压力测试..."
+        echo "🔍 智能筛选MCP工具进行压力测试..."
         echo "� 目标数量: $TEST_COUNT"
 
         export TEST_COUNT="$TEST_COUNT"
+        DEPLOYMENT_METHOD="${{ github.event.inputs.deployment_method || 'all' }}"
+        TECH_STACK="${{ github.event.inputs.tech_stack || 'all' }}"
+        SEARCH_KEYWORDS="${{ github.event.inputs.search_keywords || '' }}"
+        QUALITY_FILTER="${{ github.event.inputs.quality_filter || 'all' }}"
+        REQUIRE_API_KEY="${{ github.event.inputs.require_api_key || 'exclude' }}"
+        MIN_STARS="${{ github.event.inputs.min_stars || '0' }}"
+        EXCLUDE_BROWSER="${{ github.event.inputs.exclude_browser || 'true' }}"
 
-        # 使用简化的工具选择脚本
-        OUTPUT=$(uv run python scripts/simple_tool_selector.py)
+        echo "📦 部署方式: $DEPLOYMENT_METHOD"
+        echo "⚙️ 技术栈: $TECH_STACK"
+        echo "🔍 搜索关键词: $SEARCH_KEYWORDS"
+        echo "⭐ 质量等级: $QUALITY_FILTER"
+        echo "🔑 API Key要求: $REQUIRE_API_KEY"
+        echo "📊 最小星数: $MIN_STARS"
+        echo "🚫 排除浏览器: $EXCLUDE_BROWSER"
+
+        # 设置环境变量
+        export DEPLOYMENT_METHOD="$DEPLOYMENT_METHOD"
+        export TECH_STACK="$TECH_STACK"
+        export SEARCH_KEYWORDS="$SEARCH_KEYWORDS"
+        export QUALITY_FILTER="$QUALITY_FILTER"
+        export REQUIRE_API_KEY="$REQUIRE_API_KEY"
+        export MIN_STARS="$MIN_STARS"
+        export EXCLUDE_BROWSER="$EXCLUDE_BROWSER"
+
+        # 使用智能工具选择脚本
+        OUTPUT=$(uv run python scripts/intelligent_tool_selector.py)
 
         # 提取targets和total
         TARGETS=$(echo "$OUTPUT" | grep "^targets=" | cut -d= -f2-)
@@ -257,7 +319,7 @@ jobs:
           fi
 
           # 计算平均耗时
-          AVG_DURATION=$(tail -n +2 all_results.csv | cut -d, -f6 | awk '{sum+=$1; count++} END {printf "%.1f", count > 0 ? sum/count : 0}')
+          AVG_DURATION=$(tail -n +2 all_results.csv | cut -d, -f6 | awk '{sum+=$1; count++} END {if (count > 0) printf "%.1f", sum/count; else print "0.0"}')
           TOTAL_DURATION=$(tail -n +2 all_results.csv | cut -d, -f6 | awk '{sum+=$1} END {printf "%.1f", sum}')
 
           # 质量分布统计
@@ -294,7 +356,13 @@ jobs:
           echo "- **工具评估**: 启用（包含可持续性和受欢迎程度评分）" >> summary.md
           echo "- **并行任务数**: ${{ github.event.inputs.parallel_jobs || '5' }}" >> summary.md
           echo "- **单工具超时**: ${{ github.event.inputs.timeout_seconds || '120' }}s" >> summary.md
-          echo "- **排除类型**: 浏览器自动化相关工具" >> summary.md
+          echo "- **部署方式筛选**: ${{ github.event.inputs.deployment_method || 'all' }}" >> summary.md
+          echo "- **技术栈筛选**: ${{ github.event.inputs.tech_stack || 'all' }}" >> summary.md
+          echo "- **搜索关键词**: ${{ github.event.inputs.search_keywords || '无' }}" >> summary.md
+          echo "- **质量等级**: ${{ github.event.inputs.quality_filter || 'all' }}" >> summary.md
+          echo "- **API Key要求**: ${{ github.event.inputs.require_api_key || 'exclude' }}" >> summary.md
+          echo "- **最小星数**: ${{ github.event.inputs.min_stars || '0' }}" >> summary.md
+          echo "- **排除浏览器工具**: ${{ github.event.inputs.exclude_browser || 'true' }}" >> summary.md
           echo "" >> summary.md
 
           # 显示成功的优质工具
