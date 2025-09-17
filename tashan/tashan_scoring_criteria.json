@@ -1,0 +1,50 @@
+{
+  "scoring_system": {
+    "total_score": "他山评分 (0-100分)",
+    "components": {
+      "utility_score": {
+        "name": "实用性评分",
+        "weight": "约40%",
+        "factors": [
+          "功能的实际应用价值",
+          "解决问题的有效性",
+          "工具的易用性",
+          "文档和示例的完整性"
+        ]
+      },
+      "sustainability_score": {
+        "name": "可持续性评分",
+        "weight": "约30%",
+        "factors": [
+          "代码质量和架构",
+          "项目维护活跃度",
+          "社区参与程度",
+          "长期发展前景"
+        ]
+      },
+      "popularity_score": {
+        "name": "受欢迎度评分",
+        "weight": "约30%",
+        "factors": [
+          "GitHub stars和forks",
+          "下载量和使用量",
+          "社区讨论热度",
+          "行业认知度"
+        ]
+      }
+    }
+  },
+  "evaluation_thresholds": {
+    "excellent": "90-100分: 顶级优质项目",
+    "good": "80-89分: 优质项目，值得推荐",
+    "decent": "70-79分: 不错的项目，有一定价值",
+    "average": "60-69分: 一般项目",
+    "poor": "60分以下: 质量待改善"
+  },
+  "unique_advantages": [
+    "注重实际应用价值而非单纯热度",
+    "综合考虑技术质量和社区因素",
+    "早期识别具有潜力的项目",
+    "专业的技术评估视角"
+  ]
+}

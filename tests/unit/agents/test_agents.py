@@ -3,26 +3,26 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from src.agents.test_agent import TestAgent
+from src.agents.test_agent import TestGeneratorAgent
 from src.agents.validation_agent import ValidationAgent
 
 
-class TestTestAgent:
-    """Test cases for TestAgent."""
+class TestTestGeneratorAgent:
+    """Test cases for TestGeneratorAgent."""
 
     def test_agent_initialization(self, sample_mcp_config):
-        """Test test agent initialization."""
-        agent = TestAgent(config=sample_mcp_config)
+        """Test test generator agent initialization."""
+        agent = TestGeneratorAgent(config=sample_mcp_config)
         assert agent.config == sample_mcp_config
 
     def test_agent_name_validation(self):
         """Test agent name validation."""
         with pytest.raises(ValueError):
-            TestAgent(name="", config={})
+            TestGeneratorAgent(name="", config={})
 
     def test_generate_test_cases(self, sample_mcp_config):
         """Test test case generation."""
-        agent = TestAgent(config=sample_mcp_config)
+        agent = TestGeneratorAgent(config=sample_mcp_config)
         test_cases = agent.generate_test_cases(count=3)
 
         assert len(test_cases) == 3

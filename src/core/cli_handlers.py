@@ -12,8 +12,9 @@ MCP CLI 命令处理器 - 简洁版
 版本: 2.0.0 (简洁版)
 """
 
+import asyncio
+import json
 import time
-from pathlib import Path
 from typing import List, Optional
 
 from rich import print as rprint
@@ -185,10 +186,15 @@ class CLIHandler:
                     evaluation_result,
                 )
 
-            # 4.5. 数据库导出 (可选)
+            # 4.25. 显示精简摘要
+            if hasattr(self, '_display_concise_summary'):
+                self._display_concise_summary(report_files.get("json"))
+
+            # 4.5. 数据库导出 (可选) - 使用精简版本
             if config.db_export:
+                concise_report = report_files.get("concise") or report_files.get("json")
                 self._export_to_database(
-                    report_files.get("json"), evaluation_result=evaluation_result
+                    concise_report, evaluation_result=evaluation_result
                 )
 
             # 5. 清理资源
@@ -415,13 +421,13 @@ class CLIHandler:
     def _export_to_database(
         self, json_report_path: str, evaluation_result: Optional[dict] = None
     ):
-        """导出到数据库 - MVP版本"""
+        """导出到数据库 - 使用精简版数据"""
         if not json_report_path:
             rprint("[yellow]⚠️ 没有JSON报告，跳过数据库导出[/yellow]")
             return
 
         try:
-            rprint("[blue]🗄️ 导出结果到数据库...[/blue]")
+            rprint("[blue]🗄️ 导出精简版结果到数据库...[/blue]")
 
             import os
             from datetime import datetime
@@ -439,8 +445,19 @@ class CLIHandler:
 
             client = create_client(supabase_url, supabase_key)
 
+            # 检查是否为精简版报告，如果不是则尝试加载精简版
             with open(json_report_path, "r", encoding="utf-8") as f:
                 json_data = json.load(f)
+
+            # 如果是完整版报告，尝试查找对应的精简版
+            if "actual_response" in str(json_data):  # 简单判断是否为完整版
+                concise_path = json_report_path.replace(".json", "_concise.json")
+                if os.path.exists(concise_path):
+                    rprint("[blue]📄 发现精简版报告，使用精简数据导出[/blue]")
+                    with open(concise_path, "r", encoding="utf-8") as f:
+                        json_data = json.load(f)
+                else:
+                    rprint("[yellow]⚠️ 未找到精简版报告，使用完整数据导出[/yellow]")
 
             deployment_ok = json_data.get("deployment_success", False)
             communication_ok = json_data.get("communication_success", False)

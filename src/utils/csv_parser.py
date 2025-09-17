@@ -12,7 +12,7 @@ import json
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Optional, List, Any, Dict
 
 import pandas as pd
 from rich.console import Console
@@ -246,12 +246,22 @@ class MCPDataParser:
         return tools
 
     def find_tool_by_url(self, url: str) -> Optional[MCPToolInfo]:
-        """根据URL查找工具"""
+        """根据URL查找工具 - 支持多种URL格式"""
         if self.df is None:
             if not self.load_data():
                 return None
 
+        # 尝试多种URL匹配方式
         matches = self.df[self.df["github_url"] == url]
+        if matches.empty:
+            matches = self.df[self.df["url"] == url]
+        if matches.empty:
+            # 部分匹配：检查URL是否包含在列中
+            for col in ["github_url", "url"]:
+                matches = self.df[self.df[col].str.contains(url, na=False)]
+                if not matches.empty:
+                    break
+
         if not matches.empty:
             return self.parse_tool(matches.iloc[0])
 

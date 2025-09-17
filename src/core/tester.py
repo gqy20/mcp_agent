@@ -14,7 +14,7 @@ MCP 测试核心逻辑 - 简洁版
 
 import time
 from dataclasses import dataclass
-from typing import List, Optional, Tuple
+from typing import Optional, Tuple, List, Dict, Any
 
 from src.core.report_generator import TestResult
 from src.utils.csv_parser import MCPToolInfo
@@ -218,15 +218,30 @@ class MCPTester:
                 test_cases, mcp_client
             )
 
-            # 转换结果格式
+            # 转换结果格式 - 增强版，包含详细信息
             test_results = []
             for r in ai_results:
+                # 确定测试类别
+                test_category = "基础功能"
+                if "容错" in r.test_case.name:
+                    test_category = "容错能力"
+                elif "边界" in r.test_case.name:
+                    test_category = "边界情况"
+                elif "实际使用" in r.test_case.name:
+                    test_category = "实际使用场景"
+                
                 test_results.append(
                     TestResult(
                         test_name=r.test_case.name,
                         success=(r.status.value == "pass"),
                         duration=r.execution_time,
                         error_message=r.error_message,
+                        tool_name=r.test_case.tool_name,
+                        parameters=r.test_case.parameters,
+                        actual_response=r.response,
+                        ai_analysis=r.analysis,
+                        ai_confidence=0.95,  # 默认置信度，AI分析成功时会更新
+                        test_category=test_category,
                     )
                 )
 

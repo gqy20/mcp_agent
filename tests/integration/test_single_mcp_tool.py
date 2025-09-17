@@ -25,7 +25,7 @@ sys.path.insert(0, str(project_root))
 
 # 导入跨平台测试框架
 try:
-    from tests.tools.test_crossplatform_mcp import (
+    from tests.integration.test_crossplatform_mcp import (
         MCP_TOOLS_CONFIG,
         test_single_mcp_tool,
     )

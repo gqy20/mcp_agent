@@ -18,7 +18,7 @@ import time
 import uuid
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Optional, Dict, Any, List
 
 from src.core.error_handler import DeploymentError, log_error
 

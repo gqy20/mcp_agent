@@ -12,12 +12,10 @@ MCP 测试报告生成器 - 简洁版
 版本: 2.0.0 (简洁版)
 """
 
-import json
 import platform
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
 
 # 导入工具信息类型
 try:

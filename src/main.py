@@ -49,7 +49,7 @@ handler = get_cli_handler()
 @app.command("test-url")
 def test_single_url(
     url: str = typer.Argument(..., help="要测试的 MCP 工具 URL"),
-    timeout: int = typer.Option(600, "--timeout", "-t", help="测试超时时间（秒）"),
+    timeout: int = typer.Option(600, "--timeout", "-t", help="测试超时时间（秒，默认10分钟）"),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="详细输出模式"),
     save_report: bool = typer.Option(
         True, "--save-report/--no-save-report", help="保存测试报告"
@@ -80,7 +80,7 @@ def test_single_url(
 @app.command("test-package")
 def test_package(
     package: str = typer.Argument(..., help="要测试的 MCP 包名"),
-    timeout: int = typer.Option(600, "--timeout", "-t", help="测试超时时间（秒）"),
+    timeout: int = typer.Option(600, "--timeout", "-t", help="测试超时时间（秒，默认10分钟）"),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="详细输出模式"),
     save_report: bool = typer.Option(
         True, "--save-report/--no-save-report", help="保存测试报告"

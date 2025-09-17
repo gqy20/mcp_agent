@@ -27,7 +27,7 @@ import threading
 import time
 import uuid
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 
 # 添加项目根目录到 Python 路径
 project_root = Path(__file__).parent.parent.parent
@@ -44,7 +44,7 @@ try:
     from agentscope.service import ServiceExecStatus, ServiceResponse, ServiceToolkit
     from dotenv import load_dotenv
 
-    from tools.mcp_tools_config import MCP_TOOLS_CONFIG
+    from tests.integration.mcp_tools_config import MCP_TOOLS_CONFIG
 except ImportError as e:
     print(f"❌ 导入错误: {e}")
     print("请确保已安装所需依赖: pip install agentscope python-dotenv")
