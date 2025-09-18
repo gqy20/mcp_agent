@@ -578,7 +578,7 @@ class SimpleMCPDeployer:
             "params": {
                 "protocolVersion": "2024-11-05",
                 "capabilities": {},
-                "clientInfo": {"name": "simple-mcp-client", "version": "1.0.0"},
+                "clientInfo": {"name": "simple-mcp-client", "version": "0.1.0"},
             },
         }
 
