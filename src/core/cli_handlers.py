@@ -335,7 +335,7 @@ class CLIHandler:
                         f"[green]✅ 成功分析GitHub项目: {result.get('name', 'Unknown')}[/green]"
                     )
 
-                    # 重新查找（此时应该已经在数据库中）
+                    # 现在CSV解析器会自动尝试从GitHub获取信息，重新查找
                     tool_info = self.tester.find_tool_by_url(url)
                     if tool_info:
                         self._display_tool_info(tool_info)

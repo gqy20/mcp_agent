@@ -13,7 +13,10 @@ import json
 from pathlib import Path
 from typing import Dict, List, Optional, Set
 
+from rich.console import Console
 from .github_mcp_analyzer import GitHubMCPAnalyzer
+
+console = Console()
 
 
 class MCPTableUpdater:
@@ -28,11 +31,11 @@ class MCPTableUpdater:
             tashan_csv_path: tashan_verified_mcp.csv文件路径
         """
         self.mcp_csv_path = (
-            mcp_csv_path or "/home/qy113/workspace/project/mcp/mcp_agent/data/mcp.csv"
+            mcp_csv_path or "data/mcp.csv"
         )
         self.tashan_csv_path = (
             tashan_csv_path
-            or "/home/qy113/workspace/project/mcp/mcp_agent/data/tashan_verified_mcp.csv"
+            or "data/tashan_verified_mcp.csv"
         )
 
         self.analyzer = GitHubMCPAnalyzer()
@@ -113,7 +116,12 @@ class MCPTableUpdater:
         """
         # 检查是否已存在
         if self.is_repo_exists(github_url):
-            return {"success": False, "error": "项目已存在于数据库中", "url": github_url}
+            # 检查现有记录是否缺少关键信息
+            existing_record = self.get_existing_record(github_url)
+            if existing_record and self._needs_update(existing_record):
+                console.print(f"[yellow]📝 项目已存在但信息不完整，正在更新: {github_url}[/yellow]")
+            else:
+                return {"success": False, "error": "项目已存在于数据库中且信息完整", "url": github_url}
 
         # 分析GitHub项目
         try:
@@ -214,33 +222,52 @@ class MCPTableUpdater:
     def _add_to_mcp_table(self, record: Dict):
         """添加记录到mcp.csv"""
         try:
-            # 确保字段顺序一致
-            fieldnames = [
-                "name",
-                "url",
-                "author",
-                "github_url",
-                "evaluate",
-                "score",
-                "description",
-                "date",
-                "type",
-                "usage",
-                "star_count",
-                "fork_count",
-                "readme_path",
-                "extraction_status",
-                "extraction_error",
-                "extraction_timestamp",
-                "extracted_function_description",
-                "extracted_tools",
-                "extracted_deployment_methods",
-                "extracted_tech_stack",
-                "extracted_requires_api_key",
-                "extracted_mcp_config",
-                "extracted_api_requirements",
-                "extracted_use_cases",
-            ]
+            # 首先读取现有文件的字段名
+            existing_fieldnames = []
+            if Path(self.mcp_csv_path).exists():
+                try:
+                    with open(self.mcp_csv_path, 'r', encoding='utf-8') as f:
+                        reader = csv.DictReader(f)
+                        existing_fieldnames = reader.fieldnames or []
+                except:
+                    pass
+            
+            # 如果文件不存在或读取失败，使用默认字段名
+            if not existing_fieldnames:
+                existing_fieldnames = [
+                    "name",
+                    "url", 
+                    "author",
+                    "github_url",
+                    "evaluate",
+                    "Unnamed: 5",  # CSV中实际的score字段名
+                    "description",
+                    "date",
+                    "type",
+                    "usage",
+                    "star_count",
+                    "fork_count",
+                    "readme_path",
+                    "extraction_status",
+                    "extraction_error",
+                    "extraction_timestamp",
+                    "extracted_function_description",
+                    "extracted_tools",
+                    "extracted_deployment_methods",
+                    "extracted_tech_stack",
+                    "extracted_requires_api_key",
+                    "extracted_mcp_config",
+                    "extracted_api_requirements",
+                    "extracted_use_cases",
+                ]
+            
+            # 只添加新字段如果它们不存在于现有字段中
+            new_fields = ["package_name", "deployment_method", "install_command", "run_command"]
+            for field in new_fields:
+                if field not in existing_fieldnames:
+                    existing_fieldnames.append(field)
+            
+            fieldnames = existing_fieldnames
 
             # 检查文件是否存在
             file_exists = Path(self.mcp_csv_path).exists()
@@ -313,8 +340,8 @@ class MCPTableUpdater:
         )
 
         return {
-            "工具名称": record["name"],
-            "工具作者": record["author"],
+            "工具名称": record.get("name", "Unknown"),
+            "工具作者": record.get("author", ""),
             "他山评分": f"{total_score:.2f}",
             "实用性评分": f"{usability_score:.2f}",
             "可持续性评分": f"{sustainability_score:.2f}",
@@ -358,6 +385,37 @@ class MCPTableUpdater:
                 print(f"  • {tool['name']} by {tool['author']} ({tool['stars']} stars)")
 
         print("=" * 50)
+
+    def get_existing_record(self, github_url: str) -> Optional[Dict]:
+        """获取现有记录"""
+        try:
+            # 在mcp.csv中查找
+            if self.existing_mcp_data:
+                for record in self.existing_mcp_data:
+                    if record.get("github_url") == github_url or record.get("url") == github_url:
+                        return record
+            
+            # 在tashan_verified_mcp.csv中查找
+            if self.existing_tashan_data:
+                for record in self.existing_tashan_data:
+                    if record.get("github_url") == github_url or record.get("url") == github_url:
+                        return record
+            
+            return None
+        except Exception as e:
+            print(f"获取现有记录失败: {e}")
+            return None
+    
+    def _needs_update(self, record: Dict) -> bool:
+        """检查记录是否需要更新"""
+        # 检查关键字段是否缺失
+        critical_fields = ["package_name", "deployment_method", "install_command", "run_command"]
+        
+        for field in critical_fields:
+            if not record.get(field) or record.get(field) in ["", "N/A", "None", None]:
+                return True
+        
+        return False
 
 
 def main():

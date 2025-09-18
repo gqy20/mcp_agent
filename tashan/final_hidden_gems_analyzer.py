@@ -16,9 +16,9 @@ def analyze_hidden_gems():
 
     # 读取数据
     tashan_df = pd.read_csv(
-        "/home/qy113/workspace/project/mcp/mcp_agent/data/tashan_verified_mcp.csv"
+        "data/tashan_verified_mcp.csv"
     )
-    lobehub_df = pd.read_csv("/home/qy113/workspace/project/mcp/mcp_agent/data/mcp.csv")
+    lobehub_df = pd.read_csv("data/mcp.csv")
 
     print(f"他山项目总数: {len(tashan_df)}")
     print(f"Lobehub项目总数: {len(lobehub_df)}")

@@ -16,6 +16,7 @@ from typing import Any, Dict, List, Optional
 
 import pandas as pd
 from rich.console import Console
+from ..core.github_mcp_analyzer import GitHubMCPAnalyzer
 
 console = Console()
 
@@ -55,6 +56,7 @@ class MCPDataParser:
         self.csv_path = Path(csv_path)
         self.df = None
         self.tools_cache = {}
+        self.github_analyzer = GitHubMCPAnalyzer()
 
     def normalize_field_names(self, row: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -265,7 +267,8 @@ class MCPDataParser:
         if not matches.empty:
             return self.parse_tool(matches.iloc[0])
 
-        return None
+        # 如果在CSV中找不到，尝试从GitHub获取信息
+        return self._fetch_from_github(url)
 
     def find_tool_by_package(self, package_name: str) -> Optional[MCPToolInfo]:
         """根据包名查找工具 - 支持模糊匹配"""
@@ -299,6 +302,54 @@ class MCPDataParser:
         tools = self.get_all_tools()
         return [tool for tool in tools if category.lower() in tool.category.lower()]
 
+    def _fetch_from_github(self, url: str) -> Optional[MCPToolInfo]:
+        """当CSV中找不到工具时，尝试从GitHub获取信息"""
+        try:
+            console.print(f"[yellow]🔍 尝试从GitHub获取工具信息: {url}[/yellow]")
+            
+            # 使用GitHub分析器分析项目
+            result = self.github_analyzer.analyze_github_repo(url)
+            
+            if result and result.get("success"):
+                record = result.get("record")
+                if record:
+                    console.print(f"[green]✅ 成功从GitHub获取工具信息: {record.get('name', 'Unknown')}[/green]")
+                    
+                    # 将GitHub返回的记录转换为MCPToolInfo格式
+                    return self._github_record_to_tool_info(record)
+            
+            console.print(f"[red]❌ 无法从GitHub获取工具信息: {result.get('error', 'Unknown error') if result else 'Analysis failed'}[/red]")
+            return None
+            
+        except Exception as e:
+            console.print(f"[red]❌ 从GitHub获取工具信息时发生异常: {e}[/red]")
+            return None
+    
+    def _github_record_to_tool_info(self, record: Dict[str, Any]) -> MCPToolInfo:
+        """将GitHub分析记录转换为MCPToolInfo对象"""
+        return MCPToolInfo(
+            name=record.get("name", ""),
+            url=record.get("url", ""),
+            author=record.get("author", ""),
+            github_url=record.get("github_url", ""),
+            description=record.get("description", ""),
+            deployment_method=record.get("deployment_method", "npx"),
+            category=record.get("category", ""),
+            package_name=record.get("package_name"),
+            requires_api_key=record.get("requires_api_key", False),
+            install_command=record.get("install_command"),
+            run_command=record.get("run_command"),
+            api_requirements=record.get("api_requirements", []),
+            final_score=record.get("final_score"),
+            sustainability_score=record.get("sustainability_score"),
+            popularity_score=record.get("popularity_score"),
+            lobehub_url=record.get("lobehub_url"),
+            lobehub_evaluate=record.get("lobehub_evaluate"),
+            lobehub_score=record.get("lobehub_score"),
+            lobehub_star_count=record.get("lobehub_star_count"),
+            lobehub_fork_count=record.get("lobehub_fork_count"),
+        )
+
     def search_tools(self, query: str) -> List[MCPToolInfo]:
         """搜索工具"""
         tools = self.get_all_tools()
@@ -318,6 +369,10 @@ class MCPDataParser:
 
 # 全局解析器实例
 _parser_instance = None
+
+
+# 向后兼容别名
+CSVParser = MCPDataParser
 
 
 def get_mcp_parser() -> MCPDataParser:
