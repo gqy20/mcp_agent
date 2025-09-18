@@ -1,0 +1,131 @@
+name: Auto Release on Tag
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+
+    - name: Install UV
+      uses: astral-sh/setup-uv@v2
+      with:
+        version: "latest"
+
+    - name: Install dependencies
+      run: |
+        uv sync --dev
+
+    - name: Generate Changelog
+      id: changelog
+      run: |
+        # 获取版本号
+        VERSION="${GITHUB_REF#refs/tags/v}"
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+        # 生成变更日志
+        echo "## 🎉 Version $VERSION Release" > release_notes.md
+        echo "" >> release_notes.md
+        echo "### 📋 变更内容" >> release_notes.md
+        echo "" >> release_notes.md
+
+        # 获取从上一个版本到当前版本的提交信息
+        if git describe --tags --abbrev=0 HEAD~1 >/dev/null 2>&1; then
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD~1)
+          echo "#### 🔄 变更摘要 (从 $PREV_TAG 到 $VERSION)" >> release_notes.md
+          echo "" >> release_notes.md
+          git log --pretty=format:"- %s (%h)" $PREV_TAG..HEAD >> release_notes.md
+        else
+          echo "#### 🔄 变更摘要 (初始版本)" >> release_notes.md
+          echo "" >> release_notes.md
+          git log --pretty=format:"- %s (%h)" -10 >> release_notes.md
+        fi
+
+        echo "" >> release_notes.md
+        echo "### 🚀 安装说明" >> release_notes.md
+        echo "" >> release_notes.md
+        echo '```bash' >> release_notes.md
+        echo "# 克隆项目" >> release_notes.md
+        echo "git clone https://github.com/${{ github.repository }}.git" >> release_notes.md
+        echo "cd $(basename ${{ github.repository }})" >> release_notes.md
+        echo "" >> release_notes.md
+        echo "# 安装依赖" >> release_notes.md
+        echo "uv sync" >> release_notes.md
+        echo "" >> release_notes.md
+        echo "# 基础使用" >> release_notes.md
+        echo "uv run python -m src.main --help" >> release_notes.md
+        echo '```' >> release_notes.md
+
+        echo "" >> release_notes.md
+        echo "### 📚 文档" >> release_notes.md
+        echo "- [README](https://github.com/${{ github.repository }}/blob/main/README.md)" >> release_notes.md
+        echo "- [快速开始](https://github.com/${{ github.repository }}/blob/main/docs/QUICKSTART.md)" >> release_notes.md
+
+        # 保存发布说明到文件
+        cat release_notes.md
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ steps.changelog.outputs.version }}
+        name: "Version ${{ steps.changelog.outputs.version }}"
+        body_path: release_notes.md
+        draft: false
+        prerelease: false
+        generate_release_notes: true
+        files: |
+          pyproject.toml
+          README.md
+          .env.template
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Update Version in pyproject.toml
+      run: |
+        VERSION="${{ steps.changelog.outputs.version }}"
+        # 更新 pyproject.toml 中的版本号
+        if [ -f pyproject.toml ]; then
+          sed -i "s/^version = .*/version = \"$VERSION\"/" pyproject.toml
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add pyproject.toml
+          git commit -m "chore: 更新版本号到 $VERSION" || echo "No version update needed"
+          git push
+        fi
+
+    - name: Cleanup
+      run: |
+        rm -f release_notes.md
+
+  notify:
+    needs: release
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+    - name: Send Notification
+      run: |
+        if [ "${{ needs.release.result }}" = "success" ]; then
+          echo "✅ 版本 ${{ needs.release.outputs.version }} 发布成功！"
+          echo "🔗 发布页面: https://github.com/${{ github.repository }}/releases/tag/v${{ needs.release.outputs.version }}"
+        else
+          echo "❌ 版本发布失败"
+          exit 1
+        fi

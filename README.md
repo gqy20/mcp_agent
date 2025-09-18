@@ -246,7 +246,12 @@ mcp_agent/
 │   ├── core/                     # 核心模块
 │   │   ├── simple_mcp_deployer.py    # MCP 部署器
 │   │   ├── async_mcp_client.py       # 异步 MCP 客户端
-│   │   └── url_mcp_processor.py      # URL 处理器
+│   │   ├── url_mcp_processor.py      # URL 处理器
+│   │   ├── tester.py                 # 测试执行器
+│   │   ├── evaluator.py              # 代码质量评估器
+│   │   ├── report_generator.py       # 报告生成器
+│   │   ├── github_mcp_analyzer.py    # GitHub 分析器
+│   │   └── cli_handlers.py          # CLI 处理器
 │   ├── agents/                   # AI 智能代理
 │   │   ├── test_agent.py         # 测试生成代理
 │   │   └── validation_agent.py   # 验证执行代理
@@ -255,13 +260,24 @@ mcp_agent/
 │       └── config_loader.py      # 配置加载
 ├── data/                         # 数据目录
 │   ├── mcp.csv                   # 5000+ MCP 工具数据库
-│   └── test_results/             # 测试结果和报告
+│   ├── test_results/             # 测试结果和报告
+│   └── temp/                     # 临时测试数据
+├── scripts/                      # 脚本工具
+│   ├── demo_github_analyzer.py   # GitHub 分析演示
+│   └── intelligent_tool_selector.py # 智能工具选择器
+├── debug/                        # 调试和修复脚本
+│   └── improved_comprehensive_score.py # 综合评分修复
+├── tests/                        # 测试模块
+│   ├── unit/                     # 单元测试
+│   ├── integration/              # 集成测试
+│   ├── e2e/                      # 端到端测试
+│   ├── fixtures/                 # 测试数据
+│   └── manual/                   # 手动测试
 ├── docs/                         # 文档
 │   ├── README.md                 # 项目说明
 │   ├── QUICKSTART.md             # 快速开始
 │   └── workflow.md               # 架构和流程
-├── test/                         # 测试模块
-├── .env                          # 环境变量配置
+├── .env.template                 # 环境变量配置模板
 └── pyproject.toml                # UV 项目配置
 ```
 
@@ -412,7 +428,3 @@ uv run python -m src.main init-env
 ## 📝 许可证
 
 本项目采用 MIT 许可证。详见 [LICENSE](LICENSE) 文件。
-
----
-
-**在 MCP 生态系统中建设可靠的测试基础设施** 🔧

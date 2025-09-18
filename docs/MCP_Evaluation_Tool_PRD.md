@@ -91,7 +91,7 @@
 - **GitHub API**: 实时的项目活跃度和社区数据
 
 ### 3.2 评估算法
-- **综合评分算法**: 
+- **综合评分算法**:
   - 综合评分 = (实用性评分 × 40% + 可持续性评分 × 30% + 受欢迎度评分 × 30%)
   - 测试成功率权重计算：综合评分 = (测试成功率 × 1 + 评估评分 × 2) / 3
 - **趋势分析算法**: 基于历史数据的时间序列分析
@@ -164,24 +164,24 @@ class MCPToolInfo:
     description: str             # 工具描述
     category: str                # 工具分类
     github_url: str              # GitHub 地址
-    
+
     # 技术信息
     deployment_method: str       # 部署方式 (npx/pip/docker)
     package_name: str            # 包名
     requires_api_key: bool       # 是否需要 API 密钥
-    
+
     # 评分信息
     tashan_score: float          # 他山综合评分 (0-100)
     utility_score: float          # 实用性评分 (0-100)
     sustainability_score: float  # 可持续性评分 (0-100)
     popularity_score: float      # 受欢迎度评分 (0-100)
-    
+
     # LobeHub 评分
     lobehub_evaluate: str        # 评估等级 (优质/良好/欠佳)
     lobehub_score: float         # LobeHub 评分
     lobehub_stars: int           # GitHub stars
     lobehub_forks: int           # GitHub forks
-    
+
     # 测试信息
     test_success_rate: float     # 测试成功率 (0-100)
     test_count: int              # 测试次数
@@ -193,19 +193,19 @@ class MCPToolInfo:
 class EvaluationReport:
     # 工具信息
     tool_info: MCPToolInfo
-    
+
     # 评分明细
     comprehensive_score: float    # 综合评分
     detailed_scores: Dict[str, float]  # 各维度评分
-    
+
     # 测试结果
     test_results: List[TestResult]  # 历史测试结果
     success_analysis: Dict[str, Any]  # 成功率分析
-    
+
     # 趋势分析
     trend_data: Dict[str, List[float]]  # 历史趋势数据
     trend_analysis: str           # 趋势分析文本
-    
+
     # 推荐建议
     recommendations: List[str]    # 使用建议
     use_cases: List[str]         # 适用场景
@@ -227,19 +227,19 @@ CREATE TABLE mcp_tools (
     package_name VARCHAR(255),
     deployment_method VARCHAR(50),
     requires_api_key BOOLEAN DEFAULT FALSE,
-    
+
     -- 评分字段
     tashan_score DECIMAL(5,2),
     utility_score DECIMAL(5,2),
     sustainability_score DECIMAL(5,2),
     popularity_score DECIMAL(5,2),
-    
+
     -- LobeHub 字段
     lobehub_evaluate VARCHAR(50),
     lobehub_score DECIMAL(5,2),
     lobehub_stars INTEGER,
     lobehub_forks INTEGER,
-    
+
     -- 时间戳
     created_at TIMESTAMP WITH TIME ZONE,
     updated_at TIMESTAMP WITH TIME ZONE
@@ -256,7 +256,7 @@ CREATE TABLE mcp_test_results (
     available_tools_count INTEGER,
     test_duration_seconds FLOAT,
     error_messages TEXT[],
-    
+
     -- 环境信息
     platform_info VARCHAR(100),
     python_version VARCHAR(50),
@@ -288,7 +288,7 @@ class MCPEvaluationServer:
         self.evaluation_engine = EvaluationEngine()
         self.recommendation_engine = RecommendationEngine()
         self.github_api = GitHubAPI()
-        
+
     async def list_tools(self):
         """返回可用工具列表"""
         return [
@@ -307,7 +307,7 @@ class MCPEvaluationServer:
             },
             # ... 其他工具定义
         ]
-    
+
     async def call_tool(self, name, arguments):
         """调用具体工具"""
         if name == "search_mcp_tools":
@@ -325,7 +325,7 @@ async def search_tools(self, params):
     category = params.get("category")
     min_score = params.get("min_score", 0)
     max_score = params.get("max_score", 100)
-    
+
     # 构建查询条件
     filters = {}
     if category:
@@ -334,10 +334,10 @@ async def search_tools(self, params):
         filters["min_tashan_score"] = min_score
     if max_score < 100:
         filters["max_tashan_score"] = max_score
-    
+
     # 执行搜索
     results = await self.database.search_tools(query, filters)
-    
+
     # 格式化返回结果
     return {
         "success": True,

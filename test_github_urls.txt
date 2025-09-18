@@ -1,6 +1,0 @@
-https://github.com/microsoft/playwright-mcp
-https://github.com/upstash/context7
-https://github.com/ahujasid/blender-mcp
-https://github.com/haris-musa/excel-mcp-server
-https://github.com/elevenlabs/elevenlabs-mcp
-https://github.com/nonexistent/project

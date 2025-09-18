@@ -107,8 +107,20 @@ db_stats.json
 *.backup
 *~
 
+# Scripts and tools (moved to organized directories)
+scripts/debug_*.py
+scripts/test_*.py
+debug/*.py
+tests/manual/*.py
+
+# Test data and reports
+data/temp/
+*.temp.json
+*.temp.csv
+*_report.json
+*_results.json
+demo_*.json
+demo_*.txt
+
 # GitHub Actions logs
 .github/workflows/*.log
-CLAUDE.md
-GEMINI.md
-QWEN.md
