@@ -688,6 +688,8 @@ class CLIHandler:
                     )
 
                     if github_url:
+                        rprint(f"[cyan]🔄 开始计算综合评分: {github_url}[/cyan]")
+
                         # 先插入基础记录
                         response = (
                             client.table("mcp_test_results").insert(record).execute()
@@ -695,16 +697,22 @@ class CLIHandler:
 
                         if response.data:
                             record_id = response.data[0]["test_id"]
-                            rprint("[green]✅ 基础记录已保存到数据库[/green]")
+                            rprint(f"[green]✅ 基础记录已保存到数据库: {record_id[:8]}...[/green]")
 
                             # 计算综合评分
+                            rprint("[cyan]🧮 计算综合评分...[/cyan]")
                             comp_result = calculate_comprehensive_score_from_tests(
                                 github_url, client
                             )
+                            rprint(f"[dim]计算结果: {comp_result}[/dim]")
+
                             if (
                                 comp_result
                                 and comp_result.get("comprehensive_score") is not None
                             ):
+                                rprint(
+                                    f"[cyan]💾 准备更新综合评分: {comp_result['comprehensive_score']}[/cyan]"
+                                )
                                 try:
                                     # 尝试更新记录，如果列不存在会失败但不影响主流程
                                     update_data = {
@@ -716,30 +724,63 @@ class CLIHandler:
                                         ],
                                     }
 
-                                    client.table("mcp_test_results").update(
-                                        update_data
-                                    ).eq("test_id", record_id).execute()
-
-                                    rprint(
-                                        f"[green]✅ 综合评分已更新: {comp_result['comprehensive_score']} ({comp_result['calculation_method']})[/green]"
+                                    rprint(f"[dim]更新数据: {update_data}[/dim]")
+                                    update_response = (
+                                        client.table("mcp_test_results")
+                                        .update(update_data)
+                                        .eq("test_id", record_id)
+                                        .execute()
                                     )
+
+                                    if update_response.data:
+                                        rprint(
+                                            f"[green]✅ 综合评分已更新: {comp_result['comprehensive_score']} ({comp_result['calculation_method']})[/green]"
+                                        )
+                                        rprint(f"[green]🎉 综合评分计算流程完全成功![/green]")
+                                    else:
+                                        rprint(
+                                            f"[red]❌ 综合评分更新失败: {update_response.error if hasattr(update_response, 'error') else '未知错误'}[/red]"
+                                        )
 
                                 except Exception as update_error:
-                                    # 列不存在，但不影响核心功能
-                                    rprint(
-                                        f"[yellow]⚠️ 综合评分列不存在，请先运行数据库迁移: {update_error}[/yellow]"
-                                    )
+                                    # 更具体的异常处理
+                                    error_msg = str(update_error)
+                                    if (
+                                        "column" in error_msg
+                                        and "does not exist" in error_msg
+                                    ):
+                                        rprint(
+                                            f"[yellow]⚠️ 综合评分列不存在，请先运行数据库迁移[/yellow]"
+                                        )
+                                    else:
+                                        rprint(
+                                            f"[yellow]⚠️ 综合评分更新失败: {error_msg}[/yellow]"
+                                        )
                                     rprint(
                                         f"[dim]💡 综合评分计算完成: {comp_result['comprehensive_score']}, 但无法存储到数据库[/dim]"
                                     )
                             else:
-                                rprint("[dim]⚠️ 无法计算综合评分[/dim]")
+                                rprint("[yellow]⚠️ 综合评分计算失败或返回None[/yellow]")
+                                rprint(f"[dim]计算结果: {comp_result}[/dim]")
 
+                            rprint("[green]✅ 综合评分处理完成，提前返回[/green]")
                             return  # 成功，提前返回
+                        else:
+                            rprint("[red]❌ 基础记录保存失败[/red]")
+                    else:
+                        rprint("[yellow]⚠️ 无法获取GitHub URL，跳过综合评分计算[/yellow]")
 
                 except Exception as e:
-                    rprint(f"[yellow]⚠️ 综合评分处理失败: {e}[/yellow]")
-                    # 继续执行普通插入逻辑
+                    # 更具体的异常处理
+                    error_msg = str(e)
+                    if "calculate_comprehensive_score_from_tests" in error_msg:
+                        rprint(f"[yellow]⚠️ 综合评分计算函数异常: {error_msg}[/yellow]")
+                    elif "supabase" in error_msg.lower():
+                        rprint(f"[yellow]⚠️ 数据库操作异常: {error_msg}[/yellow]")
+                    else:
+                        rprint(f"[yellow]⚠️ 综合评分处理失败: {error_msg}[/yellow]")
+
+                    rprint("[dim]继续执行普通插入逻辑[/dim]")
 
             rprint(f"[dim]Dumping to database: {record}[/dim]")
             response = client.table("mcp_test_results").insert(record).execute()

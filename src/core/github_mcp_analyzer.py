@@ -220,11 +220,13 @@ class GitHubMCPAnalyzer:
             "use_cases": self._extract_use_cases(content),
             "installation": self._extract_installation_instructions(content),
         }
-        
+
         # 提取包名和部署命令信息
-        package_info = self._extract_package_info(content, analysis["deployment_methods"])
+        package_info = self._extract_package_info(
+            content, analysis["deployment_methods"]
+        )
         analysis.update(package_info)
-        
+
         return analysis
 
     def _extract_description(self, content: str, repo_info: Dict) -> str:
@@ -348,42 +350,44 @@ class GitHubMCPAnalyzer:
 
         return "\n".join(install_instructions[:10]) if install_instructions else ""
 
-    def _extract_package_info(self, content: str, deployment_methods: List[str]) -> Dict[str, str]:
+    def _extract_package_info(
+        self, content: str, deployment_methods: List[str]
+    ) -> Dict[str, str]:
         """从README内容中提取包名和部署命令"""
         package_info = {
             "package_name": "",
             "deployment_method": "",
             "install_command": "",
-            "run_command": ""
+            "run_command": "",
         }
-        
+
         if not deployment_methods:
             return package_info
-            
+
         # 获取主要部署方法 - 优先选择uvx/npx而不是python
         priority_order = ["uvx", "npx", "cargo", "python"]
         primary_deployment = ""
-        
+
         for method in priority_order:
             if method in deployment_methods:
                 primary_deployment = method
                 break
-        
+
         # 如果没有找到优先方法，使用第一个
         if not primary_deployment and deployment_methods:
             primary_deployment = deployment_methods[0]
-            
+
         package_info["deployment_method"] = primary_deployment
-        
+
         # 根据部署方法提取不同的信息
         if primary_deployment == "npx":
             # 查找npx相关的包名和命令
             npx_patterns = [
                 r"npx\s+([@a-zA-Z0-9/-]+)",
                 r"npm\s+install\s+(-g\s+|global\s+)?([@a-zA-Z0-9/-]+)",
-                r"npm\s+i\s+(-g\s+|global\s+)?([@a-zA-Z0-9/-]+)"
+                r"npm\s+i\s+(-g\s+|global\s+)?([@a-zA-Z0-9/-]+)",
             ]
-            
+
             for pattern in npx_patterns:
                 matches = re.findall(pattern, content, re.IGNORECASE)
                 if matches:
@@ -392,21 +396,23 @@ class GitHubMCPAnalyzer:
                         package_name = matches[0][1] if matches[0][1] else matches[0][0]
                     else:
                         package_name = matches[0]
-                    
+
                     if package_name and package_name not in ["-g", "global"]:
                         package_info["package_name"] = package_name
-                        package_info["install_command"] = f"npm install -g {package_name}"
+                        package_info[
+                            "install_command"
+                        ] = f"npm install -g {package_name}"
                         package_info["run_command"] = f"npx {package_name}"
                         break
-                        
+
         elif primary_deployment == "uvx":
             # 查找uvx相关的包名和命令
             uvx_patterns = [
                 r"uvx\s+([a-zA-Z0-9/-]+)",
                 r"pip\s+install\s+([a-zA-Z0-9/-]+)",
-                r"uv\s+run\s+([a-zA-Z0-9/-]+)"
+                r"uv\s+run\s+([a-zA-Z0-9/-]+)",
             ]
-            
+
             for pattern in uvx_patterns:
                 matches = re.findall(pattern, content, re.IGNORECASE)
                 if matches:
@@ -416,32 +422,34 @@ class GitHubMCPAnalyzer:
                         package_info["install_command"] = f"pip install {package_name}"
                         package_info["run_command"] = f"uvx {package_name}"
                         break
-                        
+
         elif primary_deployment == "cargo":
             # 查找cargo相关的包名和命令
             cargo_patterns = [
                 r"cargo\s+install\s+([a-zA-Z0-9_-]+)",
-                r"cargo\s+build.*--path.*?/([a-zA-Z0-9_-]+)"
+                r"cargo\s+build.*--path.*?/([a-zA-Z0-9_-]+)",
             ]
-            
+
             for pattern in cargo_patterns:
                 matches = re.findall(pattern, content, re.IGNORECASE)
                 if matches:
                     package_name = matches[0]
                     if package_name:
                         package_info["package_name"] = package_name
-                        package_info["install_command"] = f"cargo install {package_name}"
+                        package_info[
+                            "install_command"
+                        ] = f"cargo install {package_name}"
                         package_info["run_command"] = f"cargo run --bin {package_name}"
                         break
-                        
+
         elif primary_deployment == "python":
             # 查找python模块相关的包名和命令
             python_patterns = [
                 r"python\s+-m\s+([a-zA-Z0-9_]+)",
                 r"pip\s+install\s+([a-zA-Z0-9_-]+)",
-                r"pip3\s+install\s+([a-zA-Z0-9_-]+)"
+                r"pip3\s+install\s+([a-zA-Z0-9_-]+)",
             ]
-            
+
             for pattern in python_patterns:
                 matches = re.findall(pattern, content, re.IGNORECASE)
                 if matches:
@@ -451,37 +459,41 @@ class GitHubMCPAnalyzer:
                         package_info["install_command"] = f"pip install {package_name}"
                         package_info["run_command"] = f"python -m {package_name}"
                         break
-                        
+
         # 如果没有找到包名，尝试从项目名称推断
         if not package_info["package_name"]:
             # 尝试从README中的项目标题推断
             title_patterns = [
                 r"#\s*([a-zA-Z0-9_-]+)\s+(?:MCP|mcp|Server|server)",
                 r"#\s*([a-zA-Z0-9_-]+)\s*",
-                r"project\s*name[:：]\s*([a-zA-Z0-9_-]+)"
+                r"project\s*name[:：]\s*([a-zA-Z0-9_-]+)",
             ]
-            
+
             for pattern in title_patterns:
                 matches = re.findall(pattern, content, re.IGNORECASE)
                 if matches:
                     package_name = matches[0].lower()
                     package_info["package_name"] = package_name
-                    
+
                     # 根据部署方法设置默认命令
                     if primary_deployment == "npx":
-                        package_info["install_command"] = f"npm install -g {package_name}"
+                        package_info[
+                            "install_command"
+                        ] = f"npm install -g {package_name}"
                         package_info["run_command"] = f"npx {package_name}"
                     elif primary_deployment == "uvx":
                         package_info["install_command"] = f"pip install {package_name}"
                         package_info["run_command"] = f"uvx {package_name}"
                     elif primary_deployment == "cargo":
-                        package_info["install_command"] = f"cargo install {package_name}"
+                        package_info[
+                            "install_command"
+                        ] = f"cargo install {package_name}"
                         package_info["run_command"] = f"cargo run --bin {package_name}"
                     elif primary_deployment == "python":
                         package_info["install_command"] = f"pip install {package_name}"
                         package_info["run_command"] = f"python -m {package_name}"
                     break
-        
+
         return package_info
 
     def _generate_mcp_record(
@@ -497,13 +509,13 @@ class GitHubMCPAnalyzer:
 
         # 简单评分算法
         popularity_score = min((stars / 100) + (forks / 10), 100)
-        
+
         # 生成MCP配置JSON
         mcp_config = {
             "package_name": analysis.get("package_name", ""),
             "deployment_method": analysis.get("deployment_method", ""),
             "install_command": analysis.get("install_command", ""),
-            "run_command": analysis.get("run_command", "")
+            "run_command": analysis.get("run_command", ""),
         }
 
         return {

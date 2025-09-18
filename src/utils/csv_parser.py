@@ -16,6 +16,7 @@ from typing import Any, Dict, List, Optional
 
 import pandas as pd
 from rich.console import Console
+
 from ..core.github_mcp_analyzer import GitHubMCPAnalyzer
 
 console = Console()
@@ -306,25 +307,29 @@ class MCPDataParser:
         """当CSV中找不到工具时，尝试从GitHub获取信息"""
         try:
             console.print(f"[yellow]🔍 尝试从GitHub获取工具信息: {url}[/yellow]")
-            
+
             # 使用GitHub分析器分析项目
             result = self.github_analyzer.analyze_github_repo(url)
-            
+
             if result and result.get("success"):
                 record = result.get("record")
                 if record:
-                    console.print(f"[green]✅ 成功从GitHub获取工具信息: {record.get('name', 'Unknown')}[/green]")
-                    
+                    console.print(
+                        f"[green]✅ 成功从GitHub获取工具信息: {record.get('name', 'Unknown')}[/green]"
+                    )
+
                     # 将GitHub返回的记录转换为MCPToolInfo格式
                     return self._github_record_to_tool_info(record)
-            
-            console.print(f"[red]❌ 无法从GitHub获取工具信息: {result.get('error', 'Unknown error') if result else 'Analysis failed'}[/red]")
+
+            console.print(
+                f"[red]❌ 无法从GitHub获取工具信息: {result.get('error', 'Unknown error') if result else 'Analysis failed'}[/red]"
+            )
             return None
-            
+
         except Exception as e:
             console.print(f"[red]❌ 从GitHub获取工具信息时发生异常: {e}[/red]")
             return None
-    
+
     def _github_record_to_tool_info(self, record: Dict[str, Any]) -> MCPToolInfo:
         """将GitHub分析记录转换为MCPToolInfo对象"""
         return MCPToolInfo(
