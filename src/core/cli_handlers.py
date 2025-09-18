@@ -700,63 +700,29 @@ class CLIHandler:
                 ]
                 record["evaluation_timestamp"] = datetime.now().isoformat()
 
-                # 优先使用 evaluation_result 中的综合评分
-                if "final_comprehensive_score" in evaluation_result:
-                    record["comprehensive_score"] = evaluation_result[
-                        "final_comprehensive_score"
-                    ]
-                    record["calculation_method"] = "evaluation_result"
+                # 使用当前测试的成功率计算综合评分
+                if evaluation_result and evaluation_result.get("status") == "success":
+                    evaluator_score = evaluation_result.get("final_score", 93)
+
+                    # 使用当前测试的成功率，而不是历史数据
+                    current_success_rate = success_rate  # 当前测试的成功率
+                    current_test_count = len(test_results)  # 当前测试的数量
+                    current_passed_tests = passed_tests  # 当前测试的通过数
+
+                    # 计算综合评分 (当前测试成功率 + GitHub评估器评分)
+                    comprehensive_score = int(
+                        (current_success_rate * 1 + evaluator_score * 2) / 3
+                    )
+
+                    record["comprehensive_score"] = comprehensive_score
+                    record["calculation_method"] = "current_test_weighted"
+
                     rprint(
-                        f"[cyan]💾 使用 evaluation_result 中的综合评分: {evaluation_result['final_comprehensive_score']}[/cyan]"
+                        f"[cyan]💾 计算综合评分: (当前测试成功率{current_success_rate:.1f} × 1 + GitHub评估器评分{evaluator_score} × 2) ÷ 3 = {comprehensive_score}[/cyan]"
                     )
-                elif "comprehensive_score" in evaluation_result:
-                    record["comprehensive_score"] = evaluation_result[
-                        "comprehensive_score"
-                    ]
-                    record["calculation_method"] = "evaluation_result"
                     rprint(
-                        f"[cyan]💾 使用 evaluation_result 中的综合评分: {evaluation_result['comprehensive_score']}[/cyan]"
+                        f"[cyan]📊 当前测试: {current_passed_tests}/{current_test_count} = {current_success_rate:.1f}%[/cyan]"
                     )
-
-                # 计算并添加综合评分 - 形成闭环 (兼容模式)
-                try:
-                    from src.core.evaluator import (
-                        calculate_comprehensive_score_from_tests,
-                    )
-
-                    github_url = (
-                        tool_info.get("github_url", "")
-                        if tool_info
-                        else json_data.get("test_url", "")
-                    )
-
-                    if github_url:
-                        rprint(f"[cyan]🔄 开始计算综合评分: {github_url}[/cyan]")
-
-                        # 计算综合评分
-                        rprint("[cyan]🧮 计算综合评分...[/cyan]")
-                        comp_result = calculate_comprehensive_score_from_tests(
-                            github_url, client
-                        )
-                        rprint(f"[dim]计算结果: {comp_result}[/dim]")
-
-                        if (
-                            comp_result
-                            and comp_result.get("comprehensive_score") is not None
-                        ):
-                            # 将综合评分直接添加到记录中
-                            record["comprehensive_score"] = comp_result[
-                                "comprehensive_score"
-                            ]
-                            record["calculation_method"] = comp_result[
-                                "calculation_method"
-                            ]
-                            rprint(
-                                f"[cyan]💾 综合评分已添加到记录: {comp_result['comprehensive_score']} ({comp_result['calculation_method']})[/cyan]"
-                            )
-                        else:
-                            rprint("[yellow]⚠️ 综合评分计算失败或返回None[/yellow]")
-                            rprint(f"[dim]计算结果: {comp_result}[/dim]")
 
                     # 插入完整记录（包含综合评分）
                     response = client.table("mcp_test_results").insert(record).execute()
@@ -764,25 +730,14 @@ class CLIHandler:
                     if response.data:
                         record_id = response.data[0]["test_id"]
                         rprint(f"[green]✅ 完整记录已保存到数据库: {record_id[:8]}...[/green]")
-                        if "comprehensive_score" in record:
-                            rprint(
-                                f"[green]🎉 综合评分 {record['comprehensive_score']} 已包含在记录中![/green]"
-                            )
+                        rprint(
+                            f"[green]🎉 综合评分 {comprehensive_score} 已包含在记录中! (基于当前测试)[/green]"
+                        )
                         return  # 成功，提前返回
                     else:
                         rprint("[red]❌ 记录保存失败[/red]")
-
-                except Exception as e:
-                    # 更具体的异常处理
-                    error_msg = str(e)
-                    if "calculate_comprehensive_score_from_tests" in error_msg:
-                        rprint(f"[yellow]⚠️ 综合评分计算函数异常: {error_msg}[/yellow]")
-                    elif "supabase" in error_msg.lower():
-                        rprint(f"[yellow]⚠️ 数据库操作异常: {error_msg}[/yellow]")
-                    else:
-                        rprint(f"[yellow]⚠️ 综合评分处理失败: {error_msg}[/yellow]")
-
-                    rprint("[dim]继续执行普通插入逻辑[/dim]")
+                else:
+                    rprint("[yellow]⚠️ 评估结果不可用，跳过综合评分计算[/yellow]")
 
             rprint(f"[dim]Dumping to database: {record}[/dim]")
             response = client.table("mcp_test_results").insert(record).execute()
