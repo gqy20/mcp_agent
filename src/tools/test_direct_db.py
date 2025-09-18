@@ -30,7 +30,7 @@ def test_direct_db_save():
             "package_name": "direct-test-tool",
             "category": "testing",
             "description": "A tool to test direct database insertion",
-            "version": "1.0.0",
+            "version": "0.1.0",
             "requires_api_key": False,
             "language": "Python",
             "license": "MIT",
