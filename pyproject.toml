@@ -1,6 +1,6 @@
 [project]
 name = "batch-mcp-testing"
-version = "1.0.0"
+version = "0.1.0"
 description = "动态 MCP 工具部署和测试框架"
 authors = [{name = "AI Assistant", email = "ai@example.com"}]
 readme = "README.md"
