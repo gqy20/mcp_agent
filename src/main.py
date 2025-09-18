@@ -9,7 +9,7 @@ MCP 测试框架 - 主入口 (简洁版)
 
 作者: AI Assistant (Linus重构版)
 日期: 2025-08-18
-版本: 2.0.0 (简洁版)
+版本: 0.1.0 (简洁版)
 """
 
 import sys
@@ -200,7 +200,7 @@ def init_environment():
 def main(version: bool = typer.Option(False, "--version", help="显示版本信息")):
     """MCP 测试框架 - 简洁版"""
     if version:
-        rprint("[bold green]Batch MCP Testing Framework v2.0.0 (简洁版)[/bold green]")
+        rprint("[bold green]Batch MCP Testing Framework v0.1.0 (简洁版)[/bold green]")
         raise typer.Exit()
 
 
