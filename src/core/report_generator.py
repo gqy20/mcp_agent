@@ -131,6 +131,16 @@ class MCPTestReport:
                 "description": self.tool_info.description[:100] + "..."
                 if len(self.tool_info.description) > 100
                 else self.tool_info.description,
+                # 添加LobeHub评分信息
+                "lobehub_url": getattr(self.tool_info, "lobehub_url", None),
+                "lobehub_evaluate": getattr(self.tool_info, "lobehub_evaluate", None),
+                "lobehub_score": getattr(self.tool_info, "lobehub_score", None),
+                "lobehub_star_count": getattr(
+                    self.tool_info, "lobehub_star_count", None
+                ),
+                "lobehub_fork_count": getattr(
+                    self.tool_info, "lobehub_fork_count", None
+                ),
             }
 
         # 精简评估结果
@@ -298,7 +308,8 @@ class MCPReportGenerator:
             and hasattr(report.tool_info, "lobehub_evaluate")
             and report.tool_info.lobehub_evaluate
         ):
-            lobehub_section = """
+            lobehub_section = (
+                f"""
 <h2>LobeHub 评分</h2>
 <div class="stats">
 <div class="stat"><div>质量等级</div><div>{report.tool_info.lobehub_evaluate}</div></div>
@@ -306,7 +317,17 @@ class MCPReportGenerator:
 <div class="stat"><div>Stars</div><div>{report.tool_info.lobehub_star_count or 0}</div></div>
 <div class="stat"><div>Forks</div><div>{report.tool_info.lobehub_fork_count or 0}</div></div>
 </div>
-{f'<p>📱 <a href="{report.tool_info.lobehub_url}" target="_blank">LobeHub 页面</a></p>' if report.tool_info.lobehub_url else ''}"""
+<p>📱 <a href="{report.tool_info.lobehub_url}" target="_blank">LobeHub 页面</a></p>"""
+                if report.tool_info.lobehub_url
+                else f"""
+<h2>LobeHub 评分</h2>
+<div class="stats">
+<div class="stat"><div>质量等级</div><div>{report.tool_info.lobehub_evaluate}</div></div>
+<div class="stat"><div>评分</div><div>{report.tool_info.lobehub_score or 'N/A'}</div></div>
+<div class="stat"><div>Stars</div><div>{report.tool_info.lobehub_star_count or 0}</div></div>
+<div class="stat"><div>Forks</div><div>{report.tool_info.lobehub_fork_count or 0}</div></div>
+</div>"""
+            )
 
         # Generate HTML with proper string formatting
         html_content = f"""<!DOCTYPE html>
