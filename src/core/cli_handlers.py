@@ -769,6 +769,16 @@ class CLIHandler:
         rprint(f"[blue]📦 包名: {tool_info.package_name}[/blue]")
         rprint(f"[blue]📂 类别: {tool_info.category}[/blue]")
         rprint(f"[blue]📝 描述: {tool_info.description[:100]}...[/blue]")
+        
+        # 显示 LobeHub 评分信息
+        if tool_info.lobehub_evaluate:
+            rprint(f"[yellow]⭐ LobeHub 评分: {tool_info.lobehub_evaluate}[/yellow]")
+            if tool_info.lobehub_score:
+                rprint(f"[yellow]⭐ LobeHub 分数: {tool_info.lobehub_score}[/yellow]")
+            if tool_info.lobehub_star_count:
+                rprint(f"[yellow]⭐ LobeHub 星标: {tool_info.lobehub_star_count}[/yellow]")
+            if tool_info.lobehub_fork_count:
+                rprint(f"[yellow]⭐ LobeHub 分支: {tool_info.lobehub_fork_count}[/yellow]")
 
     def _display_evaluation_result(self, evaluation_result: dict):
         """显示评估结果 - 包含综合评分"""
