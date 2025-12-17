@@ -22,8 +22,18 @@ class HttpMCPClient:
     ) -> None:
         """初始化 HTTP MCP 客户端."""
         self.url = url
-        self.headers = headers or {}
         self.timeout = timeout
+
+        # 设置默认头
+        self.headers = {
+            "Content-Type": "application/json",
+            "Accept": "application/json, text/event-stream",  # 支持流式HTTP MCP
+            "User-Agent": "batch-mcp-testing-framework/1.0"
+        }
+
+        # 合并用户提供的头
+        if headers:
+            self.headers.update(headers)
 
     async def list_tools(self) -> dict[str, Any]:
         """获取工具列表."""

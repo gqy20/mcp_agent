@@ -217,12 +217,25 @@ class MCPReportGenerator:
                 len(server_info.available_tools) if server_info else 0
             ),
             test_duration_seconds=duration,
-            tool_info=tool_info,
+              tool_info=tool_info,
             test_results=test_results or [],
             error_messages=error_messages or [],
             evaluation_result=evaluation_result,
-            process_pid=server_info.process.pid if server_info else None,
+            # 处理STDIO和HTTP MCP客户端的不同结构
+            process_pid=self._get_process_pid(server_info)
         )
+
+    def _get_process_pid(self, server_info) -> str | None:
+        """获取进程ID，支持STDIO和HTTP MCP客户端."""
+        if not server_info:
+            return None
+
+        if hasattr(server_info, 'process') and server_info.process:
+            return server_info.process.pid
+        elif hasattr(server_info, 'url'):
+            # HTTP MCP客户端，使用URL作为标识
+            return f"HTTP-{server_info.url[:20]}..."
+        return None
 
     def save_json(self, report: MCPTestReport) -> Path:
         """保存JSON报告 - 无条件分支."""

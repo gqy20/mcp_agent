@@ -232,6 +232,69 @@ def analyze_github_repos(
         raise typer.Exit(1)
 
 
+@app.command("test-http")
+def test_http_endpoint(
+    url: str = typer.Argument(..., help="HTTP MCP 端点 URL"),
+    timeout: int = typer.Option(
+        300,
+        "--timeout",
+        "-t",
+        help="测试超时时间（秒，默认5分钟）",
+    ),
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="详细输出模式"),
+    save_report: bool = typer.Option(
+        True,
+        "--save-report/--no-save-report",
+        help="保存测试报告",
+    ),
+    cleanup: bool = typer.Option(True, "--cleanup/--no-cleanup", help="自动清理"),
+    smart: bool = typer.Option(
+        True,
+        "--smart/--no-smart",
+        help="启用AI智能测试（默认开启）",
+    ),
+    db_export: bool = typer.Option(
+        True,
+        "--db-export/--no-db-export",
+        help="导出结果到数据库（默认开启）",
+    ),
+    evaluate: bool = typer.Option(
+        False,  # HTTP端点通常没有GitHub仓库，默认禁用
+        "--evaluate/--no-evaluate",
+        help="对工具进行评估（默认禁用）",
+    ),
+    auth_token: str = typer.Option(
+        None,
+        "--auth-token",
+        help="API认证令牌（Bearer Token）",
+    ),
+) -> None:
+    """测试 HTTP MCP 端点."""
+    # URL验证
+    if not (url.startswith("http://") or url.startswith("https://")):
+        rprint("[red]❌ URL 必须以 http:// 或 https:// 开头[/red]")
+        raise typer.Exit(1)
+
+    rprint(f"[bold green]🌐 开始测试 HTTP MCP 端点:[/bold green] {url}")
+
+    config = TestConfig(
+        timeout=timeout,
+        verbose=verbose,
+        smart_test=smart,  # 注意字段名是smart_test
+        cleanup=cleanup,  # HTTP测试始终启用cleanup
+        save_report=save_report,
+        db_export=db_export,
+        evaluate=evaluate,
+    )
+
+    success = handler.test_http_endpoint(url, config, auth_token)
+
+    if success:
+        rprint(f"\n[bold green]🎉 HTTP MCP 端点测试完成！[/bold green]")
+    else:
+        raise typer.Exit(1)
+
+
 @app.command("init-env")
 def init_environment() -> None:
     """初始化测试环境."""

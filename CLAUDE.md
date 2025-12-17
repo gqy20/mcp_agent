@@ -34,7 +34,7 @@ uv sync
 uv sync --dev
 
 # Environment validation
-uv run python -m src.main init-env
+uv run python -m src.batch_mcp init-env
 ```
 
 ### Testing
@@ -42,14 +42,20 @@ uv run python -m src.main init-env
 # Run all tests
 uv run pytest
 
-# Run unit tests only
+# Run unit tests only (fast)
 uv run pytest tests/unit/ -v
 
-# Run integration tests (excluding slow ones)
-uv run pytest tests/integration/ -v -m "not slow"
+# Run integration tests (medium speed)
+uv run pytest tests/integration/ -v
 
-# Run with coverage
-uv run pytest tests/unit/ -v --tb=short --cov=src --cov-report=xml
+# Run end-to-end tests (slow)
+uv run pytest tests/e2e/ -v
+
+# Run with coverage (HTML and terminal)
+uv run pytest --cov=src --cov-report=html --cov-report=term
+
+# Run specific test file
+uv run pytest tests/unit/test_simple_mcp_deployer.py -v
 ```
 
 ### Additional Development Commands
@@ -76,32 +82,35 @@ uv run mypy src/ --ignore-missing-imports --no-strict-optional
 uv run python scripts/verify_action_runtime.py
 
 # Quick test mode (no evaluation)
-uv run python -m src.main test-package "@upstash/context7-mcp" --no-evaluate
+uv run python -m src.batch_mcp test-package "@upstash/context7-mcp" --no-evaluate
+
+# Test HTTP MCP endpoint
+uv run python -m src.batch_mcp test-http http://localhost:8080/mcp
 
 # Batch testing with parallel execution
-uv run python -m src.main test-batch --parallel 4
+uv run python -m src.batch_mcp test-batch --parallel 4
 ```
 
 
 ### Running the Framework
 ```bash
 # Test a GitHub URL (default: AI smart testing, database export, evaluation enabled)
-uv run python -m src.main test-url "https://github.com/upstash/context7"
+uv run python -m src.batch_mcp test-url "https://github.com/upstash/context7"
 
 # Test with specific options
-uv run python -m src.main test-url "https://github.com/upstash/context7" --no-smart --no-db-export --no-evaluate
+uv run python -m src.batch_mcp test-url "https://github.com/upstash/context7" --no-smart --no-db-export --no-evaluate
 
 # Test a package directly
-uv run python -m src.main test-package "@upstash/context7-mcp"
+uv run python -m src.batch_mcp test-package "@upstash/context7-mcp"
 
 # List available tools
-uv run python -m src.main list-tools --limit 10
+uv run python -m src.batch_mcp list-tools --limit 10
 
 # Search for specific tools
-uv run python -m src.main list-tools --search "github"
+uv run python -m src.batch_mcp list-tools --search "github"
 
 # Analyze GitHub project and update MCP table
-uv run python -m src.main analyze-github "https://github.com/example/repo"
+uv run python -m src.batch_mcp analyze-github "https://github.com/example/repo"
 ```
 
 ## Architecture Overview
@@ -115,12 +124,12 @@ The framework follows Linus Torvalds' programming philosophy: "Good taste" in co
 
 ### Core Components
 
-1. **src/main.py**: Minimal CLI entry point (Linus style - < 100 lines)
+1. **src/batch_mcp/main.py**: Minimal CLI entry point (Linus style - < 100 lines)
    - Uses Typer for command-line interface
    - Each command function is a thin wrapper (no business logic)
    - Follows Unix philosophy: do one thing well
 
-2. **src/core/**: Core testing framework modules
+2. **src/batch_mcp/core/**: Core testing framework modules
    - `simple_mcp_deployer.py`: Universal MCP tool deployment (npx/pip/cargo/docker)
    - `async_mcp_client.py`: Async JSON-RPC STDIO client with robust error handling
    - `url_mcp_processor.py`: GitHub URL → MCP package mapping with fallback strategies
@@ -129,15 +138,21 @@ The framework follows Linus Torvalds' programming philosophy: "Good taste" in co
    - `report_generator.py`: Multi-format reports (JSON/HTML/PDF/Word/PowerPoint)
    - `github_mcp_analyzer.py`: Repository analysis with LobeHub integration
    - `cli_handlers.py`: Command handlers with comprehensive argument validation
+   - `http_mcp_client.py`: HTTP MCP client for web-based MCP tools
 
-3. **src/agents/**: AI-powered intelligent testing
+3. **src/batch_mcp/agents/**: AI-powered intelligent testing
    - `test_agent.py`: Generates targeted test cases based on tool description
    - `validation_agent.py`: Validates test results and provides intelligent analysis
 
-4. **src/utils/**: Utilities and helpers
+4. **src/batch_mcp/utils/**: Utilities and helpers
    - `csv_parser.py`: Parses MCP tool database (5000+ tools from various sources)
    - `config_loader.py`: Manages environment variables and configuration with validation
    - `lobe_hub_client.py`: LobeHub API integration for tool ratings and metadata
+
+5. **src/batch_mcp/tools/**: Utility scripts and tools
+   - `setup_validator.py`: Environment validation and setup verification
+   - `verify_database.py`: Database connection and data verification
+   - `test_direct_db.py`: Direct database testing utilities
 
 ### Data Flow
 
@@ -274,3 +289,130 @@ The AI agents perform:
 - Targeted test case generation (3-5 cases per tool)
 - Result validation and intelligent feedback
 - Error classification and reporting
+
+## 🐛 调试和故障排除
+
+### 常见问题解决方案
+
+#### MCP 部署失败
+```bash
+# 检查 Node.js 版本
+node --version
+
+# 验证网络连接
+ping github.com
+
+# 启用详细日志
+uv run python -m src.batch_mcp test-url <url> --verbose
+
+# 清理临时文件
+rm -rf data/temp/*
+```
+
+#### AI 测试失败
+```bash
+# 验证 API 密钥配置
+echo $OPENAI_API_KEY
+
+# 测试 AI 连接
+uv run python -c "import openai; print('OpenAI client initialized')"
+
+# 检查网络代理设置
+echo $HTTP_PROXY
+echo $HTTPS_PROXY
+```
+
+#### 数据库连接问题
+```bash
+# 验证 Supabase 连接
+uv run python -m src.batch_mcp.tools.verify_database
+
+# 测试数据库配置
+uv run python -c "from supabase import create_client; print('Supabase client ready')"
+```
+
+### 调试命令
+```bash
+# 启用调试日志
+uv run python -m src.batch_mcp test-url <url> --verbose
+
+# 测试数据库连接
+uv run python -m src.batch_mcp.tools.verify_database
+
+# 验证环境配置
+uv run python -m src.batch_mcp init-env
+
+# 检查 GitHub Actions 运行时
+uv run python scripts/verify_action_runtime.py
+```
+
+## 🌐 HTTP MCP 支持
+
+框架支持通过 HTTP 协议测试 MCP 工具，适用于 Web 服务形式的 MCP 实现：
+
+### HTTP MCP 测试
+```bash
+# 测试 HTTP MCP 端点
+uv run python -m src.batch_mcp test-http http://localhost:8080/mcp
+
+# 带认证的 HTTP MCP
+uv run python -m src.batch_mcp test-http https://api.example.com/mcp --auth-token "your_token"
+```
+
+### HTTP vs STDIO MCP
+- **STDIO MCP**: 通过标准输入输出通信，适用于命令行工具
+- **HTTP MCP**: 通过 HTTP API 通信，适用于 Web 服务
+
+## 🛠️ 实用工具脚本
+
+项目包含多个实用脚本位于 `scripts/` 目录：
+
+### 数据库工具
+```bash
+# 验证数据库完整性
+uv run python scripts/verify_action_runtime.py
+
+# GitHub 分析器演示
+uv run python scripts/demo_github_analyzer.py
+
+# 智能工具选择器
+uv run python scripts/intelligent_tool_selector.py
+```
+
+### 开发工具
+```bash
+# 生成测试数据
+uv run python scripts/generate_test_data.py
+
+# 修复代码质量问题
+uv run python scripts/fix_code_quality.py
+
+# 更新 CSV 包名映射
+uv run python scripts/update_csv_package_names.py
+```
+
+## ⚡ 性能优化建议
+
+### 批量测试优化
+```bash
+# 控制并发数（推荐 2-4）
+uv run python -m src.batch_mcp test-batch --parallel 3
+
+# 限制单工具超时时间
+uv run python -m src.batch_mcp test-url <url> --timeout 300
+
+# 快速测试模式（禁用评估）
+uv run python -m src.batch_mcp test-package <package> --no-evaluate
+```
+
+### 内存管理
+```bash
+# 清理临时文件
+rm -rf data/temp/*
+
+# 检查磁盘空间
+df -h
+
+# 监控进程资源
+htop
+```
