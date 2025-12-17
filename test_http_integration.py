@@ -15,9 +15,10 @@ from pathlib import Path
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
+from rich import print as rprint
+
 from src.batch_mcp.core.http_mcp_client import HttpMCPClient
 from src.batch_mcp.core.simple_mcp_deployer import SimpleMCPDeployer
-from rich import print as rprint
 
 
 async def test_http_mcp_endpoint(url: str):
@@ -36,19 +37,19 @@ async def test_http_mcp_endpoint(url: str):
 
         tools_result = await client.list_tools()
 
-        if not tools_result['success']:
+        if not tools_result["success"]:
             rprint(f"❌ 获取工具列表失败: {tools_result.get('error', 'Unknown error')}")
             return False
 
-        tools = tools_result.get('tools', [])
+        tools = tools_result.get("tools", [])
         rprint(f"✅ 成功获取 {len(tools)} 个工具")
 
         # 3. 显示工具信息
         if tools:
             rprint("🛠️ 可用工具:")
             for i, tool in enumerate(tools, 1):
-                tool_name = tool.get('name', 'Unknown')
-                tool_desc = tool.get('description', 'No description')
+                tool_name = tool.get("name", "Unknown")
+                tool_desc = tool.get("description", "No description")
                 rprint(f"  {i}. {tool_name}")
                 rprint(f"     描述: {tool_desc[:100]}...")
 
@@ -58,27 +59,32 @@ async def test_http_mcp_endpoint(url: str):
 
             # 选择第一个工具进行测试
             test_tool = tools[0]
-            tool_name = test_tool.get('name')
+            tool_name = test_tool.get("name")
 
             if tool_name:
                 # 构造测试参数
-                input_schema = test_tool.get('inputSchema', {})
-                properties = input_schema.get('properties', {})
+                input_schema = test_tool.get("inputSchema", {})
+                properties = input_schema.get("properties", {})
 
                 test_args = {}
                 for prop_name, prop_info in properties.items():
-                    prop_type = prop_info.get('type', 'string')
+                    prop_type = prop_info.get("type", "string")
 
-                    if prop_type == 'string':
-                        if 'query' in prop_name.lower() or 'prompt' in prop_name.lower():
-                            test_args[prop_name] = "Hello, this is a test message from HTTP MCP integration test"
-                        elif prop_name in input_schema.get('required', []):
+                    if prop_type == "string":
+                        if (
+                            "query" in prop_name.lower()
+                            or "prompt" in prop_name.lower()
+                        ):
+                            test_args[prop_name] = (
+                                "Hello, this is a test message from HTTP MCP integration test"
+                            )
+                        elif prop_name in input_schema.get("required", []):
                             test_args[prop_name] = "test_value"
-                    elif prop_type == 'number':
+                    elif prop_type == "number":
                         test_args[prop_name] = 42
-                    elif prop_type == 'boolean':
+                    elif prop_type == "boolean":
                         test_args[prop_name] = True
-                    elif prop_type == 'array':
+                    elif prop_type == "array":
                         test_args[prop_name] = []
 
                 # 如果没有构造出参数，使用默认参数
@@ -90,7 +96,7 @@ async def test_http_mcp_endpoint(url: str):
 
                 call_result = await client.call_tool(tool_name, test_args)
 
-                if call_result['success']:
+                if call_result["success"]:
                     rprint("✅ 工具调用成功")
                     rprint(f"📤 调用结果: {call_result.get('result')}")
                 else:
@@ -100,8 +106,9 @@ async def test_http_mcp_endpoint(url: str):
         return True
 
     except Exception as e:
-        rprint(f"❌ 测试过程发生错误: {str(e)}")
+        rprint(f"❌ 测试过程发生错误: {e!s}")
         import traceback
+
         rprint("📋 错误详情:")
         rprint(traceback.format_exc())
         return False
@@ -123,7 +130,7 @@ async def test_deployer_integration():
         rprint(f"⚙️ 解析的配置: {config}")
 
         # 2. 部署客户端
-        if method == 'http':
+        if method == "http":
             rprint("🚀 正在部署 HTTP 客户端...")
             client = deployer.deploy_http_mcp(config)
             rprint("✅ HTTP 客户端部署成功")
@@ -131,12 +138,11 @@ async def test_deployer_integration():
             # 3. 测试客户端
             success = await test_http_mcp_endpoint(url)
             return success
-        else:
-            rprint(f"❌ 未预期的部署方法: {method}")
-            return False
+        rprint(f"❌ 未预期的部署方法: {method}")
+        return False
 
     except Exception as e:
-        rprint(f"❌ 部署器集成测试失败: {str(e)}")
+        rprint(f"❌ 部署器集成测试失败: {e!s}")
         return False
 
 
@@ -165,9 +171,8 @@ async def main():
     if success1 and success2:
         rprint("🎉 所有测试通过！HTTP MCP 集成成功！")
         return True
-    else:
-        rprint("❌ 部分测试失败，需要检查实现")
-        return False
+    rprint("❌ 部分测试失败，需要检查实现")
+    return False
 
 
 if __name__ == "__main__":

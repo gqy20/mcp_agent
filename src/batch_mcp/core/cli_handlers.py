@@ -14,7 +14,9 @@
 import asyncio
 import json
 import time
+from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 from rich import print as rprint
 
@@ -39,6 +41,7 @@ class CLIHandler:
     """CLI命令处理器 - 统一处理模式."""
 
     def __init__(self) -> None:
+        """初始化CLI处理器."""
         self.tester = get_mcp_tester()
 
     def evaluate_tools(self, db_export: bool) -> None:
@@ -60,8 +63,10 @@ class CLIHandler:
                         config.database.supabase_url,
                         config.database.supabase_service_role_key,
                     )
-                except Exception:
-                    pass
+                except ImportError:
+                    rprint("[yellow]⚠️ Supabase库未安装，跳过数据库导出[/yellow]")
+                except Exception as e:
+                    rprint(f"[yellow]⚠️ Supabase客户端创建失败: {e}[/yellow]")
 
             for tool in tools:
                 if not tool.github_url:
@@ -101,7 +106,7 @@ class CLIHandler:
     def _export_evaluation_to_database(
         self,
         github_url: str,
-        evaluation_result: dict,
+        evaluation_result: dict[str, Any],
     ) -> None:
         """导出评估结果到数据库 - 包含综合评分."""
         if not CONFIG_AVAILABLE or not config.database.has_supabase_config:
@@ -109,8 +114,6 @@ class CLIHandler:
             return
 
         try:
-            from datetime import datetime
-
             from supabase import create_client
 
             client = create_client(
@@ -133,17 +136,19 @@ class CLIHandler:
                     "details"
                 ],
                 "popularity_details": evaluation_result["popularity"]["details"],
-                "last_evaluated_at": datetime.now().isoformat(),
+                "last_evaluated_at": datetime.now(UTC).isoformat(),
                 # 新增字段
                 "success_rate": test_success_info.get("success_rate"),
                 "test_count": test_success_info.get("test_count", 0),
                 "total_score": comprehensive_info.get("total_score"),
-                "last_calculated_at": datetime.now().isoformat(),
+                "last_calculated_at": datetime.now(UTC).isoformat(),
             }
 
             client.table("mcp_repository_evaluations").upsert(record).execute()
             rprint(f"[green]✅ 成功导出评估结果到数据库: {github_url}[/green]")
 
+        except ImportError:
+            rprint("[yellow]⚠️ Supabase库未安装，跳过数据库导出[/yellow]")
         except Exception as e:
             rprint(f"[yellow]⚠️ 数据库导出异常: {e}[/yellow]")
 
@@ -387,7 +392,7 @@ class CLIHandler:
     def _deploy_tool(self, tool_info: MCPToolInfo, config: TestConfig):
         """部署工具 - 单一职责."""
         # 检查是否为 HTTP MCP 端点
-        if getattr(tool_info, 'transport', None) == 'http':
+        if getattr(tool_info, "transport", None) == "http":
             return self._deploy_http_mcp(tool_info, config)
 
         # 尝试从run_command中提取包名（如果package_name为空）
@@ -951,16 +956,16 @@ class CLIHandler:
 
     def _is_http_mcp_endpoint(self, url: str) -> bool:
         """检测是否为 HTTP MCP 端点."""
-        if url.startswith(('http://', 'https://')):
+        if url.startswith(("http://", "https://")):
             # 排除 GitHub URLs
-            if 'github.com' not in url:
+            if "github.com" not in url:
                 # 检查是否包含 MCP 相关路径
-                return '/mcp' in url or '/api/mcp' in url or url.endswith('/mcp')
+                return "/mcp" in url or "/api/mcp" in url or url.endswith("/mcp")
         return False
 
     def _create_http_tool_info(self, url: str) -> MCPToolInfo:
         """为 HTTP MCP 端点创建工具信息."""
-        from urllib.parse import urlparse, parse_qs
+        from urllib.parse import parse_qs, urlparse
 
         parsed = urlparse(url)
 
@@ -971,10 +976,10 @@ class CLIHandler:
         headers = {}
         query_params = parse_qs(parsed.query)
 
-        if 'api_key' in query_params:
-            headers['Authorization'] = f"Bearer {query_params['api_key'][0]}"
-        elif 'token' in query_params:
-            headers['Authorization'] = f"Bearer {query_params['token'][0]}"
+        if "api_key" in query_params:
+            headers["Authorization"] = f"Bearer {query_params['api_key'][0]}"
+        elif "token" in query_params:
+            headers["Authorization"] = f"Bearer {query_params['token'][0]}"
 
         return MCPToolInfo(
             name=tool_name,
@@ -991,7 +996,7 @@ class CLIHandler:
             api_requirements=["httpx"],  # HTTP客户端依赖
         )
 
-    def _deploy_http_mcp(self, tool_info: MCPToolInfo, config: TestConfig):
+    def _deploy_http_mcp(self, tool_info: MCPToolInfo, config: TestConfig) -> Any:
         """部署 HTTP MCP 端点."""
         rprint("[blue]🚀 正在部署 HTTP MCP 端点...[/blue]")
 
@@ -1001,10 +1006,10 @@ class CLIHandler:
             deployer = SimpleMCPDeployer()
 
             # 从 URL 重新解析配置
-            method, http_config = deployer.detect_deployment_method(tool_info.url)
+            _method, http_config = deployer.detect_deployment_method(tool_info.url)
 
             # 合并配置参数
-            http_config['timeout'] = config.timeout
+            http_config["timeout"] = config.timeout
 
             # 部署 HTTP 客户端
             client = deployer.deploy_http_mcp(http_config)
@@ -1016,61 +1021,68 @@ class CLIHandler:
             rprint(f"[red]❌ HTTP MCP 端点部署失败: {e}[/red]")
             return None
 
-    def _is_http_client(self, client) -> bool:
+    def _is_http_client(self, client: Any) -> bool:
         """检测是否为 HTTP MCP 客户端."""
         try:
             from .http_mcp_client import HttpMCPClient
+
             return isinstance(client, HttpMCPClient)
         except ImportError:
             return False
 
-    async def _run_http_tests(self, tool_info: MCPToolInfo | None, client, config: TestConfig):
+    async def _run_http_tests(
+        self, tool_info: MCPToolInfo | None, client: Any, config: TestConfig
+    ) -> tuple[bool, dict[str, Any]]:
         """运行 HTTP MCP 测试."""
         try:
             rprint("[blue]🔗 测试 HTTP MCP 连接...[/blue]")
 
             # 1. 获取工具列表
             tools_result = await client.list_tools()
-            if not tools_result['success']:
-                rprint(f"[red]❌ 获取工具列表失败: {tools_result.get('error', 'Unknown error')}[/red]")
+            if not tools_result["success"]:
+                rprint(
+                    f"[red]❌ 获取工具列表失败: {tools_result.get('error', 'Unknown error')}[/red]"
+                )
                 return False, {}
 
-            tools = tools_result.get('tools', [])
+            tools = tools_result.get("tools", [])
             rprint(f"[green]✅ 找到 {len(tools)} 个工具[/green]")
 
             # 显示工具列表
             if tools:
                 rprint("[blue]🛠️ 可用工具:[/blue]")
                 for i, tool in enumerate(tools, 1):
-                    tool_name = tool.get('name', 'Unknown')
-                    tool_desc = tool.get('description', 'No description')[:50]
+                    tool_name = tool.get("name", "Unknown")
+                    tool_desc = tool.get("description", "No description")[:50]
                     rprint(f"  {i}. {tool_name} - {tool_desc}...")
 
             # 2. 基础测试通过，运行智能测试（如果启用）
             test_results = {
-                'connection': True,
-                'tools_found': len(tools),
-                'tools': tools
+                "connection": True,
+                "tools_found": len(tools),
+                "tools": tools,
             }
 
             if config.smart_test and tools:
                 rprint("[blue]🤖 启用AI智能测试...[/blue]")
                 smart_results = await self._run_http_smart_tests(client, tools, config)
-                test_results['smart_tests'] = smart_results
+                test_results["smart_tests"] = smart_results
 
             rprint("[green]✅ HTTP MCP 测试完成！[/green]")
             return True, test_results
 
         except Exception as e:
             rprint(f"[red]❌ HTTP MCP 测试失败: {e}[/red]")
-            return False, {'error': str(e)}
+            return False, {"error": str(e)}
 
-    async def _run_http_smart_tests(self, client, tools: list, config: TestConfig):
+    async def _run_http_smart_tests(
+        self, client: Any, tools: list[dict[str, Any]], config: TestConfig
+    ) -> list[dict[str, Any]]:
         """运行 HTTP 智能测试."""
         smart_results = []
 
         for tool in tools[:3]:  # 限制测试前3个工具
-            tool_name = tool.get('name')
+            tool_name = tool.get("name")
             if not tool_name:
                 continue
 
@@ -1083,49 +1095,55 @@ class CLIHandler:
                 # 调用工具
                 call_result = await client.call_tool(tool_name, test_args)
 
-                test_success = call_result.get('success', False)
-                smart_results.append({
-                    'tool_name': tool_name,
-                    'success': test_success,
-                    'result': call_result.get('result'),
-                    'error': call_result.get('error')
-                })
+                test_success = call_result.get("success", False)
+                smart_results.append(
+                    {
+                        "tool_name": tool_name,
+                        "success": test_success,
+                        "result": call_result.get("result"),
+                        "error": call_result.get("error"),
+                    }
+                )
 
                 if test_success:
                     rprint(f"[green]  ✅ {tool_name} 测试成功[/green]")
                 else:
-                    rprint(f"[red]  ❌ {tool_name} 测试失败: {call_result.get('error')}[/red]")
+                    rprint(
+                        f"[red]  ❌ {tool_name} 测试失败: {call_result.get('error')}[/red]"
+                    )
 
             except Exception as e:
-                smart_results.append({
-                    'tool_name': tool_name,
-                    'success': False,
-                    'error': str(e)
-                })
+                smart_results.append(
+                    {"tool_name": tool_name, "success": False, "error": str(e)}
+                )
                 rprint(f"[red]  ❌ {tool_name} 测试异常: {e}[/red]")
 
         return smart_results
 
-    def _construct_test_args(self, tool: dict) -> dict:
+    def _construct_test_args(self, tool: dict[str, Any]) -> dict[str, Any]:
         """为工具构造测试参数."""
-        input_schema = tool.get('inputSchema', {})
-        properties = input_schema.get('properties', {})
-        required = input_schema.get('required', [])
+        input_schema = tool.get("inputSchema", {})
+        properties = input_schema.get("properties", {})
+        required = input_schema.get("required", [])
 
-        args = {}
+        args: dict[str, Any] = {}
         for prop_name, prop_info in properties.items():
-            prop_type = prop_info.get('type', 'string')
+            prop_type = prop_info.get("type", "string")
 
-            if prop_type == 'string':
-                if 'query' in prop_name.lower() or 'prompt' in prop_name.lower() or 'input' in prop_name.lower():
+            if prop_type == "string":
+                if (
+                    "query" in prop_name.lower()
+                    or "prompt" in prop_name.lower()
+                    or "input" in prop_name.lower()
+                ):
                     args[prop_name] = "Hello, this is a test message"
                 elif prop_name in required:
                     args[prop_name] = "test_value"
-            elif prop_type == 'number':
+            elif prop_type == "number":
                 args[prop_name] = 42
-            elif prop_type == 'boolean':
+            elif prop_type == "boolean":
                 args[prop_name] = True
-            elif prop_type == 'array':
+            elif prop_type == "array":
                 args[prop_name] = []
 
         # 如果没有构造出参数，使用默认参数

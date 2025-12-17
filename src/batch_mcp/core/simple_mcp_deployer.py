@@ -19,7 +19,7 @@ import uuid
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
-from urllib.parse import urlparse, parse_qs
+from urllib.parse import parse_qs, urlparse
 
 
 # 简化的通信器类（基于原CrossPlatformMCPCommunicator）
@@ -265,16 +265,20 @@ class SimpleMCPDeployer:
 
         """
         # 检查是否为 HTTP MCP 端点（更精确的检测）
-        if url.startswith(('http://', 'https://')):
+        if url.startswith(("http://", "https://")):
             # 排除 GitHub URLs
-            if not ('github.com' in url):
+            if "github.com" not in url:
                 # 检查是否包含 MCP 相关路径模式
-                if '/mcp' in url or '/api/mcp' in url or url.endswith('/mcp'):
-                    return 'http', self._parse_http_config(url)
+                if "/mcp" in url or "/api/mcp" in url or url.endswith("/mcp"):
+                    return "http", self._parse_http_config(url)
 
         # 回退到现有的 STDIO 检测逻辑
         runtime_type, runtime_cmd = self.detect_simple_platform(url)
-        return runtime_type, {'url': url, 'runtime': runtime_type, 'command': runtime_cmd}
+        return runtime_type, {
+            "url": url,
+            "runtime": runtime_type,
+            "command": runtime_cmd,
+        }
 
     def detect_simple_platform(self, github_url: str) -> tuple[str, str]:
         """根据GitHub URL检测简单平台类型（运行时）.
@@ -323,27 +327,25 @@ class SimpleMCPDeployer:
             HTTP 配置字典
 
         """
-        from urllib.parse import urlparse, parse_qs
-
         parsed = urlparse(url)
         config = {
-            'url': f"{parsed.scheme}://{parsed.netloc}{parsed.path}",
-            'headers': {},
-            'timeout': 30
+            "url": f"{parsed.scheme}://{parsed.netloc}{parsed.path}",
+            "headers": {},
+            "timeout": 30,
         }
 
         # 从查询参数提取配置
         query_params = parse_qs(parsed.query)
 
         # 支持 api_key 参数
-        if 'api_key' in query_params:
-            api_key = query_params['api_key'][0]
-            config['headers']['Authorization'] = f"Bearer {api_key}"
+        if "api_key" in query_params:
+            api_key = query_params["api_key"][0]
+            config["headers"]["Authorization"] = f"Bearer {api_key}"
 
         # 支持 token 参数
-        if 'token' in query_params:
-            token = query_params['token'][0]
-            config['headers']['Authorization'] = f"Bearer {token}"
+        if "token" in query_params:
+            token = query_params["token"][0]
+            config["headers"]["Authorization"] = f"Bearer {token}"
 
         return config
 
@@ -359,13 +361,14 @@ class SimpleMCPDeployer:
         """
         from .http_mcp_client import HttpMCPClient
 
-        if 'url' not in config:
-            raise KeyError("HTTP MCP 配置必须包含 'url' 字段")
+        if "url" not in config:
+            msg = "HTTP MCP 配置必须包含 'url' 字段"
+            raise KeyError(msg)
 
         return HttpMCPClient(
-            url=config['url'],
-            headers=config.get('headers', {}),
-            timeout=config.get('timeout', 30)
+            url=config["url"],
+            headers=config.get("headers", {}),
+            timeout=config.get("timeout", 30),
         )
 
     def deploy(self, url: str, **kwargs: Any):
@@ -381,16 +384,16 @@ class SimpleMCPDeployer:
         """
         method, config = self.detect_deployment_method(url)
 
-        if method == 'http':
+        if method == "http":
             return self.deploy_http_mcp(config)
 
         # 对于 STDIO，使用现有的 deploy_package 方法
-        if method in ['npx', 'uvx']:
+        if method in ["npx", "uvx"]:
             return self.deploy_package(
-                package_name=kwargs.get('package_name'),
-                run_command=kwargs.get('run_command'),
+                package_name=kwargs.get("package_name"),
+                run_command=kwargs.get("run_command"),
                 github_url=url,
-                timeout=kwargs.get('timeout', 30)
+                timeout=kwargs.get("timeout", 30),
             )
 
         raise ValueError(f"不支持的部署方法: {method}")

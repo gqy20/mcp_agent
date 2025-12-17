@@ -8,6 +8,7 @@
 
 from __future__ import annotations
 
+import json
 from typing import Any
 
 import httpx
@@ -65,7 +66,7 @@ class HttpMCPClient:
                     "tools": result.get("result", {}).get("tools", []),
                     "raw": result,
                 }
-            except Exception:
+            except json.JSONDecodeError:
                 # 如果JSON解析失败，尝试SSE格式
                 sse_result = self._parse_sse_response(tools_response.text)
                 if "result" in sse_result:
@@ -74,12 +75,11 @@ class HttpMCPClient:
                         "tools": sse_result.get("result", {}).get("tools", []),
                         "raw": sse_result,
                     }
-                else:
-                    return {
-                        "success": False,
-                        "error": f"无法解析响应: {sse_result}",
-                        "raw": tools_response.text,
-                    }
+                return {
+                    "success": False,
+                    "error": f"无法解析响应: {sse_result}",
+                    "raw": tools_response.text,
+                }
 
     async def call_tool(
         self, name: str, arguments: dict[str, Any] | None = None
@@ -107,7 +107,7 @@ class HttpMCPClient:
                     "error": result.get("error"),
                     "raw": result,
                 }
-            except Exception:
+            except json.JSONDecodeError:
                 # 如果JSON解析失败，尝试SSE格式
                 sse_result = self._parse_sse_response(response.text)
                 if "error" in sse_result:
@@ -116,20 +116,17 @@ class HttpMCPClient:
                         "error": sse_result["error"],
                         "raw": sse_result,
                     }
-                else:
-                    return {
-                        "success": True,
-                        "result": sse_result.get("result"),
-                        "raw": sse_result,
-                    }
+                return {
+                    "success": True,
+                    "result": sse_result.get("result"),
+                    "raw": sse_result,
+                }
 
     def _parse_sse_response(self, response_text: str) -> dict:
-        """解析 SSE 响应格式"""
-        import json
-
-        lines = response_text.strip().split('\n')
+        """解析 SSE 响应格式."""
+        lines = response_text.strip().split("\n")
         for line in reversed(lines):
-            if line.startswith('data:'):
+            if line.startswith("data:"):
                 try:
                     json_str = line[5:].strip()
                     return json.loads(json_str)

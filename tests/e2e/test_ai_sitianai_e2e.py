@@ -9,9 +9,9 @@
 
 import asyncio
 import json
+
 import httpx
 import pytest
-from src.batch_mcp.core.http_mcp_client import HttpMCPClient
 
 
 class TestAiSitianaiE2E:
@@ -36,8 +36,8 @@ class TestAiSitianaiE2E:
                 "params": {
                     "protocolVersion": "2024-11-05",
                     "capabilities": {},
-                    "clientInfo": {"name": "e2e-test-framework", "version": "1.0.0"}
-                }
+                    "clientInfo": {"name": "e2e-test-framework", "version": "1.0.0"},
+                },
             }
 
             init_response = await client.post(url, json=init_request, headers=headers)
@@ -55,7 +55,7 @@ class TestAiSitianaiE2E:
                 "jsonrpc": "2.0",
                 "id": 2,
                 "method": "tools/list",
-                "params": {}
+                "params": {},
             }
 
             tools_response = await client.post(url, json=tools_request, headers=headers)
@@ -72,12 +72,14 @@ class TestAiSitianaiE2E:
             # 显示工具信息
             for i, tool in enumerate(tools, 1):
                 print(f"  {i}. {tool.get('name', 'Unknown')}")
-                print(f"     描述: {tool.get('description', 'No description')[:100]}...")
+                print(
+                    f"     描述: {tool.get('description', 'No description')[:100]}..."
+                )
 
             # 步骤 3: 测试工具调用
             print("\n🛠️ 步骤 3: 测试工具调用...")
             tool = tools[0]  # 使用第一个工具
-            tool_name = tool.get('name')
+            tool_name = tool.get("name")
             print(f"使用工具: {tool_name}")
 
             # 根据工具的输入模式构造测试参数
@@ -87,17 +89,14 @@ class TestAiSitianaiE2E:
                 "jsonrpc": "2.0",
                 "id": 3,
                 "method": "tools/call",
-                "params": {
-                    "name": tool_name,
-                    "arguments": test_args
-                }
+                "params": {"name": tool_name, "arguments": test_args},
             }
 
             call_response = await client.post(url, json=call_request, headers=headers)
             assert call_response.status_code == 200
 
             call_result = self._parse_sse_response(call_response.text)
-            print(f"✅ 工具调用成功")
+            print("✅ 工具调用成功")
             print(f"📤 响应: {json.dumps(call_result, indent=2, ensure_ascii=False)}")
 
             # 步骤 4: 验证响应格式
@@ -115,9 +114,9 @@ class TestAiSitianaiE2E:
 
     def _parse_sse_response(self, response_text: str) -> dict:
         """解析 SSE 响应"""
-        lines = response_text.strip().split('\n')
+        lines = response_text.strip().split("\n")
         for line in reversed(lines):
-            if line.startswith('data:'):
+            if line.startswith("data:"):
                 try:
                     json_str = line[5:].strip()
                     return json.loads(json_str)
@@ -127,47 +126,49 @@ class TestAiSitianaiE2E:
 
     def _construct_test_args(self, tool: dict) -> dict:
         """根据工具模式构造测试参数"""
-        tool_name = tool.get('name', '').lower()
+        tool_name = tool.get("name", "").lower()
 
         # 如果工具有输入模式，使用它来构造参数
-        if 'inputSchema' in tool:
-            schema = tool['inputSchema']
-            properties = schema.get('properties', {})
-            required = schema.get('required', [])
+        if "inputSchema" in tool:
+            schema = tool["inputSchema"]
+            properties = schema.get("properties", {})
+            required = schema.get("required", [])
 
             args = {}
             for prop_name, prop_info in properties.items():
-                if prop_name.lower() in ['query', 'message', 'input', 'prompt']:
+                if prop_name.lower() in ["query", "message", "input", "prompt"]:
                     # 优先填充常见的文本参数
-                    args[prop_name] = "Hello, this is a test message for research topic exploration"
-                elif prop_name.lower() in ['files', 'document']:
+                    args[prop_name] = (
+                        "Hello, this is a test message for research topic exploration"
+                    )
+                elif prop_name.lower() in ["files", "document"]:
                     args[prop_name] = ["test_document.txt"]
-                elif prop_name.lower() in ['topic', 'subject']:
+                elif prop_name.lower() in ["topic", "subject"]:
                     args[prop_name] = "Artificial Intelligence in Healthcare"
-                else:
-                    # 为其他必需参数提供默认值
-                    if prop_name in required:
-                        prop_type = prop_info.get('type', 'string')
-                        if prop_type == 'string':
-                            args[prop_name] = "test_value"
-                        elif prop_type == 'number':
-                            args[prop_name] = 42
-                        elif prop_type == 'boolean':
-                            args[prop_name] = True
-                        elif prop_type == 'array':
-                            args[prop_name] = []
-                        elif prop_type == 'object':
-                            args[prop_name] = {}
+                # 为其他必需参数提供默认值
+                elif prop_name in required:
+                    prop_type = prop_info.get("type", "string")
+                    if prop_type == "string":
+                        args[prop_name] = "test_value"
+                    elif prop_type == "number":
+                        args[prop_name] = 42
+                    elif prop_type == "boolean":
+                        args[prop_name] = True
+                    elif prop_type == "array":
+                        args[prop_name] = []
+                    elif prop_type == "object":
+                        args[prop_name] = {}
 
             return args if args else {"query": "Test research topic in AI"}
 
         # 如果没有输入模式，根据工具名称推测
-        if 'research' in tool_name:
-            return {"query": "Test research topic: Machine Learning applications in healthcare"}
-        elif 'chat' in tool_name:
+        if "research" in tool_name:
+            return {
+                "query": "Test research topic: Machine Learning applications in healthcare"
+            }
+        if "chat" in tool_name:
             return {"message": "Hello, I need help with a research topic"}
-        else:
-            return {"input": "Test input for the tool"}
+        return {"input": "Test input for the tool"}
 
 
 if __name__ == "__main__":

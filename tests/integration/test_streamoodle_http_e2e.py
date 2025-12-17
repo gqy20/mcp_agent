@@ -7,9 +7,10 @@ TDD 测试：验证 streamoodle-http 完整测试流程。
 日期: 2025-12-17
 """
 
-import pytest
 import asyncio
-from unittest.mock import patch, AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 # 目标导入 - 目前还不完全存在，测试会失败
 # from src.batch_mcp.core.simple_mcp_deployer import SimpleMCPDeployer
@@ -23,7 +24,9 @@ class TestStreamoodleHTTPEndToEnd:
     async def test_streamoodle_http_full_test_workflow(self):
         """测试：streamoodle HTTP 完整测试工作流"""
         # 模拟部署器
-        with patch('src.batch_mcp.core.simple_mcp_deployer.SimpleMCPDeployer') as mock_deployer_class:
+        with patch(
+            "src.batch_mcp.core.simple_mcp_deployer.SimpleMCPDeployer"
+        ) as mock_deployer_class:
             mock_deployer = MagicMock()
             mock_deployer_class.return_value = mock_deployer
 
@@ -39,10 +42,10 @@ class TestStreamoodleHTTPEndToEnd:
                             "type": "object",
                             "properties": {
                                 "prompt": {"type": "string"},
-                                "model": {"type": "string", "default": "gpt-3.5-turbo"}
+                                "model": {"type": "string", "default": "gpt-3.5-turbo"},
                             },
-                            "required": ["prompt"]
-                        }
+                            "required": ["prompt"],
+                        },
                     },
                     {
                         "name": "chat_completion",
@@ -51,11 +54,11 @@ class TestStreamoodleHTTPEndToEnd:
                             "type": "object",
                             "properties": {
                                 "messages": {"type": "array"},
-                                "temperature": {"type": "number", "default": 0.7}
-                            }
-                        }
-                    }
-                ]
+                                "temperature": {"type": "number", "default": 0.7},
+                            },
+                        },
+                    },
+                ],
             }
 
             mock_client.call_tool.return_value = {
@@ -64,18 +67,20 @@ class TestStreamoodleHTTPEndToEnd:
                     "content": [
                         {"type": "text", "text": "Hello! This is a test response."}
                     ]
-                }
+                },
             }
 
             mock_deployer.deploy_http_mcp.return_value = mock_client
 
             # 执行完整测试流程
             deployer = mock_deployer_class.return_value
-            client = deployer.deploy_http_mcp({
-                "url": "https://api.streamoodle.com/mcp",
-                "headers": {"Authorization": "Bearer test-token"},
-                "timeout": 30
-            })
+            client = deployer.deploy_http_mcp(
+                {
+                    "url": "https://api.streamoodle.com/mcp",
+                    "headers": {"Authorization": "Bearer test-token"},
+                    "timeout": 30,
+                }
+            )
 
             # 1. 验证部署成功
             assert client is not None
@@ -89,11 +94,13 @@ class TestStreamoodleHTTPEndToEnd:
 
             # 3. 验证工具调用
             call_result = await client.call_tool(
-                "model_inference",
-                {"prompt": "Hello, world!", "model": "gpt-4"}
+                "model_inference", {"prompt": "Hello, world!", "model": "gpt-4"}
             )
             assert call_result["success"] is True
-            assert "Hello! This is a test response." in call_result["result"]["content"][0]["text"]
+            assert (
+                "Hello! This is a test response."
+                in call_result["result"]["content"][0]["text"]
+            )
 
     def test_streamoodle_config_parsing(self):
         """测试：streamoodle 配置解析"""
@@ -107,7 +114,7 @@ class TestStreamoodleHTTPEndToEnd:
             "mcp_args": {"prompt": "Test prompt"},
             "category": "AI模型",
             "verified": False,
-            "timeout": 45
+            "timeout": 45,
         }
 
         # 验证配置格式正确
@@ -121,21 +128,29 @@ class TestStreamoodleHTTPEndToEnd:
     async def test_streamoodle_error_handling(self):
         """测试：streamoodle 错误处理"""
         # 模拟部署错误
-        with patch('src.batch_mcp.core.simple_mcp_deployer.SimpleMCPDeployer') as mock_deployer_class:
+        with patch(
+            "src.batch_mcp.core.simple_mcp_deployer.SimpleMCPDeployer"
+        ) as mock_deployer_class:
             mock_deployer = MagicMock()
             mock_deployer_class.return_value = mock_deployer
 
             # 模拟连接错误
-            mock_deployer.deploy_http_mcp.side_effect = ConnectionError("Failed to connect to streamoodle API")
+            mock_deployer.deploy_http_mcp.side_effect = ConnectionError(
+                "Failed to connect to streamoodle API"
+            )
 
             deployer = mock_deployer_class.return_value
 
             # 验证错误被正确抛出
-            with pytest.raises(ConnectionError, match="Failed to connect to streamoodle API"):
-                deployer.deploy_http_mcp({
-                    "url": "https://api.streamoodle.com/mcp",
-                    "headers": {"Authorization": "Bearer invalid-token"}
-                })
+            with pytest.raises(
+                ConnectionError, match="Failed to connect to streamoodle API"
+            ):
+                deployer.deploy_http_mcp(
+                    {
+                        "url": "https://api.streamoodle.com/mcp",
+                        "headers": {"Authorization": "Bearer invalid-token"},
+                    }
+                )
 
     @pytest.mark.asyncio
     async def test_streamoodle_tool_validation(self):
@@ -150,10 +165,10 @@ class TestStreamoodleHTTPEndToEnd:
                     "properties": {
                         "prompt": {"type": "string"},
                         "model": {"type": "string"},
-                        "max_tokens": {"type": "integer", "default": 100}
+                        "max_tokens": {"type": "integer", "default": 100},
                     },
-                    "required": ["prompt"]
-                }
+                    "required": ["prompt"],
+                },
             }
         ]
 
@@ -170,7 +185,9 @@ class TestStreamoodleHTTPEndToEnd:
     async def test_streamoodle_concurrent_calls(self):
         """测试：streamoodle 并发调用"""
         # 模拟支持并发调用的 HTTP 客户端
-        with patch('src.batch_mcp.core.http_mcp_client.HttpMCPClient') as mock_client_class:
+        with patch(
+            "src.batch_mcp.core.http_mcp_client.HttpMCPClient"
+        ) as mock_client_class:
             mock_client = AsyncMock()
 
             # 模拟异步响应
