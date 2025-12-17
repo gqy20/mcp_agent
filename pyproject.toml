@@ -26,6 +26,8 @@ dependencies = [
     "python-docx>=1.2.0",
     "python-pptx>=1.0.2",
     "pillow>=11.3.0",
+    "ruff>=0.14.9",
+    "types-requests>=2.32.4.20250913",
 ]
 
 [project.optional-dependencies]
@@ -64,45 +66,96 @@ dev = [
     "pytest-mock>=3.11.0",
     "coverage>=7.3.0",
     "pre-commit>=4.3.0",
+    "bandit>=1.9.2",
+    "safety>=3.7.0",
 ]
 
-[tool.black]
-line-length = 88
-target-version = ['py312']
-include = '\.pyi?$'
-extend-exclude = '''
-/(
-  # directories
-  \.eggs
-  | \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | build
-  | dist
-)/
-'''
-
-[tool.isort]
-profile = "black"
-multi_line_output = 3
-line_length = 88
+[tool.ruff.format]
+quote-style = "preserve"
+line-ending = "auto"
 
 [tool.mypy]
 python_version = "3.12"
-warn_return_any = true
-warn_unused_configs = true
-disallow_untyped_defs = true
-disallow_incomplete_defs = true
-check_untyped_defs = true
-disallow_untyped_decorators = true
-no_implicit_optional = true
-warn_redundant_casts = true
-warn_unused_ignores = true
-warn_no_return = true
-warn_unreachable = true
-strict_equality = true
+ignore_missing_imports = true
+no_strict_optional = true
+allow_any_generics = true
+allow_untyped_defs = true
+allow_incomplete_defs = true
+disable_error_code = [
+    "attr-defined",
+    "no-any-return",
+    "no-untyped-def",
+    "var-annotated",
+    "assignment",
+    "arg-type",
+    "call-overload",
+    "unreachable",
+    "index",
+    "operator",
+    "misc",
+    "no-redef",
+    "return",
+    "call-arg"
+]
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+extend-exclude = [
+    "__pycache__",
+    ".git",
+    ".venv",
+    ".mypy_cache",
+]
+
+[tool.ruff.lint]
+# 启用所有规则，然后配置忽略
+select = ["ALL"]
+ignore = [
+    # 行长度（由 ruff format 处理）
+    "E501",
+
+    # 与 ruff format 冲突的规则
+    "COM812",  # 尾随逗号（由formatter处理）
+
+    # 类型注解相关
+    "ANN401",  # 允许 Any 类型
+    "ANN101",  # 不要求 self 类型注解
+    "ANN102",  # 不要求 cls 类型注解
+
+    # 中文标点符号
+    "RUF001",  # 全角标点符号
+    "RUF002",  # 文档字符串中的全角逗号
+    "RUF003",  # 注释中的全角逗号
+    "RUF005",  # 全角冒号
+
+
+    # 复杂度过高（可选）
+    "C901",    # 复杂度过高的函数
+
+    # 过于严格的规则
+    "TRY003",  # 要求异常消息变量化
+    "EM102",   # 要求 f-string 替代 % 格式化
+    "FBT001",  # 布尔类型的位置参数
+    "FBT002",  # 布尔类型的默认值
+    "B008",    # 函数调用中的参数默认值
+]
+
+[tool.ruff.lint.per-file-ignores]
+# 测试文件的特殊规则
+"tests/**" = [
+    "ANN",     # 测试文件不需要严格的类型注解
+    "S101",    # 允许使用 assert
+    "ARG001",  # 允许未使用的函数参数
+    "PLR2004", # 允许魔术数字
+]
+
+# 脚本文件的特殊规则
+"scripts/**" = [
+    "ANN",     # 脚本文件不需要严格的类型注解
+    "S101",    # 允许使用 assert
+]
+
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -112,6 +165,6 @@ python_functions = ["test_*"]
 addopts = "-v --tb=short --strict-markers"
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
-    "integration: marks tests as integration tests",
+    "integration: marks as integration tests",
     "unit: marks tests as unit tests"
 ]

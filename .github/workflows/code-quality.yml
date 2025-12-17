@@ -31,7 +31,7 @@ jobs:
     - name: Install dependencies
       run: |
         uv sync
-        uv add --dev pre-commit black isort flake8 mypy bandit safety
+        uv add --dev pre-commit mypy bandit safety
 
     - name: Cache pre-commit
       uses: actions/cache@v4
@@ -45,7 +45,7 @@ jobs:
 
     - name: Run type checking with mypy
       run: |
-        uv run mypy src/ --ignore-missing-imports --no-strict-optional
+        uv run mypy src/ --ignore-missing-imports
 
     - name: Run security checks with bandit
       run: |
@@ -87,9 +87,8 @@ jobs:
 
         echo "## ✅ Quality Checks Completed" >> code-quality-report.md
         echo "- [x] Pre-commit hooks" >> code-quality-report.md
-        echo "- [x] Code formatting (Black)" >> code-quality-report.md
-        echo "- [x] Import sorting (isort)" >> code-quality-report.md
-        echo "- [x] Linting (flake8)" >> code-quality-report.md
+        echo "- [x] Code formatting (Ruff)" >> code-quality-report.md
+        echo "- [x] Linting (Ruff)" >> code-quality-report.md
         echo "- [x] Type checking (mypy)" >> code-quality-report.md
         echo "- [x] Security scanning (bandit)" >> code-quality-report.md
         echo "- [x] Dependency safety check" >> code-quality-report.md

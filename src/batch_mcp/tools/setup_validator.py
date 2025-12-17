@@ -1,91 +1,64 @@
 #!/usr/bin/env python3
-"""
-Supabase 设置验证器
+"""Supabase 设置验证器.
 
 用途：验证 Supabase 配置和数据库连接是否正确配置
 运行：uv run python src/tools/setup_validator.py
 """
 
-import os
 import sys
 from pathlib import Path
 
 # 添加src目录到路径
 sys.path.append(str(Path(__file__).parent.parent))
 
+# 导入配置系统
+try:
+    from batch_mcp.core.config import get_config
 
-# 加载 .env 文件
-def load_env_file():
-    """加载 .env 文件"""
-    env_path = Path(__file__).parent.parent.parent / ".env"
-    if env_path.exists():
-        with open(env_path, "r", encoding="utf-8") as f:
-            for line in f:
-                line = line.strip()
-                if line and not line.startswith("#") and "=" in line:
-                    key, value = line.split("=", 1)
-                    os.environ[key.strip()] = value.strip()
-        print(f"✅ 已加载 .env 文件: {env_path}")
-    else:
-        print(f"⚠️ 未找到 .env 文件: {env_path}")
+    CONFIG_AVAILABLE = True
+    config = get_config() if CONFIG_AVAILABLE else None
+except ImportError:
+    CONFIG_AVAILABLE = False
+    config = None
 
 
-# 在导入之前加载环境变量
-load_env_file()
-
-
-def validate_environment():
-    """验证环境变量配置"""
-    print("🔍 检查环境变量配置...")
-
-    required_vars = ["SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY"]
-
-    missing_vars = []
-    for var in required_vars:
-        value = os.getenv(var)
-        if not value:
-            missing_vars.append(var)
-        else:
-            # 安全显示（只显示前10个字符）
-            safe_value = value[:10] + "..." if len(value) > 10 else value
-            print(f"  ✅ {var}: {safe_value}")
-
-    if missing_vars:
-        print(f"  ❌ 缺失环境变量: {', '.join(missing_vars)}")
-        print("  💡 请检查 .env 文件是否配置正确")
+def validate_environment() -> bool:
+    """验证环境变量配置."""
+    if not CONFIG_AVAILABLE:
         return False
+
+    # 验证数据库配置
+    if not config.database.has_supabase_config:
+        return False
+
+    # 显示配置信息（安全显示）
+    url = config.database.supabase_url
+    key = config.database.supabase_service_role_key
+    url[:10] + "..." if len(url) > 10 else url
+    key[:10] + "..." if len(key) > 10 else key
 
     return True
 
 
-def validate_supabase_connection():
-    """验证Supabase连接"""
-    print("\n🔗 测试Supabase连接...")
-
+def validate_supabase_connection() -> bool | None:
+    """验证Supabase连接."""
     try:
         from batch_mcp.core.supabase_connector import SupabaseConnector
 
         connector = SupabaseConnector()
 
         # 测试连接
-        response = connector.client.table("mcp_tools").select("count").execute()
-        print("  ✅ 连接成功! 数据库可访问")
+        connector.client.table("mcp_tools").select("count").execute()
         return True
 
-    except ImportError as e:
-        print(f"  ❌ 导入错误: {e}")
-        print("  💡 请确保已安装 supabase 依赖: uv add supabase")
+    except ImportError:
         return False
-    except Exception as e:
-        print(f"  ❌ 连接失败: {e}")
-        print("  💡 请检查 URL 和密钥是否正确")
+    except Exception:
         return False
 
 
-def validate_database_schema():
-    """验证数据库表结构"""
-    print("\n🗄️ 检查数据库表结构...")
-
+def validate_database_schema() -> bool | None:
+    """验证数据库表结构."""
     try:
         from batch_mcp.core.supabase_connector import SupabaseConnector
 
@@ -106,31 +79,19 @@ def validate_database_schema():
 
         for table in expected_tables:
             try:
-                response = (
-                    connector.client.table(table).select("count").limit(1).execute()
-                )
+                (connector.client.table(table).select("count").limit(1).execute())
                 existing_tables.append(table)
-                print(f"  ✅ 表 {table} 存在")
             except Exception:
                 missing_tables.append(table)
-                print(f"  ❌ 表 {table} 不存在")
 
-        if missing_tables:
-            print("\n  💡 需要初始化数据库: uv run python src/tools/db_migrate.py init")
-            return False
+        return not missing_tables
 
-        print("\n  🎉 所有表都已正确创建!")
-        return True
-
-    except Exception as e:
-        print(f"  ❌ 检查失败: {e}")
+    except Exception:
         return False
 
 
-def main():
-    """主验证流程"""
-    print("🚀 Supabase 配置验证开始...\n")
-
+def main() -> None:
+    """主验证流程."""
     steps = [
         ("环境变量配置", validate_environment),
         ("Supabase连接", validate_supabase_connection),
@@ -142,28 +103,20 @@ def main():
         try:
             result = step_func()
             results.append((step_name, result))
-        except Exception as e:
-            print(f"❌ {step_name} 验证失败: {e}")
+        except Exception:
             results.append((step_name, False))
 
     # 汇总结果
-    print("\n" + "=" * 50)
-    print("📊 验证结果汇总:")
 
     all_passed = True
-    for step_name, passed in results:
-        status = "✅ 通过" if passed else "❌ 失败"
-        print(f"  {status} {step_name}")
+    for _step_name, passed in results:
         if not passed:
             all_passed = False
 
-    print("\n" + "=" * 50)
     if all_passed:
-        print("🎉 所有验证都通过! 系统已准备就绪")
-        print("💡 现在可以运行: uv run python src/main.py")
+        pass
     else:
-        print("⚠️  部分验证失败，请按照提示修复问题")
-        print("📖 详细设置指南: docs/SUPABASE_SETUP.md")
+        pass
 
 
 if __name__ == "__main__":

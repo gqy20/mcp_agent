@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-URL-MCP 智能对接处理器
+"""URL-MCP 智能对接处理器.
 
 完善的URL与MCP工具自动部署、测试和报告生成系统
 
@@ -8,24 +7,22 @@ URL-MCP 智能对接处理器
 日期: 2025-08-15
 """
 
+import json
 import time
 import uuid
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 try:
     from rich import print as rprint
     from rich.console import Console
     from rich.panel import Panel
-    from rich.progress import Progress, SpinnerColumn, TextColumn
-    from rich.table import Table
 except ImportError:
-    print("❌ Rich未安装，使用基础输出")
 
-    def rprint(text):
-        print(text)
+    def rprint(text) -> None:
+        pass
 
     Console = None
 
@@ -35,20 +32,20 @@ from batch_mcp.utils.csv_parser import MCPToolInfo, get_mcp_parser
 
 @dataclass
 class TestReport:
-    """测试报告数据结构"""
+    """测试报告数据结构."""
 
     session_id: str
     url: str
     tool_info: MCPToolInfo
     start_time: datetime
-    end_time: Optional[datetime] = None
+    end_time: datetime | None = None
     deployment_success: bool = False
     deployment_time: float = 0.0
     communication_success: bool = False
     available_tools_count: int = 0
-    test_results: List[Dict[str, Any]] = None
-    error_messages: List[str] = None
-    performance_metrics: Dict[str, float] = None
+    test_results: list[dict[str, Any]] = None
+    error_messages: list[str] = None
+    performance_metrics: dict[str, float] = None
 
     def __post_init__(self):
         if self.test_results is None:
@@ -60,9 +57,9 @@ class TestReport:
 
 
 class URLMCPProcessor:
-    """URL-MCP智能处理器"""
+    """URL-MCP智能处理器."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.console = Console() if Console else None
         self.parser = get_mcp_parser()
         self.deployer = get_simple_mcp_deployer()
@@ -76,14 +73,16 @@ class URLMCPProcessor:
         timeout: int = 30,
         generate_report: bool = True,
     ) -> TestReport:
-        """完整的URL处理流程"""
-
+        """完整的URL处理流程."""
         session_id = str(uuid.uuid4())[:8]
         start_time = datetime.now()
 
         # 初始化报告
         report = TestReport(
-            session_id=session_id, url=url, tool_info=None, start_time=start_time
+            session_id=session_id,
+            url=url,
+            tool_info=None,
+            start_time=start_time,
         )
 
         try:
@@ -132,10 +131,10 @@ class URLMCPProcessor:
             try:
                 self.deployer.cleanup_server(server_info.server_id)
             except Exception as e:
-                report.error_messages.append(f"清理失败: {str(e)}")
+                report.error_messages.append(f"清理失败: {e!s}")
 
         except Exception as e:
-            report.error_messages.append(f"处理异常: {str(e)}")
+            report.error_messages.append(f"处理异常: {e!s}")
             rprint(f"[red]❌ 处理失败: {e}[/red]")
 
         finally:
@@ -147,8 +146,8 @@ class URLMCPProcessor:
 
         return report
 
-    async def _resolve_url_to_tool(self, url: str) -> Optional[MCPToolInfo]:
-        """将URL解析为MCP工具信息"""
+    async def _resolve_url_to_tool(self, url: str) -> MCPToolInfo | None:
+        """将URL解析为MCP工具信息."""
         try:
             rprint("[blue]🔍 解析URL到MCP工具...[/blue]")
 
@@ -164,7 +163,7 @@ class URLMCPProcessor:
                 if constructed_package:
                     tool_info.package_name = constructed_package
                     rprint(
-                        f"[green]✅ URL匹配并补充包名: {tool_info.name} -> {constructed_package}[/green]"
+                        f"[green]✅ URL匹配并补充包名: {tool_info.name} -> {constructed_package}[/green]",
                     )
                     return tool_info
 
@@ -182,7 +181,9 @@ class URLMCPProcessor:
                 tools = self.parser.search_tools(term)
                 if tools:
                     tool_info = tools[0]  # 取第一个匹配的
-                    rprint(f"[green]✅ 通过搜索词'{term}'匹配: {tool_info.name}[/green]")
+                    rprint(
+                        f"[green]✅ 通过搜索词'{term}'匹配: {tool_info.name}[/green]",
+                    )
                     return tool_info
 
             # 4. 如果是GitHub URL，尝试构造包名
@@ -201,7 +202,9 @@ class URLMCPProcessor:
                         requires_api_key=False,
                         api_requirements=[],
                     )
-                    rprint(f"[yellow]⚡ 从GitHub URL构造: {constructed_package}[/yellow]")
+                    rprint(
+                        f"[yellow]⚡ 从GitHub URL构造: {constructed_package}[/yellow]",
+                    )
                     return tool_info
 
             rprint(f"[red]❌ 无法从URL解析MCP工具: {url}[/red]")
@@ -211,8 +214,8 @@ class URLMCPProcessor:
             rprint(f"[red]❌ URL解析异常: {e}[/red]")
             return None
 
-    def _extract_package_from_url(self, url: str) -> Optional[str]:
-        """从URL提取NPM包名"""
+    def _extract_package_from_url(self, url: str) -> str | None:
+        """从URL提取NPM包名."""
         # 常见的NPM包URL模式
         patterns = [
             r"npmjs\.com/package/([^/]+(?:/[^/]+)?)",
@@ -229,12 +232,12 @@ class URLMCPProcessor:
         return None
 
     # 兼容旧测试脚本的方法名，统一对外暴露
-    def _extract_package_name(self, url: str) -> Optional[str]:
+    def _extract_package_name(self, url: str) -> str | None:
         """从任意URL中推断可用于 npx 的包名/来源规范。
         优先顺序:
         1) 直接包含的 npm 包名（npmjs 链接或 @scope/name 形式）
         2) GitHub URL -> 返回 npx 可用的 github:owner/repo 规范
-        3) 无法推断则返回 None
+        3) 无法推断则返回 None.
         """
         # 直接提取 npm 包名
         pkg = self._extract_package_from_url(url)
@@ -247,8 +250,8 @@ class URLMCPProcessor:
 
         return None
 
-    def _extract_search_terms_from_url(self, url: str) -> List[str]:
-        """从URL提取搜索关键词"""
+    def _extract_search_terms_from_url(self, url: str) -> list[str]:
+        """从URL提取搜索关键词."""
         terms = []
 
         # 从路径中提取词汇
@@ -261,8 +264,8 @@ class URLMCPProcessor:
 
         return terms
 
-    def _construct_package_from_github_url(self, url: str) -> Optional[str]:
-        """从GitHub URL构造可能的包名"""
+    def _construct_package_from_github_url(self, url: str) -> str | None:
+        """从GitHub URL构造可能的包名."""
         import re
 
         # 提取 github.com/username/repo 模式
@@ -275,13 +278,12 @@ class URLMCPProcessor:
 
             # 优先返回 npx 可直接执行的 GitHub 源规范
             # 参考: npx -y github:owner/repo
-            github_spec = f"github:{username}/{repo}"
-            return github_spec
+            return f"github:{username}/{repo}"
 
         return None
 
     async def _deploy_tool(self, tool_info: MCPToolInfo, timeout: int):
-        """部署MCP工具"""
+        """部署MCP工具."""
         try:
             # 优先使用run_command，其次使用package_name
             if tool_info.run_command:
@@ -297,18 +299,22 @@ class URLMCPProcessor:
                 rprint(f"[blue]🚀 部署MCP工具: {display_name}[/blue]")
 
                 if not tool_info.package_name:
-                    raise ValueError("缺少包名信息")
+                    msg = "缺少包名信息"
+                    raise ValueError(msg)
 
                 server_info = self.deployer.deploy_package(
-                    tool_info.package_name, timeout
+                    tool_info.package_name,
+                    timeout,
                 )
 
             if server_info:
                 rprint(f"[green]✅ {display_name} 部署成功！[/green]")
                 rprint(
-                    f"[green]🔧 可用工具: {[tool['name'] for tool in server_info.available_tools]}[/green]"
+                    f"[green]🔧 可用工具: {[tool['name'] for tool in server_info.available_tools]}[/green]",
                 )
-                rprint(f"[green]✅ 部署成功，工具数: {len(server_info.available_tools)}[/green]")
+                rprint(
+                    f"[green]✅ 部署成功，工具数: {len(server_info.available_tools)}[/green]",
+                )
 
             return server_info
 
@@ -317,7 +323,7 @@ class URLMCPProcessor:
             return None
 
     async def _verify_communication(self, server_info) -> bool:
-        """验证MCP通信"""
+        """验证MCP通信."""
         try:
             rprint("[blue]📡 验证MCP通信...[/blue]")
 
@@ -333,16 +339,15 @@ class URLMCPProcessor:
             if result["success"]:
                 rprint("[green]✅ MCP通信正常[/green]")
                 return True
-            else:
-                rprint(f"[yellow]⚠️ MCP通信异常: {result.get('error')}[/yellow]")
-                return False
+            rprint(f"[yellow]⚠️ MCP通信异常: {result.get('error')}[/yellow]")
+            return False
 
         except Exception as e:
             rprint(f"[red]❌ 通信验证失败: {e}[/red]")
             return False
 
-    async def _run_basic_tests(self, server_info) -> List[Dict[str, Any]]:
-        """运行基础测试"""
+    async def _run_basic_tests(self, server_info) -> list[dict[str, Any]]:
+        """运行基础测试."""
         tests = []
 
         try:
@@ -366,7 +371,7 @@ class URLMCPProcessor:
                     "success": result["success"],
                     "response_time": test_time,
                     "details": result,
-                }
+                },
             )
 
             # 对每个可用工具进行简单测试
@@ -384,7 +389,8 @@ class URLMCPProcessor:
                     }
 
                     result = server_info.communicator.send_request(
-                        tool_request, timeout=5
+                        tool_request,
+                        timeout=5,
                     )
                     test_time = time.time() - test_start
 
@@ -394,7 +400,7 @@ class URLMCPProcessor:
                             "success": result.get("success", False),
                             "response_time": test_time,
                             "details": result,
-                        }
+                        },
                     )
 
                 except Exception as e:
@@ -404,7 +410,7 @@ class URLMCPProcessor:
                             "success": False,
                             "response_time": time.time() - test_start,
                             "error": str(e),
-                        }
+                        },
                     )
 
             passed = sum(1 for t in tests if t.get("success", False))
@@ -416,17 +422,16 @@ class URLMCPProcessor:
         return tests
 
     async def _run_smart_tests(
-        self, tool_info: MCPToolInfo, server_info
-    ) -> List[Dict[str, Any]]:
-        """运行智能测试（暂时回退到基础测试）"""
+        self,
+        tool_info: MCPToolInfo,
+        server_info,
+    ) -> list[dict[str, Any]]:
+        """运行智能测试（暂时回退到基础测试）."""
         try:
             rprint("[blue]🤖 尝试智能测试...[/blue]")
 
             # 尝试导入智能代理
             try:
-                from batch_mcp.agents.test_agent import get_test_generator
-                from batch_mcp.agents.validation_agent import get_validation_agent
-
                 # 智能测试逻辑（简化版）
                 rprint("[yellow]⚠️ 智能测试功能开发中，使用增强基础测试[/yellow]")
                 return await self._run_basic_tests(server_info)
@@ -441,9 +446,11 @@ class URLMCPProcessor:
             return await self._run_basic_tests(server_info)
 
     async def _analyze_performance(
-        self, server_info, deployment_time: float
-    ) -> Dict[str, float]:
-        """性能分析"""
+        self,
+        server_info,
+        deployment_time: float,
+    ) -> dict[str, float]:
+        """性能分析."""
         metrics = {
             "deployment_time": deployment_time,
             "tools_count": len(server_info.available_tools),
@@ -466,8 +473,8 @@ class URLMCPProcessor:
 
         return metrics
 
-    async def _generate_reports(self, report: TestReport):
-        """生成多格式测试报告"""
+    async def _generate_reports(self, report: TestReport) -> None:
+        """生成多格式测试报告."""
         try:
             rprint("[blue]📊 生成测试报告...[/blue]")
 
@@ -483,8 +490,8 @@ class URLMCPProcessor:
         except Exception as e:
             rprint(f"[red]❌ 报告生成失败: {e}[/red]")
 
-    async def _generate_json_report(self, report: TestReport):
-        """生成JSON格式报告"""
+    async def _generate_json_report(self, report: TestReport) -> None:
+        """生成JSON格式报告."""
         try:
             timestamp = report.start_time.strftime("%Y%m%d_%H%M%S")
             filename = f"mcp_test_{timestamp}_{report.session_id}.json"
@@ -505,8 +512,8 @@ class URLMCPProcessor:
         except Exception as e:
             rprint(f"[red]❌ JSON报告生成失败: {e}[/red]")
 
-    async def _generate_html_report(self, report: TestReport):
-        """生成HTML格式报告"""
+    async def _generate_html_report(self, report: TestReport) -> None:
+        """生成HTML格式报告."""
         try:
             timestamp = report.start_time.strftime("%Y%m%d_%H%M%S")
             filename = f"mcp_test_{timestamp}_{report.session_id}.html"
@@ -523,8 +530,8 @@ class URLMCPProcessor:
             rprint(f"[red]❌ HTML报告生成失败: {e}[/red]")
 
     def _create_html_template(self, report: TestReport) -> str:
-        """创建HTML报告模板"""
-        duration = (
+        """创建HTML报告模板."""
+        (
             (report.end_time - report.start_time).total_seconds()
             if report.end_time
             else 0
@@ -534,7 +541,7 @@ class URLMCPProcessor:
             1 for test in report.test_results if test.get("success", False)
         )
         total_tests = len(report.test_results)
-        success_rate = (success_count / total_tests * 100) if total_tests > 0 else 0
+        (success_count / total_tests * 100) if total_tests > 0 else 0
 
         html = """
 <!DOCTYPE html>
@@ -630,8 +637,8 @@ class URLMCPProcessor:
 """
 
         for test in report.test_results:
-            success_class = "" if test.get("success", False) else "test-failed"
-            status_icon = "✅" if test.get("success", False) else "❌"
+            "" if test.get("success", False) else "test-failed"
+            "✅" if test.get("success", False) else "❌"
 
             html += """
             <div class="test-item {success_class}">
@@ -659,13 +666,13 @@ class URLMCPProcessor:
 """
         return html
 
-    def _print_console_summary(self, report: TestReport):
-        """打印控制台摘要"""
+    def _print_console_summary(self, report: TestReport) -> None:
+        """打印控制台摘要."""
         if not self.console:
             return
 
         try:
-            duration = (
+            (
                 (report.end_time - report.start_time).total_seconds()
                 if report.end_time
                 else 0
@@ -674,7 +681,7 @@ class URLMCPProcessor:
                 1 for test in report.test_results if test.get("success", False)
             )
             total_tests = len(report.test_results)
-            success_rate = (success_count / total_tests * 100) if total_tests > 0 else 0
+            (success_count / total_tests * 100) if total_tests > 0 else 0
 
             # 创建摘要面板
             summary_text = """
@@ -690,9 +697,11 @@ class URLMCPProcessor:
             panel = Panel(
                 summary_text.strip(),
                 title=f"📊 测试摘要 [{report.session_id}]",
-                border_style="green"
-                if report.deployment_success and report.communication_success
-                else "red",
+                border_style=(
+                    "green"
+                    if report.deployment_success and report.communication_success
+                    else "red"
+                ),
             )
 
             self.console.print(panel)
@@ -706,7 +715,7 @@ _url_processor_instance = None
 
 
 def get_url_mcp_processor() -> URLMCPProcessor:
-    """获取全局URL-MCP处理器实例"""
+    """获取全局URL-MCP处理器实例."""
     global _url_processor_instance
     if _url_processor_instance is None:
         _url_processor_instance = URLMCPProcessor()

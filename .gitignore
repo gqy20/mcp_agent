@@ -117,6 +117,15 @@ tests/manual/*.py
 data/temp/
 *.temp.json
 *.temp.csv
+
+# Security check reports (temporary generated files)
+bandit-report.json
+safety-report.json
+
+# Code quality cache directories
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
 *_report.json
 *_results.json
 demo_*.json

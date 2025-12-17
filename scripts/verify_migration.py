@@ -8,7 +8,8 @@
 import sys
 import traceback
 from pathlib import Path
-from typing import List, Tuple, Dict, Any
+from typing import Any, Dict, List, Tuple
+
 
 class MigrationValidator:
     """迁移验证器"""
@@ -27,11 +28,7 @@ class MigrationValidator:
 
         print(full_message)
 
-        test_result = {
-            'name': name,
-            'success': success,
-            'message': message
-        }
+        test_result = {"name": name, "success": success, "message": message}
 
         self.test_results.append(test_result)
 
@@ -77,12 +74,21 @@ class MigrationValidator:
 
         test_imports = [
             ("核心测试器", "from src.batch_mcp.core.tester import MCPTester"),
-            ("部署器", "from src.batch_mcp.core.simple_mcp_deployer import SimpleMCPDeployer"),
+            (
+                "部署器",
+                "from src.batch_mcp.core.simple_mcp_deployer import SimpleMCPDeployer",
+            ),
             ("CSV解析器", "from src.batch_mcp.utils.csv_parser import MCPDataParser"),
             ("测试代理", "from src.batch_mcp.agents.test_agent import TestAgent"),
-            ("验证代理", "from src.batch_mcp.agents.validation_agent import ValidationAgent"),
+            (
+                "验证代理",
+                "from src.batch_mcp.agents.validation_agent import ValidationAgent",
+            ),
             ("异步客户端", "from src.batch_mcp.core.async_mcp_client import AsyncMCPClient"),
-            ("URL处理器", "from src.batch_mcp.core.url_mcp_processor import URLMCPProcessor"),
+            (
+                "URL处理器",
+                "from src.batch_mcp.core.url_mcp_processor import URLMCPProcessor",
+            ),
             ("评估器模块", "import src.batch_mcp.core.evaluator"),
         ]
 
@@ -95,8 +101,11 @@ class MigrationValidator:
             except Exception as e:
                 self.log_test(name, False, str(e))
 
-        self.log_test("导入检查", success_count == len(test_imports),
-                     f"{success_count}/{len(test_imports)} 成功")
+        self.log_test(
+            "导入检查",
+            success_count == len(test_imports),
+            f"{success_count}/{len(test_imports)} 成功",
+        )
         return success_count == len(test_imports)
 
     def test_package_info(self) -> bool:
@@ -104,7 +113,8 @@ class MigrationValidator:
         print("\n📋 验证包信息...")
 
         try:
-            from src.batch_mcp import __version__, __author__
+            from src.batch_mcp import __author__, __version__
+
             self.log_test("包版本", True, f"v{__version__}")
             self.log_test("包作者", True, __author__)
             return True
@@ -119,6 +129,7 @@ class MigrationValidator:
         try:
             # 测试模块导入
             import src.batch_mcp.main
+
             self.log_test("主模块导入", True)
 
             # 测试app对象
@@ -136,9 +147,13 @@ class MigrationValidator:
 
         try:
             import subprocess
-            result = subprocess.run([
-                sys.executable, "-m", "src.batch_mcp", "--help"
-            ], capture_output=True, text=True, timeout=10)
+
+            result = subprocess.run(
+                [sys.executable, "-m", "src.batch_mcp", "--help"],
+                capture_output=True,
+                text=True,
+                timeout=10,
+            )
 
             if result.returncode == 0:
                 help_text = result.stdout
@@ -170,7 +185,7 @@ class MigrationValidator:
         for file_path in critical_files:
             if Path(file_path).exists():
                 try:
-                    with open(file_path, 'r', encoding='utf-8') as f:
+                    with open(file_path, "r", encoding="utf-8") as f:
                         content = f.read()
 
                     # 检查是否包含新的导入路径
@@ -184,8 +199,11 @@ class MigrationValidator:
             else:
                 self.log_warning(f"外部导入检查 ({file_path}): 文件不存在")
 
-        self.log_test("外部导入检查", success_count == len(critical_files),
-                     f"{success_count}/{len(critical_files)} 个文件已更新")
+        self.log_test(
+            "外部导入检查",
+            success_count == len(critical_files),
+            f"{success_count}/{len(critical_files)} 个文件已更新",
+        )
         return True
 
     def test_file_pathing(self) -> bool:
@@ -197,7 +215,7 @@ class MigrationValidator:
 
             # 测试CSV解析器是否能找到正确的文件路径
             parser = get_mcp_parser()
-            if hasattr(parser, 'csv_path'):
+            if hasattr(parser, "csv_path"):
                 expected_path = "src/batch_mcp/../../../data/mcp_database/mcp.csv"
                 actual_path = str(parser.csv_path)
                 if "mcp_database/mcp.csv" in actual_path:
@@ -243,12 +261,12 @@ class MigrationValidator:
 
     def print_summary(self) -> None:
         """打印验证摘要"""
-        print("\n" + "="*50)
+        print("\n" + "=" * 50)
         print("📊 验证摘要")
-        print("="*50)
+        print("=" * 50)
 
         total_tests = len(self.test_results)
-        passed_tests = len([r for r in self.test_results if r['success']])
+        passed_tests = len([r for r in self.test_results if r["success"]])
         failed_tests = len(self.failed_tests)
 
         print(f"总测试数: {total_tests}")
@@ -265,6 +283,7 @@ class MigrationValidator:
             for test in self.failed_tests:
                 print(f"  - {test['name']}: {test['message']}")
 
+
 def main():
     """主函数"""
     validator = MigrationValidator()
@@ -272,6 +291,7 @@ def main():
     validator.print_summary()
 
     sys.exit(0 if success else 1)
+
 
 if __name__ == "__main__":
     main()

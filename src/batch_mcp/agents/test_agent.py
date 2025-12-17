@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-智能测试生成代理
+"""智能测试生成代理.
 
 基于AgentScope实现的智能测试用例生成器
 根据MCP工具的功能和参数自动生成测试用例
@@ -13,43 +12,79 @@ import json
 import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 try:
     import agentscope
     from agentscope.message import Msg
     from dotenv import load_dotenv
-except ImportError as e:
-    print(f"❌ AgentScope导入失败: {e}")
-    print("请确保已安装 agentscope 和 python-dotenv")
+except ImportError:
+    pass
 
 from batch_mcp.utils.csv_parser import MCPToolInfo
+
+# 导入配置系统
+try:
+    from batch_mcp.core.config import get_config
+
+    CONFIG_AVAILABLE = True
+    config = get_config() if CONFIG_AVAILABLE else None
+except ImportError:
+    CONFIG_AVAILABLE = False
+    config = None
 
 
 @dataclass
 class TestCase:
-    """测试用例数据结构"""
+    """测试用例数据结构."""
 
     name: str
     description: str
     tool_name: str
-    parameters: Dict[str, Any]
+    parameters: dict[str, Any]
     expected_type: str  # success, error, specific_content
-    expected_result: Optional[str] = None
+    expected_result: str | None = None
     priority: str = "normal"  # high, normal, low
 
 
 class TestGeneratorAgent:
-    """智能测试用例生成代理"""
+    """智能测试用例生成代理."""
 
-    def __init__(self, model_config: Optional[Dict] = None):
+    def __init__(self, model_config: dict | None = None) -> None:
         self.model_config = model_config or self._load_default_config()
         self.agent = None
         self._initialize_agent()
 
-    def _load_default_config(self) -> Dict:
-        """加载默认模型配置"""
-        # 加载环境变量
+    def _load_default_config(self) -> dict:
+        """加载默认模型配置."""
+        if CONFIG_AVAILABLE and config.ai.has_any_ai_config:
+            # 使用配置系统
+            if config.ai.has_openai_config:
+                return {
+                    "config_name": "test_generator_config",
+                    "model_type": "openai_chat",
+                    "model_name": config.ai.openai_model,
+                    "api_key": config.ai.openai_api_key,
+                    "client_args": {
+                        "base_url": config.ai.openai_base_url,
+                        "timeout": 60,
+                    },
+                    "generate_args": {"temperature": 0.7, "max_tokens": 1000},
+                }
+            if config.ai.has_dashscope_config:
+                return {
+                    "config_name": "test_generator_config",
+                    "model_type": "openai_chat",
+                    "model_name": config.ai.dashscope_model,
+                    "api_key": config.ai.dashscope_api_key,
+                    "client_args": {
+                        "base_url": config.ai.dashscope_base_url,
+                        "timeout": 60,
+                    },
+                    "generate_args": {"temperature": 0.7, "max_tokens": 1000},
+                }
+
+        # 回退到环境变量
         env_path = Path(__file__).parent.parent.parent / ".env"
         load_dotenv(env_path)
 
@@ -60,13 +95,13 @@ class TestGeneratorAgent:
             "api_key": os.getenv("OPENAI_API_KEY"),
             "client_args": {
                 "base_url": os.getenv("OPENAI_BASE_URL"),
-                "timeout": 60,  # 增加到60秒超时
+                "timeout": 60,
             },
-            "generate_args": {"temperature": 0.7, "max_tokens": 1000},  # 减少token数量加快响应
+            "generate_args": {"temperature": 0.7, "max_tokens": 1000},
         }
 
-    def _initialize_agent(self):
-        """初始化AgentScope代理"""
+    def _initialize_agent(self) -> None:
+        """初始化AgentScope代理."""
         try:
             # 初始化AgentScope
             agentscope.init(
@@ -93,17 +128,15 @@ class TestGeneratorAgent:
                 from agentscope.agents import DialogAgent
 
                 self.agent = DialogAgent(
-                    name="mcp_test_generator", sys_prompt=sys_prompt
+                    name="mcp_test_generator",
+                    sys_prompt=sys_prompt,
                 )
 
-            print("✅ 测试生成代理初始化成功")
-
-        except Exception as e:
-            print(f"❌ 代理初始化失败: {e}")
+        except Exception:
             self.agent = None  # 标记为不可用
 
     def _get_test_generator_prompt(self) -> str:
-        """获取测试生成代理的系统提示词"""
+        """获取测试生成代理的系统提示词."""
         return """你是一个专业的MCP(Model Context Protocol)工具测试用例生成专家。
 
 你的任务是根据MCP工具的信息生成实用、现实的测试用例，重点验证工具的核心功能是否正常工作。
@@ -161,12 +194,13 @@ class TestGeneratorAgent:
 现在请为给定的MCP工具生成实用、容易通过的测试用例。"""
 
     def generate_test_cases(
-        self, tool_info: MCPToolInfo, available_tools: List[Dict[str, Any]]
-    ) -> List[TestCase]:
-        """为指定MCP工具生成测试用例"""
+        self,
+        tool_info: MCPToolInfo,
+        available_tools: list[dict[str, Any]],
+    ) -> list[TestCase]:
+        """为指定MCP工具生成测试用例."""
         try:
             if self.agent is None:
-                print("⚠️ 智能代理不可用，使用备选测试用例")
                 return self._generate_fallback_test_cases(tool_info, available_tools)
 
             # 构建工具信息提示
@@ -187,30 +221,22 @@ API密钥列表: {tool_info.api_requirements if tool_info.requires_api_key else 
 请生成3-5个最重要的测试用例来验证这个MCP工具的核心功能（严格不要超过5个）。优先选择最具代表性的测试场景。
 """
 
-            print(f"🤖 正在为 {tool_info.name} 生成真实测试用例...")
-            print("📡 调用大模型API...")
-
             # 调用代理生成测试用例 - 使用真实的大模型API
             user_msg = Msg("user", tool_info_text, role="user")
             response = self.agent(user_msg)
 
-            print(f"🎯 大模型响应: {response.content[:200]}...")
-
             # 解析响应并生成测试用例
             test_cases = self._parse_test_cases_response(
-                response.content, tool_info, available_tools
+                response.content,
+                tool_info,
+                available_tools,
             )
 
             if test_cases:
-                print(f"✅ 成功生成 {len(test_cases)} 个真实测试用例")
                 return test_cases
-            else:
-                print("⚠️ 大模型响应解析失败，使用备选测试用例")
-                return self._generate_fallback_test_cases(tool_info, available_tools)
+            return self._generate_fallback_test_cases(tool_info, available_tools)
 
-        except Exception as e:
-            print(f"❌ 生成测试用例失败: {e}")
-            print("🔄 回退到基于工具信息的智能推断测试用例")
+        except Exception:
             # 返回基于真实工具信息的推断测试用例（非模拟）
             return self._generate_fallback_test_cases(tool_info, available_tools)
 
@@ -218,9 +244,9 @@ API密钥列表: {tool_info.api_requirements if tool_info.requires_api_key else 
         self,
         response: str,
         tool_info: MCPToolInfo,
-        available_tools: List[Dict[str, Any]],
-    ) -> List[TestCase]:
-        """解析代理响应并转换为测试用例"""
+        available_tools: list[dict[str, Any]],
+    ) -> list[TestCase]:
+        """解析代理响应并转换为测试用例."""
         test_cases = []
 
         try:
@@ -250,17 +276,18 @@ API密钥列表: {tool_info.api_requirements if tool_info.requires_api_key else 
                     )
                     test_cases.append(test_case)
 
-        except (json.JSONDecodeError, KeyError) as e:
-            print(f"⚠️ 解析代理响应失败: {e}")
+        except (json.JSONDecodeError, KeyError):
             # 返回基础测试用例
             return self._generate_fallback_test_cases(tool_info, available_tools)
 
         return test_cases
 
     def _generate_fallback_test_cases(
-        self, tool_info: MCPToolInfo, available_tools: List[Dict[str, Any]]
-    ) -> List[TestCase]:
-        """生成备选的基础测试用例 - 通用版，适用于所有MCP工具"""
+        self,
+        tool_info: MCPToolInfo,
+        available_tools: list[dict[str, Any]],
+    ) -> list[TestCase]:
+        """生成备选的基础测试用例 - 通用版，适用于所有MCP工具."""
         test_cases = []
 
         # 基础连通性测试
@@ -272,13 +299,13 @@ API密钥列表: {tool_info.api_requirements if tool_info.requires_api_key else 
                 parameters={},
                 expected_type="success",
                 priority="high",
-            )
+            ),
         )
 
         # 为每个可用工具生成针对性的测试用例
         for tool in available_tools:
             tool_name = tool.get("name", "unknown")
-            tool_description = tool.get("description", "")
+            tool.get("description", "")
 
             # 生成基础功能测试用例
             test_cases.append(
@@ -289,7 +316,7 @@ API密钥列表: {tool_info.api_requirements if tool_info.requires_api_key else 
                     parameters=self._generate_smart_parameters(tool),
                     expected_type="success",
                     priority="high",
-                )
+                ),
             )
 
             # 生成实际使用场景测试用例
@@ -301,7 +328,7 @@ API密钥列表: {tool_info.api_requirements if tool_info.requires_api_key else 
                     parameters=self._generate_realistic_parameters(tool),
                     expected_type="success",
                     priority="normal",
-                )
+                ),
             )
 
             # 生成容错能力测试用例
@@ -313,7 +340,7 @@ API密钥列表: {tool_info.api_requirements if tool_info.requires_api_key else 
                     parameters=self._generate_edge_case_parameters(tool),
                     expected_type="any_response",  # 容错测试，只要响应即可
                     priority="normal",
-                )
+                ),
             )
 
             # 生成边界情况测试用例
@@ -325,7 +352,7 @@ API密钥列表: {tool_info.api_requirements if tool_info.requires_api_key else 
                     parameters=self._generate_boundary_parameters(tool),
                     expected_type="success",
                     priority="low",
-                )
+                ),
             )
 
         # API密钥配置检查
@@ -338,46 +365,46 @@ API密钥列表: {tool_info.api_requirements if tool_info.requires_api_key else 
                     parameters={"api_keys": tool_info.api_requirements},
                     expected_type="success",
                     priority="high",
-                )
+                ),
             )
 
         # 确保测试用例数量合理（限制最多15个）
         if len(test_cases) > 15:
             # 保留高优先级的测试用例
             test_cases = sorted(
-                test_cases, key=lambda x: (x.priority != "high", x.priority != "normal")
+                test_cases,
+                key=lambda x: (x.priority != "high", x.priority != "normal"),
             )
             test_cases = test_cases[:15]
 
         return test_cases
 
-    def _generate_smart_parameters(self, tool: Dict[str, Any]) -> Dict[str, Any]:
-        """为工具生成智能的基础参数 - 适用于所有MCP工具"""
+    def _generate_smart_parameters(self, tool: dict[str, Any]) -> dict[str, Any]:
+        """为工具生成智能的基础参数 - 适用于所有MCP工具."""
         tool_name = tool.get("name", "").lower()
-        tool_description = tool.get("description", "").lower()
+        tool.get("description", "").lower()
 
         # 根据工具类型生成基础参数
         if any(keyword in tool_name for keyword in ["search", "find", "query"]):
             return {"query": "test"}
-        elif any(
+        if any(
             keyword in tool_name for keyword in ["get", "fetch", "retrieve", "read"]
         ):
             return {"id": "test"}
-        elif any(keyword in tool_name for keyword in ["create", "add", "new", "make"]):
+        if any(keyword in tool_name for keyword in ["create", "add", "new", "make"]):
             return {"name": "test"}
-        elif any(keyword in tool_name for keyword in ["update", "edit", "modify"]):
+        if any(keyword in tool_name for keyword in ["update", "edit", "modify"]):
             return {"id": "test", "data": {"field": "value"}}
-        elif any(keyword in tool_name for keyword in ["delete", "remove"]):
+        if any(keyword in tool_name for keyword in ["delete", "remove"]):
             return {"id": "test"}
-        elif any(keyword in tool_name for keyword in ["list", "enum", "show"]):
+        if any(keyword in tool_name for keyword in ["list", "enum", "show"]):
             return {"limit": 5}
-        elif any(keyword in tool_name for keyword in ["resolve", "identify", "lookup"]):
+        if any(keyword in tool_name for keyword in ["resolve", "identify", "lookup"]):
             return {"target": "test"}
-        else:
-            return {"value": "test"}
+        return {"value": "test"}
 
-    def _generate_realistic_parameters(self, tool: Dict[str, Any]) -> Dict[str, Any]:
-        """生成实际使用场景的参数 - 使用真实的常用值"""
+    def _generate_realistic_parameters(self, tool: dict[str, Any]) -> dict[str, Any]:
+        """生成实际使用场景的参数 - 使用真实的常用值."""
         tool_name = tool.get("name", "").lower()
         tool_description = tool.get("description", "").lower()
 
@@ -385,73 +412,72 @@ API密钥列表: {tool_info.api_requirements if tool_info.requires_api_key else 
         if any(keyword in tool_name for keyword in ["search", "find", "query"]):
             # 常见搜索词
             return {"query": "react", "limit": 10}
-        elif any(
+        if any(
             keyword in tool_name for keyword in ["get", "fetch", "retrieve", "read"]
         ):
             # 常见ID格式
             if "library" in tool_description:
                 return {"context7CompatibleLibraryID": "/facebook/react"}
-            elif "package" in tool_description:
+            if "package" in tool_description:
                 return {"packageName": "react"}
-            else:
-                return {"id": "react"}
-        elif any(keyword in tool_name for keyword in ["create", "add", "new", "make"]):
+            return {"id": "react"}
+        if any(keyword in tool_name for keyword in ["create", "add", "new", "make"]):
             # 实际创建参数
-            return {"name": "example-project", "description": "示例项目", "tags": ["test"]}
-        elif any(keyword in tool_name for keyword in ["list", "enum", "show"]):
+            return {
+                "name": "example-project",
+                "description": "示例项目",
+                "tags": ["test"],
+            }
+        if any(keyword in tool_name for keyword in ["list", "enum", "show"]):
             # 实际分页参数
             return {"limit": 20, "offset": 0, "sort": "name"}
-        elif any(keyword in tool_name for keyword in ["resolve", "identify", "lookup"]):
+        if any(keyword in tool_name for keyword in ["resolve", "identify", "lookup"]):
             # 实际解析参数
             if "library" in tool_description:
                 return {"libraryName": "react"}
-            else:
-                return {"target": "react"}
-        else:
-            return {"input": "realistic-data", "options": {"optimized": True}}
+            return {"target": "react"}
+        return {"input": "realistic-data", "options": {"optimized": True}}
 
-    def _generate_edge_case_parameters(self, tool: Dict[str, Any]) -> Dict[str, Any]:
-        """生成容错测试的边界参数"""
+    def _generate_edge_case_parameters(self, tool: dict[str, Any]) -> dict[str, Any]:
+        """生成容错测试的边界参数."""
         tool_name = tool.get("name", "").lower()
 
         # 根据工具类型生成边界参数
         if any(keyword in tool_name for keyword in ["search", "find", "query"]):
             return {"query": "", "limit": 0}  # 空查询
-        elif any(
+        if any(
             keyword in tool_name for keyword in ["get", "fetch", "retrieve", "read"]
         ):
             return {"id": "nonexistent-id-12345"}  # 不存在的ID
-        elif any(keyword in tool_name for keyword in ["create", "add", "new", "make"]):
+        if any(keyword in tool_name for keyword in ["create", "add", "new", "make"]):
             return {"name": "", "data": None}  # 空数据
-        elif any(keyword in tool_name for keyword in ["list", "enum", "show"]):
+        if any(keyword in tool_name for keyword in ["list", "enum", "show"]):
             return {"limit": 999999}  # 极大值
-        elif any(keyword in tool_name for keyword in ["resolve", "identify", "lookup"]):
+        if any(keyword in tool_name for keyword in ["resolve", "identify", "lookup"]):
             return {"target": "unknown-target-12345"}  # 未知目标
-        else:
-            return {"invalid": "data"}  # 无效数据
+        return {"invalid": "data"}  # 无效数据
 
-    def _generate_boundary_parameters(self, tool: Dict[str, Any]) -> Dict[str, Any]:
-        """生成边界测试参数"""
+    def _generate_boundary_parameters(self, tool: dict[str, Any]) -> dict[str, Any]:
+        """生成边界测试参数."""
         tool_name = tool.get("name", "").lower()
 
         # 根据工具类型生成边界参数
         if any(keyword in tool_name for keyword in ["search", "find", "query"]):
             return {"query": "a", "limit": 1}  # 最小值
-        elif any(
+        if any(
             keyword in tool_name for keyword in ["get", "fetch", "retrieve", "read"]
         ):
             return {"id": "a"}  # 最短ID
-        elif any(keyword in tool_name for keyword in ["create", "add", "new", "make"]):
+        if any(keyword in tool_name for keyword in ["create", "add", "new", "make"]):
             return {"name": "a"}  # 最短名称
-        elif any(keyword in tool_name for keyword in ["list", "enum", "show"]):
+        if any(keyword in tool_name for keyword in ["list", "enum", "show"]):
             return {"limit": 1, "offset": 0}  # 最小分页
-        elif any(keyword in tool_name for keyword in ["resolve", "identify", "lookup"]):
+        if any(keyword in tool_name for keyword in ["resolve", "identify", "lookup"]):
             return {"target": "a"}  # 最短目标
-        else:
-            return {"input": "minimal"}  # 最小输入
+        return {"input": "minimal"}  # 最小输入
 
-    def _generate_basic_parameters(self, tool: Dict[str, Any]) -> Dict[str, Any]:
-        """为工具生成基础参数 - 保持向后兼容"""
+    def _generate_basic_parameters(self, tool: dict[str, Any]) -> dict[str, Any]:
+        """为工具生成基础参数 - 保持向后兼容."""
         return self._generate_smart_parameters(tool)
 
 
@@ -460,7 +486,7 @@ _test_generator_instance = None
 
 
 def get_test_generator() -> TestGeneratorAgent:
-    """获取全局测试生成器实例"""
+    """获取全局测试生成器实例."""
     global _test_generator_instance
     if _test_generator_instance is None:
         _test_generator_instance = TestGeneratorAgent()

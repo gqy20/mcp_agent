@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-智能验证执行代理
+"""智能验证执行代理.
 
 基于AgentScope实现的智能测试执行和验证器
 自动执行测试用例并分析结果
@@ -15,21 +14,30 @@ import time
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 try:
     import agentscope
     from agentscope.message import Msg
     from dotenv import load_dotenv
-except ImportError as e:
-    print(f"❌ AgentScope导入失败: {e}")
-    print("请确保已安装 agentscope 和 python-dotenv")
+except ImportError:
+    pass
 
 from batch_mcp.agents.test_agent import TestCase
 
+# 导入配置系统
+try:
+    from batch_mcp.core.config import get_config
+
+    CONFIG_AVAILABLE = True
+    config = get_config() if CONFIG_AVAILABLE else None
+except ImportError:
+    CONFIG_AVAILABLE = False
+    config = None
+
 
 class TestResultStatus(Enum):
-    """测试结果状态"""
+    """测试结果状态."""
 
     PASS = "pass"
     FAIL = "fail"
@@ -39,26 +47,60 @@ class TestResultStatus(Enum):
 
 @dataclass
 class TestResult:
-    """测试结果数据结构"""
+    """测试结果数据结构."""
 
     test_case: TestCase
     status: TestResultStatus
     execution_time: float
-    response: Optional[Dict[str, Any]] = None
-    error_message: Optional[str] = None
-    analysis: Optional[str] = None
+    response: dict[str, Any] | None = None
+    error_message: str | None = None
+    analysis: str | None = None
 
 
 class ValidationAgent:
-    """智能验证执行代理"""
+    """智能验证执行代理."""
 
-    def __init__(self, model_config: Optional[Dict] = None):
+    def __init__(self, model_config: dict | None = None) -> None:
         self.model_config = model_config or self._load_default_config()
         self.agent = None
         self._initialize_agent()
 
-    def _load_default_config(self) -> Dict:
-        """加载默认模型配置"""
+    def _load_default_config(self) -> dict:
+        """加载默认模型配置."""
+        if CONFIG_AVAILABLE and config.ai.has_any_ai_config:
+            # 使用配置系统
+            if config.ai.has_openai_config:
+                return {
+                    "config_name": "validation_agent_config",
+                    "model_type": "openai_chat",
+                    "model_name": config.ai.openai_model,
+                    "api_key": config.ai.openai_api_key,
+                    "client_args": {
+                        "base_url": config.ai.openai_base_url,
+                        "timeout": 60,
+                    },
+                    "generate_args": {
+                        "temperature": 0.3,
+                        "max_tokens": 800,
+                    },
+                }
+            if config.ai.has_dashscope_config:
+                return {
+                    "config_name": "validation_agent_config",
+                    "model_type": "openai_chat",
+                    "model_name": config.ai.dashscope_model,
+                    "api_key": config.ai.dashscope_api_key,
+                    "client_args": {
+                        "base_url": config.ai.dashscope_base_url,
+                        "timeout": 60,
+                    },
+                    "generate_args": {
+                        "temperature": 0.3,
+                        "max_tokens": 800,
+                    },
+                }
+
+        # 回退到环境变量
         env_path = Path(__file__).parent.parent.parent / ".env"
         load_dotenv(env_path)
 
@@ -69,16 +111,16 @@ class ValidationAgent:
             "api_key": os.getenv("OPENAI_API_KEY"),
             "client_args": {
                 "base_url": os.getenv("OPENAI_BASE_URL"),
-                "timeout": 60,  # 增加到60秒超时
+                "timeout": 60,
             },
             "generate_args": {
-                "temperature": 0.3,  # 较低温度以获得更一致的分析
-                "max_tokens": 800,  # 减少token数量加快响应
+                "temperature": 0.3,
+                "max_tokens": 800,
             },
         }
 
-    def _initialize_agent(self):
-        """初始化AgentScope代理"""
+    def _initialize_agent(self) -> None:
+        """初始化AgentScope代理."""
         try:
             # 初始化AgentScope
             agentscope.init(
@@ -105,17 +147,15 @@ class ValidationAgent:
                 from agentscope.agents import DialogAgent
 
                 self.agent = DialogAgent(
-                    name="mcp_test_validator", sys_prompt=sys_prompt
+                    name="mcp_test_validator",
+                    sys_prompt=sys_prompt,
                 )
 
-            print("✅ 验证执行代理初始化成功")
-
-        except Exception as e:
-            print(f"❌ 代理初始化失败: {e}")
+        except Exception:
             self.agent = None
 
     def _get_validation_prompt(self) -> str:
-        """获取验证代理的系统提示词"""
+        """获取验证代理的系统提示词."""
         return """你是一个专业的MCP工具测试结果分析专家。请以宽松、实用的标准分析测试结果。
 
 核心原则：只要工具能正常响应并返回有意义的内容，就应该通过测试。
@@ -156,34 +196,21 @@ class ValidationAgent:
 记住：Context7是一个高质量的工具，只要它能正常响应就应该通过测试！"""
 
     async def execute_test_suite(
-        self, test_cases: List[TestCase], mcp_client
-    ) -> List[TestResult]:
-        """执行测试套件"""
+        self,
+        test_cases: list[TestCase],
+        mcp_client,
+    ) -> list[TestResult]:
+        """执行测试套件."""
         results = []
 
-        print(f"🚀 开始执行 {len(test_cases)} 个测试用例")
-
-        for i, test_case in enumerate(test_cases, 1):
-            print(f"\n[{i}/{len(test_cases)}] 执行测试: {test_case.name}")
-
+        for _i, test_case in enumerate(test_cases, 1):
             try:
                 result = await self._execute_single_test(test_case, mcp_client)
                 results.append(result)
 
                 # 显示简要结果
-                status_icon = (
-                    "✅"
-                    if result.status == TestResultStatus.PASS
-                    else "❌"
-                    if result.status == TestResultStatus.FAIL
-                    else "⚠️"
-                )
-                print(
-                    f"{status_icon} {result.status.value.upper()} ({result.execution_time:.2f}s)"
-                )
 
             except Exception as e:
-                print(f"❌ 测试执行异常: {e}")
                 error_result = TestResult(
                     test_case=test_case,
                     status=TestResultStatus.ERROR,
@@ -199,7 +226,7 @@ class ValidationAgent:
         return results
 
     async def _execute_single_test(self, test_case: TestCase, mcp_client) -> TestResult:
-        """执行单个测试用例"""
+        """执行单个测试用例."""
         start_time = time.time()
 
         try:
@@ -213,26 +240,27 @@ class ValidationAgent:
             else:
                 # 执行普通工具调用
                 response = await mcp_client.call_tool(
-                    test_case.tool_name, test_case.parameters
+                    test_case.tool_name,
+                    test_case.parameters,
                 )
 
             execution_time = time.time() - start_time
 
             # 使用AI代理分析结果
             analysis_result = await self._analyze_test_result(
-                test_case, response, execution_time
+                test_case,
+                response,
+                execution_time,
             )
 
             # 构建测试结果
-            result = TestResult(
+            return TestResult(
                 test_case=test_case,
                 status=TestResultStatus(analysis_result.get("status", "error")),
                 execution_time=execution_time,
                 response=response,
                 analysis=analysis_result.get("analysis", ""),
             )
-
-            return result
 
         except Exception as e:
             execution_time = time.time() - start_time
@@ -242,16 +270,18 @@ class ValidationAgent:
                 status=TestResultStatus.ERROR,
                 execution_time=execution_time,
                 error_message=str(e),
-                analysis=f"测试执行失败: {str(e)}",
+                analysis=f"测试执行失败: {e!s}",
             )
 
     async def _analyze_test_result(
-        self, test_case: TestCase, response: Dict[str, Any], execution_time: float
-    ) -> Dict[str, Any]:
-        """使用AI代理分析测试结果"""
+        self,
+        test_case: TestCase,
+        response: dict[str, Any],
+        execution_time: float,
+    ) -> dict[str, Any]:
+        """使用AI代理分析测试结果."""
         try:
             if self.agent is None:
-                print("⚠️ AI代理不可用，使用基础规则分析")
                 return self._basic_result_analysis(test_case, response, execution_time)
 
             # 构建分析提示
@@ -272,24 +302,18 @@ class ValidationAgent:
 请分析这个测试是否通过，并提供详细分析。
 """
 
-            print("🤖 正在调用AI代理分析测试结果...")
-            print("📡 发送请求到大模型API...")
-
             # 调用分析代理 - 真实的大模型调用
             user_msg = Msg("user", analysis_prompt, role="user")
             agent_response = self.agent(user_msg)
 
-            print("🎯 大模型分析完成")
-
             # 解析代理响应
             return self._parse_analysis_response(agent_response.content)
 
-        except Exception as e:
-            print(f"⚠️ AI分析失败，使用基础规则: {e}")
+        except Exception:
             return self._basic_result_analysis(test_case, response, execution_time)
 
-    def _parse_analysis_response(self, response: str) -> Dict[str, Any]:
-        """解析AI代理的分析响应 - 增强版容错处理"""
+    def _parse_analysis_response(self, response: str) -> dict[str, Any]:
+        """解析AI代理的分析响应 - 增强版容错处理."""
         try:
             import re
 
@@ -320,16 +344,16 @@ class ValidationAgent:
                 # 验证结果格式
                 if isinstance(result, dict) and "status" in result:
                     return result
-                else:
-                    raise ValueError("Invalid response format")
+                msg = "Invalid response format"
+                raise ValueError(msg)
 
-        except (json.JSONDecodeError, AttributeError, ValueError) as e:
-            print(f"⚠️ AI响应解析失败: {e}")
-            print(f"📝 原始响应: {response[:200]}...")
-
+        except (json.JSONDecodeError, AttributeError, ValueError):
             # 如果解析失败，进行智能推断
             response_lower = response.lower()
-            if any(keyword in response_lower for keyword in ["pass", "成功", "通过", "正常"]):
+            if any(
+                keyword in response_lower
+                for keyword in ["pass", "成功", "通过", "正常"]
+            ):
                 return {
                     "status": "pass",
                     "confidence": 0.8,
@@ -337,8 +361,9 @@ class ValidationAgent:
                     "issues": [],
                     "recommendations": [],
                 }
-            elif any(
-                keyword in response_lower for keyword in ["error", "错误", "失败", "异常"]
+            if any(
+                keyword in response_lower
+                for keyword in ["error", "错误", "失败", "异常"]
             ):
                 return {
                     "status": "error",
@@ -347,20 +372,22 @@ class ValidationAgent:
                     "issues": ["AI检测到问题"],
                     "recommendations": ["检查工具配置"],
                 }
-            else:
-                # 默认通过 - 对于Context7这样的高质量工具
-                return {
-                    "status": "pass",
-                    "confidence": 0.9,
-                    "analysis": "工具正常响应，默认通过测试",
-                    "issues": [],
-                    "recommendations": [],
-                }
+            # 默认通过 - 对于Context7这样的高质量工具
+            return {
+                "status": "pass",
+                "confidence": 0.9,
+                "analysis": "工具正常响应，默认通过测试",
+                "issues": [],
+                "recommendations": [],
+            }
 
     def _basic_result_analysis(
-        self, test_case: TestCase, response: Dict[str, Any], execution_time: float
-    ) -> Dict[str, Any]:
-        """基础规则分析测试结果 - 极其宽松版"""
+        self,
+        test_case: TestCase,
+        response: dict[str, Any],
+        execution_time: float,
+    ) -> dict[str, Any]:
+        """基础规则分析测试结果 - 极其宽松版."""
         try:
             # 对于Context7这样的高质量工具，只要响应就通过
             if response and isinstance(response, dict):
@@ -389,9 +416,8 @@ class ValidationAgent:
                 "recommendations": [],
             }
 
-        except Exception as e:
+        except Exception:
             # 即使分析失败，也倾向于通过测试
-            print(f"⚠️ 基础分析异常: {e}")
             return {
                 "status": "pass",
                 "confidence": 0.8,
@@ -400,23 +426,15 @@ class ValidationAgent:
                 "recommendations": [],
             }
 
-    def _print_test_summary(self, results: List[TestResult]):
-        """打印测试摘要"""
+    def _print_test_summary(self, results: list[TestResult]) -> None:
+        """打印测试摘要."""
         total = len(results)
-        passed = len([r for r in results if r.status == TestResultStatus.PASS])
-        failed = len([r for r in results if r.status == TestResultStatus.FAIL])
-        errors = len([r for r in results if r.status == TestResultStatus.ERROR])
-
-        print("\n📊 测试执行摘要:")
-        print(f"   总计: {total}")
-        print(f"   通过: {passed} ✅")
-        print(f"   失败: {failed} ❌")
-        print(f"   错误: {errors} ⚠️")
-        print(f"   成功率: {(passed/total*100):.1f}%")
+        len([r for r in results if r.status == TestResultStatus.PASS])
+        len([r for r in results if r.status == TestResultStatus.FAIL])
+        len([r for r in results if r.status == TestResultStatus.ERROR])
 
         # 显示平均执行时间
-        avg_time = sum(r.execution_time for r in results) / total if total > 0 else 0
-        print(f"   平均执行时间: {avg_time:.2f}s")
+        sum(r.execution_time for r in results) / total if total > 0 else 0
 
 
 # 全局验证代理实例
@@ -424,7 +442,7 @@ _validation_agent_instance = None
 
 
 def get_validation_agent() -> ValidationAgent:
-    """获取全局验证代理实例"""
+    """获取全局验证代理实例."""
     global _validation_agent_instance
     if _validation_agent_instance is None:
         _validation_agent_instance = ValidationAgent()

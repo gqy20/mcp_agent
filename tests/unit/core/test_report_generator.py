@@ -6,7 +6,11 @@ from unittest.mock import Mock, mock_open, patch
 
 import pytest
 
-from src.batch_mcp.core.report_generator import MCPReportGenerator, MCPTestReport, TestResult
+from src.batch_mcp.core.report_generator import (
+    MCPReportGenerator,
+    MCPTestReport,
+    TestResult,
+)
 from src.batch_mcp.utils.csv_parser import MCPToolInfo
 
 

@@ -1,5 +1,4 @@
-"""
-Tools module for batch_mcp
+"""Tools module for batch_mcp.
 
 Utility tools and helper functions.
 """

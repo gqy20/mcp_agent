@@ -2,8 +2,8 @@ import os
 import re
 import statistics
 import time
-from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List, Optional
+from datetime import UTC, datetime, timedelta
+from typing import Any
 
 import requests
 
@@ -47,8 +47,8 @@ if HUB_TOKEN:
 # --- 辅助函数和API调用 ---
 
 
-def parse_github_url(url: str) -> tuple[Optional[str], Optional[str]]:
-    """解析GitHub URL获取owner和repo"""
+def parse_github_url(url: str) -> tuple[str | None, str | None]:
+    """解析GitHub URL获取owner和repo."""
     if not isinstance(url, str):
         return None, None
     match = re.search(r"github\.com/([^/]+)/([^/]+)", url)
@@ -58,16 +58,16 @@ def parse_github_url(url: str) -> tuple[Optional[str], Optional[str]]:
     return None, None
 
 
-def get_repo_data(owner: str, repo: str) -> Dict[str, Any]:
-    """获取仓库数据"""
+def get_repo_data(owner: str, repo: str) -> dict[str, Any]:
+    """获取仓库数据."""
     url = f"{API_URL}/repos/{owner}/{repo}"
     response = requests.get(url, headers=HEADERS)
     response.raise_for_status()
     return response.json()
 
 
-def get_commit_data(owner: str, repo: str, limit: int = 100) -> list[Dict[str, Any]]:
-    """获取提交数据"""
+def get_commit_data(owner: str, repo: str, limit: int = 100) -> list[dict[str, Any]]:
+    """获取提交数据."""
     url = f"{API_URL}/repos/{owner}/{repo}/commits"
     params = {"per_page": limit}
     response = requests.get(url, headers=HEADERS, params=params)
@@ -76,8 +76,11 @@ def get_commit_data(owner: str, repo: str, limit: int = 100) -> list[Dict[str, A
 
 
 def get_issue_data(
-    owner: str, repo: str, state: str = "closed", limit: int = 100
-) -> list[Dict[str, Any]]:
+    owner: str,
+    repo: str,
+    state: str = "closed",
+    limit: int = 100,
+) -> list[dict[str, Any]]:
     url = f"{API_URL}/repos/{owner}/{repo}/issues"
     params = {"per_page": limit, "state": state}
     response = requests.get(url, headers=HEADERS, params=params)
@@ -86,7 +89,7 @@ def get_issue_data(
 
 
 def get_closed_issues_count(owner: str, repo: str) -> int:
-    """获取已关闭issue数量"""
+    """获取已关闭issue数量."""
     url = f"{API_URL}/search/issues"
     params = {"q": f"repo:{owner}/{repo} is:issue is:closed"}
     response = requests.get(url, headers=HEADERS, params=params)
@@ -98,15 +101,12 @@ def get_closed_issues_count(owner: str, repo: str) -> int:
 
 
 # === 可持续性分析模块 ===
-def analyze_recency(repo_data: Dict[str, Any]) -> tuple[int, str]:
-    """分析代码活跃度"""
+def analyze_recency(repo_data: dict[str, Any]) -> tuple[int, str]:
+    """分析代码活跃度."""
     last_pushed_str = repo_data.get("pushed_at")
     if not last_pushed_str:
         return 0, "无法获取最后更新时间"
-    days = (
-        datetime.now(timezone.utc)
-        - datetime.fromisoformat(last_pushed_str.replace("Z", "+00:00"))
-    ).days
+    days = (datetime.now(UTC) - datetime.fromisoformat(last_pushed_str)).days
     w = SUSTAINABILITY_WEIGHTS["recency"]
     if days <= 7:
         score, reason = w, f"非常活跃 (最近 {days} 天内有更新)"
@@ -117,16 +117,15 @@ def analyze_recency(repo_data: Dict[str, Any]) -> tuple[int, str]:
     return int(score), reason
 
 
-def analyze_frequency(commit_data: list[Dict[str, Any]]) -> tuple[int, str]:
-    """分析提交频率"""
+def analyze_frequency(commit_data: list[dict[str, Any]]) -> tuple[int, str]:
+    """分析提交频率."""
     if not commit_data:
         return 0, "没有提交记录"
-    ninety_days_ago = datetime.now(timezone.utc) - timedelta(days=90)
+    ninety_days_ago = datetime.now(UTC) - timedelta(days=90)
     recent_commits = [
         c
         for c in commit_data
-        if datetime.fromisoformat(c["commit"]["author"]["date"].replace("Z", "+00:00"))
-        > ninety_days_ago
+        if datetime.fromisoformat(c["commit"]["author"]["date"]) > ninety_days_ago
     ]
     count = len(recent_commits)
     per_week = count / (90 / 7) if count > 0 else 0
@@ -134,22 +133,21 @@ def analyze_frequency(commit_data: list[Dict[str, Any]]) -> tuple[int, str]:
     if per_week >= 5:
         score, reason = w, f"非常高频 (近90天 {count} 次提交, 约 {per_week:.1f} 次/周)"
     elif per_week >= 2:
-        score, reason = w * 0.8, f"较高频率 (近90天 {count} 次提交, 约 {per_week:.1f} 次/周)"
+        score, reason = (
+            w * 0.8,
+            f"较高频率 (近90天 {count} 次提交, 约 {per_week:.1f} 次/周)",
+        )
     else:
         score, reason = 0, "近90天内无提交"
     return int(score), reason
 
 
-def analyze_stability(commit_data: list[Dict[str, Any]]) -> tuple[int, str]:
-    """分析提交稳定性"""
+def analyze_stability(commit_data: list[dict[str, Any]]) -> tuple[int, str]:
+    """分析提交稳定性."""
     if len(commit_data) < 5:
         return 0, "提交记录过少 (<5)，无法评估稳定性"
-    dates = [
-        datetime.fromisoformat(c["commit"]["author"]["date"].replace("Z", "+00:00"))
-        for c in commit_data
-    ]
+    dates = [datetime.fromisoformat(c["commit"]["author"]["date"]) for c in commit_data]
     intervals = [(dates[i] - dates[i + 1]).days for i in range(len(dates) - 1)]
-    print(f"DEBUG: intervals: {intervals}")
     if not intervals:
         return 0, "无法计算提交间隔"
     std_dev = statistics.stdev(intervals) if len(intervals) > 1 else 0
@@ -168,15 +166,17 @@ def analyze_issue_responsiveness(closed_issues):
         return 0, "近期没有已关闭的Issue"
     resolution_days = [
         (
-            datetime.fromisoformat(i["closed_at"].replace("Z", "+00:00"))
-            - datetime.fromisoformat(i["created_at"].replace("Z", "+00:00"))
+            datetime.fromisoformat(i["closed_at"])
+            - datetime.fromisoformat(i["created_at"])
         ).days
         for i in closed_issues
         if "pull_request" not in i
     ]
-    print(f"DEBUG: resolution_days: {resolution_days}")
     if not resolution_days:
-        return int(SUSTAINABILITY_WEIGHTS["issue_responsiveness"] * 0.5), "近期关闭的都是PR"
+        return (
+            int(SUSTAINABILITY_WEIGHTS["issue_responsiveness"] * 0.5),
+            "近期关闭的都是PR",
+        )
     median_days = statistics.median(resolution_days)
     w = SUSTAINABILITY_WEIGHTS["issue_responsiveness"]
     if median_days <= 3:
@@ -310,7 +310,10 @@ def evaluate_full_repository_profile(github_url):
         closed_issues_count = get_closed_issues_count(owner, repo)
 
         sustainability = evaluate_sustainability(
-            repo_data, commit_data, closed_issues, closed_issues_count
+            repo_data,
+            commit_data,
+            closed_issues,
+            closed_issues_count,
         )
         popularity = evaluate_popularity(repo_data)
 
@@ -352,10 +355,10 @@ def evaluate_full_repository_profile(github_url):
 
 
 def get_test_success_rate(
-    github_url: str, supabase_client=None
-) -> Optional[Dict[str, Any]]:
-    """
-    获取工具的测试成功率
+    github_url: str,
+    supabase_client=None,
+) -> dict[str, Any] | None:
+    """获取工具的测试成功率.
 
     Args:
         github_url: GitHub URL
@@ -363,6 +366,7 @@ def get_test_success_rate(
 
     Returns:
         包含成功率、测试数量等信息的字典，失败时返回None
+
     """
     if not supabase_client:
         try:
@@ -399,7 +403,7 @@ def get_test_success_rate(
             result = (
                 supabase_client.table("mcp_test_results")
                 .select(
-                    "test_success, deployment_success, communication_success, test_timestamp"
+                    "test_success, deployment_success, communication_success, test_timestamp",
                 )
                 .eq("tool_identifier", identifier)
                 .execute()
@@ -450,11 +454,11 @@ def get_test_success_rate(
 
 
 def calculate_comprehensive_score_from_tests(
-    github_url: str, supabase_client=None
-) -> Dict[str, Any]:
-    """
-    从mcp_test_results表计算工具的综合评分
-    使用现有的final_score作为github_evaluation_score
+    github_url: str,
+    supabase_client=None,
+) -> dict[str, Any]:
+    """从mcp_test_results表计算工具的综合评分
+    使用现有的final_score作为github_evaluation_score.
 
     Args:
         github_url: GitHub URL
@@ -462,6 +466,7 @@ def calculate_comprehensive_score_from_tests(
 
     Returns:
         包含综合评分和详细信息的字典
+
     """
     if not supabase_client:
         try:
@@ -499,7 +504,7 @@ def calculate_comprehensive_score_from_tests(
             result = (
                 supabase_client.table("mcp_test_results")
                 .select(
-                    "test_success, deployment_success, communication_success, test_timestamp, final_score, sustainability_score, popularity_score"
+                    "test_success, deployment_success, communication_success, test_timestamp, final_score, sustainability_score, popularity_score",
                 )
                 .eq("tool_identifier", identifier)
                 .execute()
@@ -582,10 +587,10 @@ def calculate_comprehensive_score_from_tests(
 
 
 def evaluate_full_repository_with_comprehensive_score(
-    github_url: str, supabase_client=None
-) -> Dict[str, Any]:
-    """
-    完整的仓库评估 + 测试成功率 + 综合评分
+    github_url: str,
+    supabase_client=None,
+) -> dict[str, Any]:
+    """完整的仓库评估 + 测试成功率 + 综合评分.
 
     Args:
         github_url: GitHub URL
@@ -593,6 +598,7 @@ def evaluate_full_repository_with_comprehensive_score(
 
     Returns:
         完整的评估结果，包含综合评分
+
     """
     # 1. 执行基本的GitHub仓库评估
     basic_evaluation = evaluate_full_repository_profile(github_url)
@@ -641,7 +647,7 @@ def evaluate_full_repository_with_comprehensive_score(
             "test_success_rate": success_rate_result,
             "comprehensive_scoring": comprehensive_result,
             "final_comprehensive_score": comprehensive_result["total_score"],
-        }
+        },
     )
 
     return result

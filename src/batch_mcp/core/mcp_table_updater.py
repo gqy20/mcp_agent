@@ -1,5 +1,4 @@
-"""
-MCP表格更新器
+"""MCP表格更新器.
 
 功能：
 1. 检查GitHub项目是否存在于现有表格中
@@ -9,9 +8,7 @@ MCP表格更新器
 """
 
 import csv
-import json
 from pathlib import Path
-from typing import Dict, List, Optional, Set
 
 from rich.console import Console
 
@@ -21,15 +18,19 @@ console = Console()
 
 
 class MCPTableUpdater:
-    """MCP表格更新器"""
+    """MCP表格更新器."""
 
-    def __init__(self, mcp_csv_path: str = None, tashan_csv_path: str = None):
-        """
-        初始化表格更新器
+    def __init__(
+        self,
+        mcp_csv_path: str | None = None,
+        tashan_csv_path: str | None = None,
+    ) -> None:
+        """初始化表格更新器.
 
         Args:
             mcp_csv_path: mcp.csv文件路径
             tashan_csv_path: tashan_verified_mcp.csv文件路径
+
         """
         self.mcp_csv_path = mcp_csv_path or "data/mcp_database/mcp.csv"
         self.tashan_csv_path = (
@@ -45,34 +46,32 @@ class MCPTableUpdater:
         # 提取现有GitHub URLs
         self.existing_urls = self._extract_existing_urls()
 
-    def _load_mcp_data(self) -> List[Dict]:
-        """加载mcp.csv数据"""
+    def _load_mcp_data(self) -> list[dict]:
+        """加载mcp.csv数据."""
         try:
             data = []
-            with open(self.mcp_csv_path, "r", encoding="utf-8") as f:
+            with open(self.mcp_csv_path, encoding="utf-8") as f:
                 reader = csv.DictReader(f)
                 for row in reader:
                     data.append(row)
             return data
-        except Exception as e:
-            print(f"加载mcp.csv失败: {e}")
+        except Exception:
             return []
 
-    def _load_tashan_data(self) -> List[Dict]:
-        """加载tashan_verified_mcp.csv数据"""
+    def _load_tashan_data(self) -> list[dict]:
+        """加载tashan_verified_mcp.csv数据."""
         try:
             data = []
-            with open(self.tashan_csv_path, "r", encoding="utf-8") as f:
+            with open(self.tashan_csv_path, encoding="utf-8") as f:
                 reader = csv.DictReader(f)
                 for row in reader:
                     data.append(row)
             return data
-        except Exception as e:
-            print(f"加载tashan_verified_mcp.csv失败: {e}")
+        except Exception:
             return []
 
-    def _extract_existing_urls(self) -> Set[str]:
-        """提取现有的GitHub URLs"""
+    def _extract_existing_urls(self) -> set[str]:
+        """提取现有的GitHub URLs."""
         urls = set()
 
         # 从mcp.csv提取
@@ -88,7 +87,7 @@ class MCPTableUpdater:
         return urls
 
     def is_repo_exists(self, github_url: str) -> bool:
-        """检查GitHub项目是否已存在"""
+        """检查GitHub项目是否已存在."""
         normalized_url = github_url.lower().strip()
 
         # 移除.git后缀进行标准化
@@ -102,24 +101,30 @@ class MCPTableUpdater:
 
         return False
 
-    def analyze_github_project(self, github_url: str) -> Dict:
-        """
-        分析单个GitHub项目并添加到表格
+    def analyze_github_project(self, github_url: str) -> dict:
+        """分析单个GitHub项目并添加到表格.
 
         Args:
             github_url: GitHub项目URL
 
         Returns:
             分析结果
+
         """
         # 检查是否已存在
         if self.is_repo_exists(github_url):
             # 检查现有记录是否缺少关键信息
             existing_record = self.get_existing_record(github_url)
             if existing_record and self._needs_update(existing_record):
-                console.print(f"[yellow]📝 项目已存在但信息不完整，正在更新: {github_url}[/yellow]")
+                console.print(
+                    f"[yellow]📝 项目已存在但信息不完整，正在更新: {github_url}[/yellow]",
+                )
             else:
-                return {"success": False, "error": "项目已存在于数据库中且信息完整", "url": github_url}
+                return {
+                    "success": False,
+                    "error": "项目已存在于数据库中且信息完整",
+                    "url": github_url,
+                }
 
         # 分析GitHub项目
         try:
@@ -133,7 +138,7 @@ class MCPTableUpdater:
                 )
                 return {"success": False, "error": error_msg, "url": github_url}
         except Exception as e:
-            return {"success": False, "error": f"分析异常: {str(e)}", "url": github_url}
+            return {"success": False, "error": f"分析异常: {e!s}", "url": github_url}
 
         record = analysis_result["record"]
 
@@ -160,15 +165,15 @@ class MCPTableUpdater:
             "record": record,
         }
 
-    def update_with_new_repos(self, github_urls: List[str]) -> Dict:
-        """
-        用新的GitHub URLs更新表格
+    def update_with_new_repos(self, github_urls: list[str]) -> dict:
+        """用新的GitHub URLs更新表格.
 
         Args:
             github_urls: GitHub URL列表
 
         Returns:
             更新结果统计
+
         """
         results = {
             "total_urls": len(github_urls),
@@ -181,12 +186,9 @@ class MCPTableUpdater:
         }
 
         for url in github_urls:
-            print(f"\n处理: {url}")
-
             # 检查是否已存在
             if self.is_repo_exists(url):
                 results["existing_repos"] += 1
-                print(f"⚠️ 项目已存在，跳过")
                 continue
 
             # 分析GitHub项目
@@ -206,28 +208,26 @@ class MCPTableUpdater:
                         "url": url,
                         "author": mcp_record["author"],
                         "stars": mcp_record["star_count"],
-                    }
+                    },
                 )
 
-                print(f"✅ 添加MCP工具: {mcp_record['name']}")
             else:
                 results["non_mcp_projects"] += 1
                 results["new_repos"] += 1
-                print(f"❌ 非MCP项目或分析失败")
 
         return results
 
-    def _add_to_mcp_table(self, record: Dict):
-        """添加记录到mcp.csv"""
+    def _add_to_mcp_table(self, record: dict) -> None:
+        """添加记录到mcp.csv."""
         try:
             # 首先读取现有文件的字段名
             existing_fieldnames = []
             if Path(self.mcp_csv_path).exists():
                 try:
-                    with open(self.mcp_csv_path, "r", encoding="utf-8") as f:
+                    with open(self.mcp_csv_path, encoding="utf-8") as f:
                         reader = csv.DictReader(f)
                         existing_fieldnames = reader.fieldnames or []
-                except:
+                except Exception:
                     pass
 
             # 如果文件不存在或读取失败，使用默认字段名
@@ -285,11 +285,11 @@ class MCPTableUpdater:
                 # 写入记录
                 writer.writerow(record)
 
-        except Exception as e:
-            print(f"添加到mcp.csv失败: {e}")
+        except Exception:
+            pass
 
-    def _add_to_tashan_table(self, record: Dict):
-        """添加记录到tashan_verified_mcp.csv"""
+    def _add_to_tashan_table(self, record: dict) -> None:
+        """添加记录到tashan_verified_mcp.csv."""
         try:
             # 计算他山评分
             tashan_record = self._convert_to_tashan_format(record)
@@ -319,11 +319,11 @@ class MCPTableUpdater:
                 # 写入记录
                 writer.writerow(tashan_record)
 
-        except Exception as e:
-            print(f"添加到tashan_verified_mcp.csv失败: {e}")
+        except Exception:
+            pass
 
-    def _convert_to_tashan_format(self, record: Dict) -> Dict:
-        """转换记录为tashan_verified_mcp.csv格式"""
+    def _convert_to_tashan_format(self, record: dict) -> dict:
+        """转换记录为tashan_verified_mcp.csv格式."""
         # 简单的评分计算
         stars = int(record.get("star_count", 0))
         forks = int(record.get("fork_count", 0))
@@ -353,44 +353,30 @@ class MCPTableUpdater:
             "github_url": record["github_url"],
         }
 
-    def batch_update_from_file(self, urls_file: str) -> Dict:
-        """
-        从文件批量更新
+    def batch_update_from_file(self, urls_file: str) -> dict:
+        """从文件批量更新.
 
         Args:
             urls_file: 包含GitHub URLs的文件路径
+
         """
         try:
-            with open(urls_file, "r", encoding="utf-8") as f:
+            with open(urls_file, encoding="utf-8") as f:
                 urls = [line.strip() for line in f if line.strip()]
 
             return self.update_with_new_repos(urls)
 
         except Exception as e:
-            print(f"读取文件失败: {e}")
             return {"error": str(e)}
 
-    def generate_report(self, results: Dict):
-        """生成更新报告"""
-        print("\n" + "=" * 50)
-        print("MCP表格更新报告")
-        print("=" * 50)
-        print(f"总计处理URLs: {results['total_urls']}")
-        print(f"已存在项目: {results['existing_repos']}")
-        print(f"新增项目: {results['new_repos']}")
-        print(f"MCP项目: {results['mcp_projects']}")
-        print(f"非MCP项目: {results['non_mcp_projects']}")
-        print(f"分析失败: {results['failed_analysis']}")
-
+    def generate_report(self, results: dict) -> None:
+        """生成更新报告."""
         if results["added_tools"]:
-            print(f"\n新增MCP工具 ({len(results['added_tools'])}):")
-            for tool in results["added_tools"]:
-                print(f"  • {tool['name']} by {tool['author']} ({tool['stars']} stars)")
+            for _tool in results["added_tools"]:
+                pass
 
-        print("=" * 50)
-
-    def get_existing_record(self, github_url: str) -> Optional[Dict]:
-        """获取现有记录"""
+    def get_existing_record(self, github_url: str) -> dict | None:
+        """获取现有记录."""
         try:
             # 在mcp.csv中查找
             if self.existing_mcp_data:
@@ -411,12 +397,11 @@ class MCPTableUpdater:
                         return record
 
             return None
-        except Exception as e:
-            print(f"获取现有记录失败: {e}")
+        except Exception:
             return None
 
-    def _needs_update(self, record: Dict) -> bool:
-        """检查记录是否需要更新"""
+    def _needs_update(self, record: dict) -> bool:
+        """检查记录是否需要更新."""
         # 检查关键字段是否缺失
         critical_fields = [
             "package_name",
@@ -432,8 +417,8 @@ class MCPTableUpdater:
         return False
 
 
-def main():
-    """测试函数"""
+def main() -> None:
+    """测试函数."""
     updater = MCPTableUpdater()
 
     # 测试URLs

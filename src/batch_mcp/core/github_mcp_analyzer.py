@@ -1,5 +1,4 @@
-"""
-GitHub MCP项目自动分析器
+"""GitHub MCP项目自动分析器.
 
 功能：
 1. 获取GitHub项目的README文件
@@ -12,21 +11,19 @@ import json
 import re
 import urllib.parse
 from datetime import datetime
-from pathlib import Path
-from typing import Dict, List, Optional, Tuple
 
 import requests
 
 
 class GitHubMCPAnalyzer:
-    """GitHub MCP项目自动分析器"""
+    """GitHub MCP项目自动分析器."""
 
-    def __init__(self, github_token: Optional[str] = None):
-        """
-        初始化分析器
+    def __init__(self, github_token: str | None = None) -> None:
+        """初始化分析器.
 
         Args:
             github_token: GitHub API token (可选，提高API限制)
+
         """
         self.github_token = github_token
         self.headers = {"Accept": "application/vnd.github.v3+json"}
@@ -83,15 +80,15 @@ class GitHubMCPAnalyzer:
             "ruby": [r"ruby", r"gem"],
         }
 
-    def analyze_github_repo(self, github_url: str) -> Optional[Dict]:
-        """
-        分析GitHub仓库并生成MCP工具记录
+    def analyze_github_repo(self, github_url: str) -> dict | None:
+        """分析GitHub仓库并生成MCP工具记录.
 
         Args:
             github_url: GitHub仓库URL
 
         Returns:
             包含MCP工具信息的字典，如果不是MCP项目则返回None
+
         """
         try:
             # 解析GitHub URL
@@ -111,24 +108,29 @@ class GitHubMCPAnalyzer:
 
             # 检查是否为MCP项目
             if not self._is_mcp_project(readme_content):
-                return {"success": False, "error": "项目不是MCP工具", "is_mcp_project": False}
+                return {
+                    "success": False,
+                    "error": "项目不是MCP工具",
+                    "is_mcp_project": False,
+                }
 
             # 分析MCP项目
             analysis_result = self._analyze_mcp_content(readme_content, repo_info)
 
             # 生成标准化记录
             mcp_record = self._generate_mcp_record(
-                github_url, repo_info, analysis_result
+                github_url,
+                repo_info,
+                analysis_result,
             )
 
             return {"success": True, "record": mcp_record}
 
         except Exception as e:
-            print(f"分析GitHub仓库时出错: {e}")
             return {"success": False, "error": str(e)}
 
-    def _parse_github_url(self, url: str) -> Tuple[Optional[str], Optional[str]]:
-        """解析GitHub URL获取owner和repo"""
+    def _parse_github_url(self, url: str) -> tuple[str | None, str | None]:
+        """解析GitHub URL获取owner和repo."""
         try:
             # 标准化URL
             url = url.lower().strip()
@@ -150,19 +152,18 @@ class GitHubMCPAnalyzer:
         except Exception:
             return None, None
 
-    def _get_repo_info(self, owner: str, repo: str) -> Optional[Dict]:
-        """获取GitHub仓库信息"""
+    def _get_repo_info(self, owner: str, repo: str) -> dict | None:
+        """获取GitHub仓库信息."""
         try:
             url = f"https://api.github.com/repos/{owner}/{repo}"
             response = requests.get(url, headers=self.headers)
             response.raise_for_status()
             return response.json()
-        except Exception as e:
-            print(f"获取仓库信息失败: {e}")
+        except Exception:
             return None
 
-    def _get_readme_content(self, owner: str, repo: str) -> Optional[str]:
-        """获取README内容"""
+    def _get_readme_content(self, owner: str, repo: str) -> str | None:
+        """获取README内容."""
         try:
             # 尝试不同的README文件名
             readme_names = ["README.md", "README", "readme.md", "readme"]
@@ -175,25 +176,18 @@ class GitHubMCPAnalyzer:
                     # 解码base64内容
                     import base64
 
-                    content = base64.b64decode(response.json()["content"]).decode(
-                        "utf-8"
-                    )
-                    return content
-                elif response.status_code == 404:
+                    return base64.b64decode(response.json()["content"]).decode("utf-8")
+                if response.status_code == 404:
                     continue
-                else:
-                    print(f"获取README失败: {response.status_code}")
-                    return None
+                return None
 
-            print("未找到README文件")
             return None
 
-        except Exception as e:
-            print(f"获取README内容失败: {e}")
+        except Exception:
             return None
 
     def _is_mcp_project(self, content: str) -> bool:
-        """检查是否为MCP项目"""
+        """检查是否为MCP项目."""
         content_lower = content.lower()
 
         # 检查MCP关键词
@@ -209,8 +203,8 @@ class GitHubMCPAnalyzer:
 
         return False
 
-    def _analyze_mcp_content(self, content: str, repo_info: Dict) -> Dict:
-        """分析MCP项目内容"""
+    def _analyze_mcp_content(self, content: str, repo_info: dict) -> dict:
+        """分析MCP项目内容."""
         analysis = {
             "description": self._extract_description(content, repo_info),
             "deployment_methods": self._extract_deployment_methods(content),
@@ -223,14 +217,15 @@ class GitHubMCPAnalyzer:
 
         # 提取包名和部署命令信息
         package_info = self._extract_package_info(
-            content, analysis["deployment_methods"]
+            content,
+            analysis["deployment_methods"],
         )
         analysis.update(package_info)
 
         return analysis
 
-    def _extract_description(self, content: str, repo_info: Dict) -> str:
-        """提取项目描述"""
+    def _extract_description(self, content: str, repo_info: dict) -> str:
+        """提取项目描述."""
         # 优先使用GitHub描述
         if repo_info.get("description"):
             return repo_info["description"]
@@ -250,8 +245,8 @@ class GitHubMCPAnalyzer:
 
         return " ".join(description_lines) if description_lines else "MCP工具"
 
-    def _extract_deployment_methods(self, content: str) -> List[str]:
-        """提取部署方式"""
+    def _extract_deployment_methods(self, content: str) -> list[str]:
+        """提取部署方式."""
         methods = []
         content_lower = content.lower()
 
@@ -264,7 +259,7 @@ class GitHubMCPAnalyzer:
         return list(set(methods))
 
     def _check_api_key_requirement(self, content: str) -> bool:
-        """检查是否需要API密钥"""
+        """检查是否需要API密钥."""
         content_lower = content.lower()
 
         for pattern in self.api_key_patterns:
@@ -273,8 +268,8 @@ class GitHubMCPAnalyzer:
 
         return False
 
-    def _extract_tech_stack(self, content: str) -> List[str]:
-        """提取技术栈"""
+    def _extract_tech_stack(self, content: str) -> list[str]:
+        """提取技术栈."""
         tech_stack = []
         content_lower = content.lower()
 
@@ -286,8 +281,8 @@ class GitHubMCPAnalyzer:
 
         return list(set(tech_stack))
 
-    def _extract_tools(self, content: str) -> List[str]:
-        """提取工具列表"""
+    def _extract_tools(self, content: str) -> list[str]:
+        """提取工具列表."""
         tools = []
 
         # 查找工具描述
@@ -309,8 +304,8 @@ class GitHubMCPAnalyzer:
 
         return list(set(tools))[:10]  # 限制工具数量
 
-    def _extract_use_cases(self, content: str) -> List[str]:
-        """提取使用场景"""
+    def _extract_use_cases(self, content: str) -> list[str]:
+        """提取使用场景."""
         use_cases = []
 
         # 查找使用场景描述
@@ -331,7 +326,7 @@ class GitHubMCPAnalyzer:
         return list(set(use_cases))[:5]  # 限制使用场景数量
 
     def _extract_installation_instructions(self, content: str) -> str:
-        """提取安装说明"""
+        """提取安装说明."""
         lines = content.split("\n")
         install_section = False
         install_instructions = []
@@ -351,9 +346,11 @@ class GitHubMCPAnalyzer:
         return "\n".join(install_instructions[:10]) if install_instructions else ""
 
     def _extract_package_info(
-        self, content: str, deployment_methods: List[str]
-    ) -> Dict[str, str]:
-        """从README内容中提取包名和部署命令"""
+        self,
+        content: str,
+        deployment_methods: list[str],
+    ) -> dict[str, str]:
+        """从README内容中提取包名和部署命令."""
         package_info = {
             "package_name": "",
             "deployment_method": "",
@@ -399,9 +396,9 @@ class GitHubMCPAnalyzer:
 
                     if package_name and package_name not in ["-g", "global"]:
                         package_info["package_name"] = package_name
-                        package_info[
-                            "install_command"
-                        ] = f"npm install -g {package_name}"
+                        package_info["install_command"] = (
+                            f"npm install -g {package_name}"
+                        )
                         package_info["run_command"] = f"npx {package_name}"
                         break
 
@@ -436,9 +433,9 @@ class GitHubMCPAnalyzer:
                     package_name = matches[0]
                     if package_name:
                         package_info["package_name"] = package_name
-                        package_info[
-                            "install_command"
-                        ] = f"cargo install {package_name}"
+                        package_info["install_command"] = (
+                            f"cargo install {package_name}"
+                        )
                         package_info["run_command"] = f"cargo run --bin {package_name}"
                         break
 
@@ -477,17 +474,17 @@ class GitHubMCPAnalyzer:
 
                     # 根据部署方法设置默认命令
                     if primary_deployment == "npx":
-                        package_info[
-                            "install_command"
-                        ] = f"npm install -g {package_name}"
+                        package_info["install_command"] = (
+                            f"npm install -g {package_name}"
+                        )
                         package_info["run_command"] = f"npx {package_name}"
                     elif primary_deployment == "uvx":
                         package_info["install_command"] = f"pip install {package_name}"
                         package_info["run_command"] = f"uvx {package_name}"
                     elif primary_deployment == "cargo":
-                        package_info[
-                            "install_command"
-                        ] = f"cargo install {package_name}"
+                        package_info["install_command"] = (
+                            f"cargo install {package_name}"
+                        )
                         package_info["run_command"] = f"cargo run --bin {package_name}"
                     elif primary_deployment == "python":
                         package_info["install_command"] = f"pip install {package_name}"
@@ -497,9 +494,12 @@ class GitHubMCPAnalyzer:
         return package_info
 
     def _generate_mcp_record(
-        self, github_url: str, repo_info: Dict, analysis: Dict
-    ) -> Dict:
-        """生成标准化的MCP记录"""
+        self,
+        github_url: str,
+        repo_info: dict,
+        analysis: dict,
+    ) -> dict:
+        """生成标准化的MCP记录."""
         owner = repo_info.get("owner", {}).get("login", "")
         repo_name = repo_info.get("name", "")
 
@@ -508,7 +508,7 @@ class GitHubMCPAnalyzer:
         forks = repo_info.get("forks_count", 0)
 
         # 简单评分算法
-        popularity_score = min((stars / 100) + (forks / 10), 100)
+        min((stars / 100) + (forks / 10), 100)
 
         # 生成MCP配置JSON
         mcp_config = {
@@ -551,38 +551,34 @@ class GitHubMCPAnalyzer:
         }
 
     def _calculate_evaluate_score(self, stars: int, forks: int) -> str:
-        """计算评估分数"""
+        """计算评估分数."""
         score = (stars / 100) + (forks / 10)
 
         if score >= 80:
             return "优质"
-        elif score >= 50:
+        if score >= 50:
             return "中等"
-        else:
-            return "一般"
+        return "一般"
 
-    def batch_analyze_repos(self, github_urls: List[str]) -> List[Dict]:
-        """批量分析GitHub仓库"""
+    def batch_analyze_repos(self, github_urls: list[str]) -> list[dict]:
+        """批量分析GitHub仓库."""
         results = []
 
         for url in github_urls:
-            print(f"正在分析: {url}")
             result = self.analyze_github_repo(url)
 
             if result:
                 results.append(result)
-                print(f"✅ 成功分析: {result['name']}")
             else:
-                print(f"❌ 分析失败或非MCP项目: {url}")
+                pass
 
         return results
 
-    def export_to_csv(self, results: List[Dict], output_file: str):
-        """导出结果到CSV文件"""
+    def export_to_csv(self, results: list[dict], output_file: str) -> None:
+        """导出结果到CSV文件."""
         import csv
 
         if not results:
-            print("没有结果可导出")
             return
 
         # 获取所有字段
@@ -598,11 +594,9 @@ class GitHubMCPAnalyzer:
             for result in results:
                 writer.writerow(result)
 
-        print(f"结果已导出到: {output_file}")
 
-
-def main():
-    """测试函数"""
+def main() -> None:
+    """测试函数."""
     analyzer = GitHubMCPAnalyzer()
 
     # 测试分析一个GitHub仓库
@@ -610,10 +604,9 @@ def main():
     result = analyzer.analyze_github_repo(test_url)
 
     if result:
-        print("分析结果:")
-        print(json.dumps(result, indent=2, ensure_ascii=False))
+        pass
     else:
-        print("分析失败")
+        pass
 
 
 if __name__ == "__main__":

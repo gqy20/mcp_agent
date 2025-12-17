@@ -1,4 +1,4 @@
-"""Batch MCP - 批量MCP工具测试框架
+"""Batch MCP - 批量MCP工具测试框架.
 
 一个用于自动部署、测试和评估Model Context Protocol (MCP)工具的综合框架。
 
@@ -12,19 +12,19 @@ __email__ = "ai@example.com"
 
 # 导出主要接口
 __all__ = [
-    "app",
+    "AsyncMCPClient",
     "MCPTester",
     "SimpleMCPDeployer",
-    "AsyncMCPClient",
     "URLMCPProcessor",
+    "app",
 ]
 
 try:
-    from .main import app
-    from .core.tester import MCPTester
-    from .core.simple_mcp_deployer import SimpleMCPDeployer
     from .core.async_mcp_client import AsyncMCPClient
+    from .core.simple_mcp_deployer import SimpleMCPDeployer
+    from .core.tester import MCPTester
     from .core.url_mcp_processor import URLMCPProcessor
-except ImportError as e:
+    from .main import app
+except ImportError:
     # 如果导入失败，可能是模块还没有迁移完成
-    print(f"警告: 无法导入主要模块: {e}")
+    pass

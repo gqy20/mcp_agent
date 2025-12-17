@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-MCP CLI 命令处理器 - 简洁版
+"""MCP CLI 命令处理器 - 简洁版.
 
 遵循 Linus 的"好品味"原则：
 - 每个命令处理器只做一件事
@@ -15,7 +14,7 @@ MCP CLI 命令处理器 - 简洁版
 import asyncio
 import json
 import time
-from typing import List, Optional
+from pathlib import Path
 
 from rich import print as rprint
 
@@ -24,15 +23,24 @@ from batch_mcp.core.report_generator import generate_test_report
 from batch_mcp.core.tester import TestConfig, get_mcp_tester
 from batch_mcp.utils.csv_parser import MCPToolInfo, get_mcp_parser
 
+try:
+    from .config import get_config
+
+    CONFIG_AVAILABLE = True
+    config = get_config() if CONFIG_AVAILABLE else None
+except ImportError:
+    CONFIG_AVAILABLE = False
+    config = None
+
 
 class CLIHandler:
-    """CLI命令处理器 - 统一处理模式"""
+    """CLI命令处理器 - 统一处理模式."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.tester = get_mcp_tester()
 
-    def evaluate_tools(self, db_export: bool):
-        """评估所有工具 - 包含综合评分"""
+    def evaluate_tools(self, db_export: bool) -> None:
+        """评估所有工具 - 包含综合评分."""
         try:
             parser = get_mcp_parser()
             tools = parser.get_all_tools()
@@ -42,16 +50,14 @@ class CLIHandler:
 
             # 创建Supabase客户端供评估使用
             supabase_client = None
-            if db_export:
+            if db_export and CONFIG_AVAILABLE and config.database.has_supabase_config:
                 try:
-                    import os
-
                     from supabase import create_client
 
-                    supabase_url = os.getenv("SUPABASE_URL")
-                    supabase_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
-                    if supabase_url and supabase_key:
-                        supabase_client = create_client(supabase_url, supabase_key)
+                    supabase_client = create_client(
+                        config.database.supabase_url,
+                        config.database.supabase_service_role_key,
+                    )
                 except Exception:
                     pass
 
@@ -61,47 +67,54 @@ class CLIHandler:
 
                 rprint(f"[blue]🔍 正在评估: {tool.name}[/blue]")
                 evaluation_result = evaluate_full_repository_with_comprehensive_score(
-                    tool.github_url, supabase_client
+                    tool.github_url,
+                    supabase_client,
                 )
 
                 if evaluation_result["status"] == "success":
                     final_score = evaluation_result["final_score"]
                     comprehensive_score = evaluation_result.get(
-                        "final_comprehensive_score", final_score
+                        "final_comprehensive_score",
+                        final_score,
                     )
                     rprint(
                         f"[green]✅ 评估完成: {tool.name} - "
                         f"GitHub评分: {final_score}/100, "
-                        f"综合评分: {comprehensive_score}/100[/green]"
+                        f"综合评分: {comprehensive_score}/100[/green]",
                     )
                     if db_export:
                         self._export_evaluation_to_database(
-                            tool.github_url, evaluation_result
+                            tool.github_url,
+                            evaluation_result,
                         )
                 else:
                     rprint(
-                        f"[red]❌ 评估失败: {tool.name} - {evaluation_result['message']}[/red]"
+                        f"[red]❌ 评估失败: {tool.name} - "
+                        f"{evaluation_result['message']}[/red]",
                     )
 
         except Exception as e:
             rprint(f"[red]❌ 评估过程发生错误: {e}[/red]")
 
-    def _export_evaluation_to_database(self, github_url: str, evaluation_result: dict):
-        """导出评估结果到数据库 - 包含综合评分"""
+    def _export_evaluation_to_database(
+        self,
+        github_url: str,
+        evaluation_result: dict,
+    ) -> None:
+        """导出评估结果到数据库 - 包含综合评分."""
+        if not CONFIG_AVAILABLE or not config.database.has_supabase_config:
+            rprint("[yellow]⚠️ 数据库配置未设置，跳过数据库导出[/yellow]")
+            return
+
         try:
-            import os
             from datetime import datetime
 
             from supabase import create_client
 
-            supabase_url = os.getenv("SUPABASE_URL")
-            supabase_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
-
-            if not supabase_url or not supabase_key:
-                rprint("[yellow]⚠️ 数据库配置未设置，跳过数据库导出[/yellow]")
-                return
-
-            client = create_client(supabase_url, supabase_key)
+            client = create_client(
+                config.database.supabase_url,
+                config.database.supabase_service_role_key,
+            )
 
             # 获取综合评分数据
             test_success_info = evaluation_result.get("test_success_rate", {})
@@ -133,7 +146,7 @@ class CLIHandler:
             rprint(f"[yellow]⚠️ 数据库导出异常: {e}[/yellow]")
 
     def test_url(self, url: str, config: TestConfig) -> bool:
-        """测试URL - 主要流程"""
+        """测试URL - 主要流程."""
         try:
             # 1. 查找工具信息
             tool_info = self._find_tool_info(url)
@@ -154,21 +167,24 @@ class CLIHandler:
                 rprint("[blue]🔍 正在评估工具...[/blue]")
                 # 创建Supabase客户端供评估使用
                 supabase_client = None
-                if config.db_export:
+                if (
+                    config.db_export
+                    and CONFIG_AVAILABLE
+                    and config.database.has_supabase_config
+                ):
                     try:
-                        import os
-
                         from supabase import create_client
 
-                        supabase_url = os.getenv("SUPABASE_URL")
-                        supabase_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
-                        if supabase_url and supabase_key:
-                            supabase_client = create_client(supabase_url, supabase_key)
+                        supabase_client = create_client(
+                            config.database.supabase_url,
+                            config.database.supabase_service_role_key,
+                        )
                     except Exception:
                         pass
 
                 evaluation_result = evaluate_full_repository_with_comprehensive_score(
-                    tool_info.github_url, supabase_client
+                    tool_info.github_url,
+                    supabase_client,
                 )
                 if evaluation_result and evaluation_result.get("status") == "success":
                     self._display_evaluation_result(evaluation_result)
@@ -194,7 +210,8 @@ class CLIHandler:
             if config.db_export:
                 concise_report = report_files.get("concise") or report_files.get("json")
                 self._export_to_database(
-                    concise_report, evaluation_result=evaluation_result
+                    concise_report,
+                    evaluation_result=evaluation_result,
                 )
 
             # 5. 清理资源
@@ -208,7 +225,7 @@ class CLIHandler:
             return False
 
     def test_package(self, package: str, config: TestConfig) -> bool:
-        """测试包 - 统一流程"""
+        """测试包 - 统一流程."""
         try:
             # 查找工具信息
             parser, _ = self.tester._get_services()
@@ -231,21 +248,24 @@ class CLIHandler:
                 rprint("[blue]🔍 正在评估工具...[/blue]")
                 # 创建Supabase客户端供评估使用
                 supabase_client = None
-                if config.db_export:
+                if (
+                    config.db_export
+                    and CONFIG_AVAILABLE
+                    and config.database.has_supabase_config
+                ):
                     try:
-                        import os
-
                         from supabase import create_client
 
-                        supabase_url = os.getenv("SUPABASE_URL")
-                        supabase_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
-                        if supabase_url and supabase_key:
-                            supabase_client = create_client(supabase_url, supabase_key)
+                        supabase_client = create_client(
+                            config.database.supabase_url,
+                            config.database.supabase_service_role_key,
+                        )
                     except Exception:
                         pass
 
                 evaluation_result = evaluate_full_repository_with_comprehensive_score(
-                    tool_info.github_url, supabase_client
+                    tool_info.github_url,
+                    supabase_client,
                 )
                 if evaluation_result and evaluation_result.get("status") == "success":
                     self._display_evaluation_result(evaluation_result)
@@ -266,7 +286,8 @@ class CLIHandler:
             # 数据库导出 (如果需要)
             if config.db_export:
                 self._export_to_database(
-                    report_files.get("json"), evaluation_result=evaluation_result
+                    report_files.get("json"),
+                    evaluation_result=evaluation_result,
                 )
 
             # 清理
@@ -281,12 +302,12 @@ class CLIHandler:
 
     def list_tools(
         self,
-        category: Optional[str],
-        search: Optional[str],
+        category: str | None,
+        search: str | None,
         limit: int,
         show_package: bool,
-    ):
-        """列出工具 - 简化实现"""
+    ) -> None:
+        """列出工具 - 简化实现."""
         try:
             parser, _ = self.tester._get_services()
 
@@ -313,8 +334,8 @@ class CLIHandler:
             rprint(f"[red]❌ 加载工具列表失败: {e}[/red]")
             raise
 
-    def _find_tool_info(self, url: str) -> Optional[MCPToolInfo]:
-        """查找工具信息 - 单一职责"""
+    def _find_tool_info(self, url: str) -> MCPToolInfo | None:
+        """查找工具信息 - 单一职责."""
         rprint("[blue]🔍 在数据库中查找对应的MCP工具...[/blue]")
         tool_info = self.tester.find_tool_by_url(url)
 
@@ -332,7 +353,7 @@ class CLIHandler:
                 result = updater.analyze_github_project(url)
                 if result and result.get("success"):
                     rprint(
-                        f"[green]✅ 成功分析GitHub项目: {result.get('name', 'Unknown')}[/green]"
+                        f"[green]✅ 成功分析GitHub项目: {result.get('name', 'Unknown')}[/green]",
                     )
 
                     # 现在CSV解析器会自动尝试从GitHub获取信息，重新查找
@@ -340,19 +361,17 @@ class CLIHandler:
                     if tool_info:
                         self._display_tool_info(tool_info)
                         return tool_info
-                    else:
-                        rprint(f"[red]❌ 分析完成后仍未在数据库中找到工具信息[/red]")
-                        return None
-                else:
-                    rprint(
-                        f"[red]❌ GitHub项目分析失败: {result.get('error', 'Unknown error')}[/red]"
-                    )
+                    rprint("[red]❌ 分析完成后仍未在数据库中找到工具信息[/red]")
                     return None
+                rprint(
+                    f"[red]❌ GitHub项目分析失败: {result.get('error', 'Unknown error')}[/red]",
+                )
+                return None
 
             except Exception as e:
                 rprint(f"[red]❌ GitHub项目分析异常: {e}[/red]")
                 rprint(
-                    "[yellow]💡 提示: 可以使用 'batch-mcp list-tools --search <关键词>' 搜索可用工具[/yellow]"
+                    "[yellow]💡 提示: 可以使用 'batch-mcp list-tools --search <关键词>' 搜索可用工具[/yellow]",
                 )
                 return None
 
@@ -360,7 +379,7 @@ class CLIHandler:
         return tool_info
 
     def _deploy_tool(self, tool_info: MCPToolInfo, config: TestConfig):
-        """部署工具 - 单一职责"""
+        """部署工具 - 单一职责."""
         # 尝试从run_command中提取包名（如果package_name为空）
         package_name = tool_info.package_name
         run_command = getattr(tool_info, "run_command", None)
@@ -379,7 +398,7 @@ class CLIHandler:
 
         if tool_info.requires_api_key:
             rprint(
-                f"[yellow]🔑 该工具需要API密钥: {', '.join(tool_info.api_requirements)}[/yellow]"
+                f"[yellow]🔑 该工具需要API密钥: {', '.join(tool_info.api_requirements)}[/yellow]",
             )
             rprint("[yellow]⚠️ 请确保已在.env文件中配置相应的API密钥[/yellow]")
 
@@ -395,18 +414,19 @@ class CLIHandler:
         return server_info
 
     def _run_tests(
-        self, tool_info: Optional[MCPToolInfo], server_info, config: TestConfig
+        self,
+        tool_info: MCPToolInfo | None,
+        server_info,
+        config: TestConfig,
     ):
-        """执行测试 - 支持无tool_info场景"""
+        """执行测试 - 支持无tool_info场景."""
         rprint("[yellow]🧪 执行基础连通性测试...[/yellow]")
 
         if config.smart_test and tool_info:
             try:
-                from batch_mcp.agents.test_agent import get_test_generator
-
                 rprint("[blue]🤖 启用AI智能测试模式...[/blue]")
                 return asyncio.run(
-                    self.tester.run_smart_test(tool_info, server_info, config.verbose)
+                    self.tester.run_smart_test(tool_info, server_info, config.verbose),
                 )
             except ImportError:
                 rprint("[yellow]⚠️ AgentScope不可用，使用基础测试模式[/yellow]")
@@ -423,9 +443,9 @@ class CLIHandler:
         success: bool,
         test_results,
         start_time,
-        evaluation_result: Optional[dict] = None,
+        evaluation_result: dict | None = None,
     ):
-        """保存报告 - 单一职责"""
+        """保存报告 - 单一职责."""
         try:
             rprint("[blue]📊 生成测试报告...[/blue]")
 
@@ -449,7 +469,7 @@ class CLIHandler:
                 # 同步人气评分
                 if "popularity" in evaluation_result:
                     tool_info.popularity_score = evaluation_result["popularity"].get(
-                        "total_score"
+                        "total_score",
                     )
 
                 rprint("[dim]✅ 评分信息已同步到 tool_info[/dim]")
@@ -466,7 +486,9 @@ class CLIHandler:
             )
 
             for format_name, file_path in report_files.items():
-                rprint(f"[green]✅ {format_name.upper()} 报告已保存: {file_path}[/green]")
+                rprint(
+                    f"[green]✅ {format_name.upper()} 报告已保存: {file_path}[/green]",
+                )
 
             return report_files
 
@@ -475,8 +497,7 @@ class CLIHandler:
             return {}
 
     def _get_tool_identifier(self, json_data: dict, tool_info: dict) -> str:
-        """
-        获取工具标识符，确保不为空
+        """获取工具标识符，确保不为空.
 
         问题分析：
         1. 在to_concise_dict中，精简的tool_info不包含github_url字段
@@ -510,9 +531,7 @@ class CLIHandler:
         return test_url
 
     def _lookup_github_url_from_csv(self, json_data: dict) -> str:
-        """
-        从CSV中查找GitHub URL
-        """
+        """从CSV中查找GitHub URL."""
         try:
             # 获取工具名称
             tool_name = json_data.get("tool_name", "")
@@ -550,14 +569,11 @@ class CLIHandler:
 
         except Exception as e:
             rprint(f"[yellow]⚠️ 从CSV查找GitHub URL时出错: {e}[/yellow]")
-            pass
 
         return ""
 
     def _infer_github_url_from_test_url(self, test_url: str) -> str:
-        """
-        从test_url推断GitHub URL
-        """
+        """从test_url推断GitHub URL."""
         if not test_url:
             return ""
 
@@ -576,24 +592,22 @@ class CLIHandler:
                 # 特殊处理一些常见的包名映射
                 if owner == "upstash" and "context7" in repo:
                     return "https://github.com/upstash/context7"
-                elif owner == "modelcontextprotocol":
-                    if "filesystem" in repo:
+                if owner == "modelcontextprotocol":
+                    if "filesystem" in repo or "sequential-thinking" in repo:
                         return "https://github.com/modelcontextprotocol/servers"
-                    elif "sequential-thinking" in repo:
-                        return "https://github.com/modelcontextprotocol/servers"
-                    else:
-                        return f"https://github.com/modelcontextprotocol/{repo}"
-                else:
-                    # 默认映射
-                    return f"https://github.com/{owner}/{repo}"
+                    return f"https://github.com/modelcontextprotocol/{repo}"
+                # 默认映射
+                return f"https://github.com/{owner}/{repo}"
 
         # 对于其他情况，无法推断，返回空字符串
         return ""
 
     def _export_to_database(
-        self, json_report_path: str, evaluation_result: Optional[dict] = None
-    ):
-        """导出到数据库 - 使用精简版数据"""
+        self,
+        json_report_path: str,
+        evaluation_result: dict | None = None,
+    ) -> None:
+        """导出到数据库 - 使用精简版数据."""
         if not json_report_path:
             rprint("[yellow]⚠️ 没有JSON报告，跳过数据库导出[/yellow]")
             return
@@ -601,32 +615,31 @@ class CLIHandler:
         try:
             rprint("[blue]🗄️ 导出精简版结果到数据库...[/blue]")
 
-            import os
+            if not CONFIG_AVAILABLE or not config.database.has_supabase_config:
+                rprint(
+                    "[yellow]⚠️ 数据库配置未设置 (SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)，跳过数据库导出[/yellow]",
+                )
+                return
+
             from datetime import datetime
 
             from supabase import create_client
 
-            supabase_url = os.getenv("SUPABASE_URL")
-            supabase_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
-
-            if not supabase_url or not supabase_key:
-                rprint(
-                    "[yellow]⚠️ 数据库配置未设置 (SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)，跳过数据库导出[/yellow]"
-                )
-                return
-
-            client = create_client(supabase_url, supabase_key)
+            client = create_client(
+                config.database.supabase_url,
+                config.database.supabase_service_role_key,
+            )
 
             # 检查是否为精简版报告，如果不是则尝试加载精简版
-            with open(json_report_path, "r", encoding="utf-8") as f:
+            with open(json_report_path, encoding="utf-8") as f:
                 json_data = json.load(f)
 
             # 如果是完整版报告，尝试查找对应的精简版
             if "actual_response" in str(json_data):  # 简单判断是否为完整版
                 concise_path = json_report_path.replace(".json", "_concise.json")
-                if os.path.exists(concise_path):
+                if Path(concise_path).exists():
                     rprint("[blue]📄 发现精简版报告，使用精简数据导出[/blue]")
-                    with open(concise_path, "r", encoding="utf-8") as f:
+                    with open(concise_path, encoding="utf-8") as f:
                         json_data = json.load(f)
                 else:
                     rprint("[yellow]⚠️ 未找到精简版报告，使用完整数据导出[/yellow]")
@@ -655,9 +668,11 @@ class CLIHandler:
             record = {
                 "test_timestamp": datetime.now().isoformat(),
                 "tool_identifier": tool_identifier,
-                "tool_name": tool_info.get("name", "Unknown")
-                if tool_info
-                else json_data.get("tool_name", "Unknown"),
+                "tool_name": (
+                    tool_info.get("name", "Unknown")
+                    if tool_info
+                    else json_data.get("tool_name", "Unknown")
+                ),
                 "tool_author": tool_info.get("author", "") if tool_info else "",
                 "tool_category": tool_info.get("category", "") if tool_info else "",
                 "test_success": overall_success,
@@ -668,7 +683,7 @@ class CLIHandler:
                 "error_messages": json_data.get("error_messages", []),
                 "test_details": json_data.get("test_results", []),
                 "environment_info": {
-                    "platform": json_data.get("platform_info", "Unknown")
+                    "platform": json_data.get("platform_info", "Unknown"),
                 },
             }
 
@@ -681,7 +696,7 @@ class CLIHandler:
                         "lobehub_score": tool_info.get("lobehub_score"),
                         "lobehub_star_count": tool_info.get("lobehub_star_count"),
                         "lobehub_fork_count": tool_info.get("lobehub_fork_count"),
-                    }
+                    },
                 )
 
             if evaluation_result and evaluation_result.get("status") == "success":
@@ -711,17 +726,17 @@ class CLIHandler:
 
                     # 计算综合评分 (当前测试成功率 + GitHub评估器评分)
                     comprehensive_score = int(
-                        (current_success_rate * 1 + evaluator_score * 2) / 3
+                        (current_success_rate * 1 + evaluator_score * 2) / 3,
                     )
 
                     record["comprehensive_score"] = comprehensive_score
                     record["calculation_method"] = "current_test_weighted"
 
                     rprint(
-                        f"[cyan]💾 计算综合评分: (当前测试成功率{current_success_rate:.1f} × 1 + GitHub评估器评分{evaluator_score} × 2) ÷ 3 = {comprehensive_score}[/cyan]"
+                        f"[cyan]💾 计算综合评分: (当前测试成功率{current_success_rate:.1f} × 1 + GitHub评估器评分{evaluator_score} × 2) ÷ 3 = {comprehensive_score}[/cyan]",
                     )
                     rprint(
-                        f"[cyan]📊 当前测试: {current_passed_tests}/{current_test_count} = {current_success_rate:.1f}%[/cyan]"
+                        f"[cyan]📊 当前测试: {current_passed_tests}/{current_test_count} = {current_success_rate:.1f}%[/cyan]",
                     )
 
                     # 插入完整记录（包含综合评分）
@@ -729,13 +744,14 @@ class CLIHandler:
 
                     if response.data:
                         record_id = response.data[0]["test_id"]
-                        rprint(f"[green]✅ 完整记录已保存到数据库: {record_id[:8]}...[/green]")
                         rprint(
-                            f"[green]🎉 综合评分 {comprehensive_score} 已包含在记录中! (基于当前测试)[/green]"
+                            f"[green]✅ 完整记录已保存到数据库: {record_id[:8]}...[/green]",
+                        )
+                        rprint(
+                            f"[green]🎉 综合评分 {comprehensive_score} 已包含在记录中! (基于当前测试)[/green]",
                         )
                         return  # 成功，提前返回
-                    else:
-                        rprint("[red]❌ 记录保存失败[/red]")
+                    rprint("[red]❌ 记录保存失败[/red]")
                 else:
                     rprint("[yellow]⚠️ 评估结果不可用，跳过综合评分计算[/yellow]")
 
@@ -743,18 +759,22 @@ class CLIHandler:
             response = client.table("mcp_test_results").insert(record).execute()
 
             if response.data:
-                rprint("[green]✅ 数据库导出成功 - 记录已保存到 mcp_test_results 表[/green]")
+                rprint(
+                    "[green]✅ 数据库导出成功 - 记录已保存到 mcp_test_results 表[/green]",
+                )
             else:
                 rprint(
-                    f"[red]❌ 数据库导出失败: {response.error.message if response.error else '未知错误'}[/red]"
+                    f"[red]❌ 数据库导出失败: {response.error.message if response.error else '未知错误'}[/red]",
                 )
 
         except Exception as e:
             rprint(f"[red]❌ 数据库导出异常: {e}[/red]")
-            rprint("[dim]   检查 SUPABASE_URL 和 SUPABASE_SERVICE_ROLE_KEY 环境变量[/dim]")
+            rprint(
+                "[dim]   检查 SUPABASE_URL 和 SUPABASE_SERVICE_ROLE_KEY 环境变量[/dim]",
+            )
 
-    def _cleanup_server(self, server_id: str):
-        """清理服务器 - 单一职责"""
+    def _cleanup_server(self, server_id: str) -> None:
+        """清理服务器 - 单一职责."""
         try:
             rprint("[yellow]🧹 清理测试环境...[/yellow]")
             self.tester.cleanup_server(server_id)
@@ -762,8 +782,8 @@ class CLIHandler:
         except Exception as e:
             rprint(f"[yellow]⚠️ 清理异常: {e}[/yellow]")
 
-    def _display_tool_info(self, tool_info: MCPToolInfo):
-        """显示工具信息 - 统一格式"""
+    def _display_tool_info(self, tool_info: MCPToolInfo) -> None:
+        """显示工具信息 - 统一格式."""
         rprint(f"[green]✅ 找到工具: {tool_info.name}[/green]")
         rprint(f"[blue]👤 作者: {tool_info.author}[/blue]")
         rprint(f"[blue]📦 包名: {tool_info.package_name}[/blue]")
@@ -776,12 +796,16 @@ class CLIHandler:
             if tool_info.lobehub_score:
                 rprint(f"[yellow]⭐ LobeHub 分数: {tool_info.lobehub_score}[/yellow]")
             if tool_info.lobehub_star_count:
-                rprint(f"[yellow]⭐ LobeHub 星标: {tool_info.lobehub_star_count}[/yellow]")
+                rprint(
+                    f"[yellow]⭐ LobeHub 星标: {tool_info.lobehub_star_count}[/yellow]",
+                )
             if tool_info.lobehub_fork_count:
-                rprint(f"[yellow]⭐ LobeHub 分支: {tool_info.lobehub_fork_count}[/yellow]")
+                rprint(
+                    f"[yellow]⭐ LobeHub 分支: {tool_info.lobehub_fork_count}[/yellow]",
+                )
 
-    def _display_evaluation_result(self, evaluation_result: dict):
-        """显示评估结果 - 包含综合评分"""
+    def _display_evaluation_result(self, evaluation_result: dict) -> None:
+        """显示评估结果 - 包含综合评分."""
         from rich.console import Console
         from rich.table import Table
 
@@ -796,11 +820,12 @@ class CLIHandler:
         sustainability = evaluation_result.get("sustainability", {})
         popularity = evaluation_result.get("popularity", {})
         test_success_info = evaluation_result.get("test_success_rate", {})
-        comprehensive_info = evaluation_result.get("comprehensive_scoring", {})
+        evaluation_result.get("comprehensive_scoring", {})
 
         # 显示综合评分
         final_comprehensive_score = evaluation_result.get(
-            "final_comprehensive_score", evaluation_result.get("final_score")
+            "final_comprehensive_score",
+            evaluation_result.get("final_score"),
         )
         table.add_row(
             "[bold red]综合评分[/bold red]",
@@ -822,7 +847,10 @@ class CLIHandler:
             success_rate = test_success_info["success_rate"]
             test_count = test_success_info.get("test_count", 0)
             table.add_row(
-                "测试成功率", "", f"[bold]{success_rate}%[/bold]", f"基于 {test_count} 次测试记录"
+                "测试成功率",
+                "",
+                f"[bold]{success_rate}%[/bold]",
+                f"基于 {test_count} 次测试记录",
             )
         else:
             table.add_row("测试成功率", "", "[dim]暂无数据[/dim]", "无测试记录")
@@ -849,22 +877,28 @@ class CLIHandler:
 
         console.print(table)
 
-    def _display_deployment_success(self, server_info, package_name=None):
-        """显示部署成功信息 - 统一格式"""
+    def _display_deployment_success(self, server_info, package_name=None) -> None:
+        """显示部署成功信息 - 统一格式."""
         rprint(f"[green]✅ 部署成功！服务器ID: {server_info.server_id}[/green]")
 
         if package_name:
             rprint(f"[blue]📦 包名: {package_name}[/blue]")
 
         if server_info.available_tools:
-            rprint(f"[green]🛠️ 可用工具 ({len(server_info.available_tools)} 个):[/green]")
+            rprint(
+                f"[green]🛠️ 可用工具 ({len(server_info.available_tools)} 个):[/green]",
+            )
             for i, tool in enumerate(server_info.available_tools, 1):
                 tool_name = tool.get("name", "unknown")
                 tool_desc = tool.get("description", "无描述")
                 rprint(f"  {i}. [cyan]{tool_name}[/cyan] - {tool_desc[:60]}...")
 
-    def _display_tools_table(self, tools: List[MCPToolInfo], show_package: bool):
-        """显示工具表格 - 简化实现"""
+    def _display_tools_table(
+        self,
+        tools: list[MCPToolInfo],
+        show_package: bool,
+    ) -> None:
+        """显示工具表格 - 简化实现."""
         from rich.console import Console
         from rich.table import Table
 
@@ -907,5 +941,5 @@ _handler = CLIHandler()
 
 
 def get_cli_handler() -> CLIHandler:
-    """获取全局CLI处理器实例"""
+    """获取全局CLI处理器实例."""
     return _handler

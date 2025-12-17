@@ -11,6 +11,7 @@ import sys
 from pathlib import Path
 from typing import List, Tuple
 
+
 class ImportMigrator:
     """导入路径迁移器"""
 
@@ -22,16 +23,13 @@ class ImportMigrator:
         # 需要处理的导入模式
         self.patterns = [
             # from batch_mcp.core.xxx import Yyy -> from batch_mcp.core.xxx import Yyy
-            (r'from\s+(core|agents|utils|tools)\.', r'from batch_mcp.\1.'),
-
+            (r"from\s+(core|agents|utils|tools)\.", r"from batch_mcp.\1."),
             # import batch_mcp.core.xxx -> import batch_mcp.core.xxx
-            (r'import\s+(core|agents|utils|tools)\.', r'import batch_mcp.\1.'),
-
+            (r"import\s+(core|agents|utils|tools)\.", r"import batch_mcp.\1."),
             # from src.batch_mcp.core.xxx -> from src.batch_mcp.core.xxx
-            (r'from\s+src\.(core|agents|utils|tools)', r'from src.batch_mcp.\1'),
-
+            (r"from\s+src\.(core|agents|utils|tools)", r"from src.batch_mcp.\1"),
             # relative imports inside the package
-            (r'^from\s+\.\.?\s*(core|agents|utils|tools)\.', r'from batch_mcp.\1.'),
+            (r"^from\s+\.\.?\s*(core|agents|utils|tools)\.", r"from batch_mcp.\1."),
         ]
 
     def update_file(self, file_path: Path) -> Tuple[bool, int]:
@@ -44,11 +42,11 @@ class ImportMigrator:
         if not file_path.exists() or not file_path.is_file():
             return (False, 0)
 
-        if not file_path.suffix == '.py':
+        if not file_path.suffix == ".py":
             return (False, 0)
 
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 original_content = f.read()
 
             content = original_content
@@ -62,7 +60,7 @@ class ImportMigrator:
 
             # 如果有更新，写回文件
             if content != original_content:
-                with open(file_path, 'w', encoding='utf-8') as f:
+                with open(file_path, "w", encoding="utf-8") as f:
                     f.write(content)
                 return (True, update_count)
 
@@ -93,7 +91,7 @@ class ImportMigrator:
 
     def update_external_files(self, root_dir: Path) -> None:
         """更新外部文件（scripts/, tests/, tools/）中的src导入"""
-        external_dirs = ['scripts', 'tests', 'tools']
+        external_dirs = ["scripts", "tests", "tools"]
 
         for dir_name in external_dirs:
             dir_path = root_dir / dir_name
@@ -108,39 +106,37 @@ class ImportMigrator:
             return False
 
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
 
             original = content
 
             # 更新packages配置
             content = re.sub(
-                r'packages = \["src"\]',
-                'packages = ["src.batch_mcp"]',
-                content
+                r'packages = \["src"\]', 'packages = ["src.batch_mcp"]', content
             )
 
             # 更新scripts配置
             content = re.sub(
                 r'batch-mcp = "src.main:app"',
                 'batch-mcp = "batch_mcp.main:app"',
-                content
+                content,
             )
 
             # 添加build配置（如果不存在）
-            if 'build-backend' not in content:
-                build_config = '''
+            if "build-backend" not in content:
+                build_config = """
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src.batch_mcp"]
-'''
+"""
                 content += build_config
 
             if content != original:
-                with open(file_path, 'w', encoding='utf-8') as f:
+                with open(file_path, "w", encoding="utf-8") as f:
                     f.write(content)
                 print(f"✅ 更新: {file_path}")
                 return True
@@ -161,6 +157,7 @@ packages = ["src.batch_mcp"]
             print(f"❌ 失败文件数: {len(self.failed_files)}")
             for file_path, error in self.failed_files:
                 print(f"  - {file_path}: {error}")
+
 
 def main():
     """主函数"""
@@ -189,6 +186,7 @@ def main():
     else:
         print(f"\n🎉 所有文件更新成功！")
         sys.exit(0)
+
 
 if __name__ == "__main__":
     main()

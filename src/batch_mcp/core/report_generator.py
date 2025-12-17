@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
-"""
-
-MCP 测试报告生成器 (简洁版)
+"""MCP 测试报告生成器 (简洁版).
 
 作者: AI Assistant (Linus重构版)
 日期: 2025-08-18
@@ -14,7 +12,6 @@ import platform
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional
 
 # 导入工具信息类型
 try:
@@ -29,28 +26,30 @@ except ImportError:
         category: str
         description: str
         requires_api_key: bool = False
-        api_requirements: List[str] = None
+        api_requirements: list[str] = None
 
 
 @dataclass
 class TestResult:
-    """单个测试结果 - 增强版，包含详细响应和分析"""
+    """单个测试结果 - 增强版，包含详细响应和分析."""
 
     test_name: str
     success: bool
     duration: float
-    error_message: Optional[str] = None
+    error_message: str | None = None
 
     # 新增：详细测试信息
-    tool_name: Optional[str] = None
-    parameters: Optional[Dict] = None
-    actual_response: Optional[Dict] = None
-    ai_analysis: Optional[str] = None
-    ai_confidence: Optional[float] = None
-    test_category: Optional[str] = None  # "基础功能", "实际使用场景", "容错能力", "边界情况"
+    tool_name: str | None = None
+    parameters: dict | None = None
+    actual_response: dict | None = None
+    ai_analysis: str | None = None
+    ai_confidence: float | None = None
+    test_category: str | None = (
+        None  # "基础功能", "实际使用场景", "容错能力", "边界情况"
+    )
 
-    def to_concise_dict(self) -> Dict:
-        """转换为精简格式 - 保留关键信息"""
+    def to_concise_dict(self) -> dict:
+        """转换为精简格式 - 保留关键信息."""
         result = {
             "test_name": self.test_name,
             "success": self.success,
@@ -90,7 +89,7 @@ class TestResult:
 
 @dataclass
 class MCPTestReport:
-    """MCP测试报告 - 简洁版数据结构"""
+    """MCP测试报告 - 简洁版数据结构."""
 
     # 核心信息
     tool_name: str
@@ -107,16 +106,16 @@ class MCPTestReport:
 
     # 详细信息
     tool_info: MCPToolInfo
-    test_results: List[TestResult]
-    error_messages: List[str]
-    evaluation_result: Optional[dict] = None
+    test_results: list[TestResult]
+    error_messages: list[str]
+    evaluation_result: dict | None = None
 
     # 环境信息
     platform_info: str = platform.system()
-    process_pid: Optional[int] = None
+    process_pid: int | None = None
 
-    def to_concise_dict(self) -> Dict:
-        """转换为精简格式 - 适合控制台输出"""
+    def to_concise_dict(self) -> dict:
+        """转换为精简格式 - 适合控制台输出."""
         passed = sum(1 for t in self.test_results if t.success)
         total = len(self.test_results)
         success_rate = (passed / total * 100) if total > 0 else 0
@@ -128,18 +127,24 @@ class MCPTestReport:
                 "name": self.tool_info.name,
                 "author": self.tool_info.author,
                 "category": self.tool_info.category,
-                "description": self.tool_info.description[:100] + "..."
-                if len(self.tool_info.description) > 100
-                else self.tool_info.description,
+                "description": (
+                    self.tool_info.description[:100] + "..."
+                    if len(self.tool_info.description) > 100
+                    else self.tool_info.description
+                ),
                 # 添加LobeHub评分信息
                 "lobehub_url": getattr(self.tool_info, "lobehub_url", None),
                 "lobehub_evaluate": getattr(self.tool_info, "lobehub_evaluate", None),
                 "lobehub_score": getattr(self.tool_info, "lobehub_score", None),
                 "lobehub_star_count": getattr(
-                    self.tool_info, "lobehub_star_count", None
+                    self.tool_info,
+                    "lobehub_star_count",
+                    None,
                 ),
                 "lobehub_fork_count": getattr(
-                    self.tool_info, "lobehub_fork_count", None
+                    self.tool_info,
+                    "lobehub_fork_count",
+                    None,
                 ),
             }
 
@@ -148,10 +153,12 @@ class MCPTestReport:
         if self.evaluation_result:
             concise_evaluation = {
                 "final_score": self.evaluation_result.get(
-                    "final_comprehensive_score", 0
+                    "final_comprehensive_score",
+                    0,
                 ),
                 "test_success_rate": self.evaluation_result.get(
-                    "test_success_rate", {}
+                    "test_success_rate",
+                    {},
                 ).get("success_rate", 0),
                 "status": self.evaluation_result.get("status", "unknown"),
             }
@@ -170,18 +177,18 @@ class MCPTestReport:
                 "total_tests": total,
                 "passed_tests": passed,
                 "success_rate": f"{success_rate:.1f}%",
-                "final_score": concise_evaluation["final_score"]
-                if concise_evaluation
-                else 0,
+                "final_score": (
+                    concise_evaluation["final_score"] if concise_evaluation else 0
+                ),
             },
             "evaluation": concise_evaluation,
         }
 
 
 class MCPReportGenerator:
-    """简洁的MCP报告生成器 - Linus重构版"""
+    """简洁的MCP报告生成器 - Linus重构版."""
 
-    def __init__(self, output_dir: str = "data/test_results"):
+    def __init__(self, output_dir: str = "data/test_results") -> None:
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -192,12 +199,11 @@ class MCPReportGenerator:
         server_info,
         test_success: bool,
         duration: float,
-        test_results: List[TestResult] = None,
-        error_messages: List[str] = None,
-        evaluation_result: Optional[dict] = None,
+        test_results: list[TestResult] | None = None,
+        error_messages: list[str] | None = None,
+        evaluation_result: dict | None = None,
     ) -> MCPTestReport:
-        """创建报告对象 - 单一职责"""
-
+        """创建报告对象 - 单一职责."""
         # 处理tool_info为None的情况（用于package测试）
         tool_name = tool_info.name if tool_info else url
 
@@ -207,9 +213,9 @@ class MCPReportGenerator:
             test_time=datetime.now(),
             deployment_success=server_info is not None,
             communication_success=test_success,
-            available_tools_count=len(server_info.available_tools)
-            if server_info
-            else 0,
+            available_tools_count=(
+                len(server_info.available_tools) if server_info else 0
+            ),
             test_duration_seconds=duration,
             tool_info=tool_info,
             test_results=test_results or [],
@@ -219,7 +225,7 @@ class MCPReportGenerator:
         )
 
     def save_json(self, report: MCPTestReport) -> Path:
-        """保存JSON报告 - 无条件分支"""
+        """保存JSON报告 - 无条件分支."""
         timestamp = report.test_time.strftime("%Y%m%d_%H%M%S")
         json_path = self.output_dir / f"mcp_test_{timestamp}.json"
 
@@ -236,7 +242,7 @@ class MCPReportGenerator:
         return json_path
 
     def save_concise_json(self, report: MCPTestReport) -> Path:
-        """保存精简版JSON报告 - 适合控制台输出和数据库存储"""
+        """保存精简版JSON报告 - 适合控制台输出和数据库存储."""
         timestamp = report.test_time.strftime("%Y%m%d_%H%M%S")
         concise_path = self.output_dir / f"mcp_test_{timestamp}_concise.json"
 
@@ -248,42 +254,27 @@ class MCPReportGenerator:
 
         return concise_path
 
-    def print_concise_summary(self, report: MCPTestReport):
-        """打印精简摘要到控制台"""
+    def print_concise_summary(self, report: MCPTestReport) -> None:
+        """打印精简摘要到控制台."""
         concise = report.to_concise_dict()
 
-        print(f"\n🎯 {concise['tool_name']} 测试完成")
-        print(f"⏱️  耗时: {concise['test_duration_seconds']}s")
-        print(
-            f"📊 测试结果: {concise['summary']['passed_tests']}/{concise['summary']['total_tests']} 通过 ({concise['summary']['success_rate']})"
-        )
-        print(f"🔧 部署状态: {'✅' if concise['deployment_success'] else '❌'}")
-        print(f"📡 通信状态: {'✅' if concise['communication_success'] else '❌'}")
-        print(f"🛠️  可用工具: {concise['available_tools_count']} 个")
-
         if concise["evaluation"]:
-            print(f"⭐ 综合评分: {concise['evaluation']['final_score']}")
+            pass
 
-        print(f"\n📋 详细结果:")
-        for i, result in enumerate(concise["test_results"], 1):
-            status = "✅" if result["success"] else "❌"
-            print(f"  {i}. {status} {result['test_name']} ({result['duration']}s)")
+        for _i, result in enumerate(concise["test_results"], 1):
+            "✅" if result["success"] else "❌"
             if result.get("response_summary"):
-                print(f"     → {result['response_summary']}")
-
-        print(
-            f"\n📄 报告文件: mcp_test_{report.test_time.strftime('%Y%m%d_%H%M%S')}_concise.json"
-        )
+                pass
 
     def _convert_numpy_types(self, obj):
-        """递归转换NumPy类型和其他类型为Python原生类型"""
+        """递归转换NumPy类型和其他类型为Python原生类型."""
         if isinstance(obj, dict):
             return {key: self._convert_numpy_types(value) for key, value in obj.items()}
-        elif isinstance(obj, list):
+        if isinstance(obj, list):
             return [self._convert_numpy_types(item) for item in obj]
-        elif hasattr(obj, "item"):  # NumPy scalar
+        if hasattr(obj, "item"):  # NumPy scalar
             return obj.item()
-        elif str(type(obj)).startswith("<class 'numpy."):  # NumPy types
+        if str(type(obj)).startswith("<class 'numpy."):  # NumPy types
             try:
                 return obj.item() if hasattr(obj, "item") else obj.tolist()
             except Exception:
@@ -292,7 +283,7 @@ class MCPReportGenerator:
             return obj
 
     def save_html(self, report: MCPTestReport) -> Path:
-        """保存HTML报告 - 最简模板"""
+        """保存HTML报告 - 最简模板."""
         timestamp = report.test_time.strftime("%Y%m%d_%H%M%S")
         html_path = self.output_dir / f"mcp_test_{timestamp}.html"
 
@@ -313,7 +304,7 @@ class MCPReportGenerator:
 <h2>LobeHub 评分</h2>
 <div class="stats">
 <div class="stat"><div>质量等级</div><div>{report.tool_info.lobehub_evaluate}</div></div>
-<div class="stat"><div>评分</div><div>{report.tool_info.lobehub_score or 'N/A'}</div></div>
+<div class="stat"><div>评分</div><div>{report.tool_info.lobehub_score or "N/A"}</div></div>
 <div class="stat"><div>Stars</div><div>{report.tool_info.lobehub_star_count or 0}</div></div>
 <div class="stat"><div>Forks</div><div>{report.tool_info.lobehub_fork_count or 0}</div></div>
 </div>
@@ -323,7 +314,7 @@ class MCPReportGenerator:
 <h2>LobeHub 评分</h2>
 <div class="stats">
 <div class="stat"><div>质量等级</div><div>{report.tool_info.lobehub_evaluate}</div></div>
-<div class="stat"><div>评分</div><div>{report.tool_info.lobehub_score or 'N/A'}</div></div>
+<div class="stat"><div>评分</div><div>{report.tool_info.lobehub_score or "N/A"}</div></div>
 <div class="stat"><div>Stars</div><div>{report.tool_info.lobehub_star_count or 0}</div></div>
 <div class="stat"><div>Forks</div><div>{report.tool_info.lobehub_fork_count or 0}</div></div>
 </div>"""
@@ -342,12 +333,12 @@ a{{color:#667eea;text-decoration:none;}} a:hover{{text-decoration:underline;}}
 <body>
 <div class="header">
 <h1>🧪 {report.tool_name}</h1>
-<p>{report.test_time.strftime('%Y-%m-%d %H:%M:%S')} | 耗时: {report.test_duration_seconds:.1f}秒</p>
+<p>{report.test_time.strftime("%Y-%m-%d %H:%M:%S")} | 耗时: {report.test_duration_seconds:.1f}秒</p>
 </div>
 
 <div class="stats">
-<div class="stat"><div>部署</div><div class="{'success' if report.deployment_success else 'failure'}">{'✅' if report.deployment_success else '❌'}</div></div>
-<div class="stat"><div>通信</div><div class="{'success' if report.communication_success else 'failure'}">{'✅' if report.communication_success else '❌'}</div></div>
+<div class="stat"><div>部署</div><div class="{"success" if report.deployment_success else "failure"}">{"✅" if report.deployment_success else "❌"}</div></div>
+<div class="stat"><div>通信</div><div class="{"success" if report.communication_success else "failure"}">{"✅" if report.communication_success else "❌"}</div></div>
 <div class="stat"><div>工具数</div><div>{report.available_tools_count}</div></div>
 <div class="stat"><div>成功率</div><div>{success_rate:.1f}%</div></div>
 </div>
@@ -362,9 +353,9 @@ a{{color:#667eea;text-decoration:none;}} a:hover{{text-decoration:underline;}}
         for test in report.test_results:
             html_content += f"""<tr>
 <td>{test.test_name}</td>
-<td class="{'success' if test.success else 'failure'}">{'✅' if test.success else '❌'}</td>
+<td class="{"success" if test.success else "failure"}">{"✅" if test.success else "❌"}</td>
 <td>{test.duration:.2f}s</td>
-<td>{test.error_message or '-'}</td>
+<td>{test.error_message or "-"}</td>
 </tr>"""
 
         html_content += "</table></body></html>"
@@ -385,12 +376,11 @@ def generate_test_report(
     server_info,
     test_success: bool,
     duration: float,
-    test_results: List = None,
-    evaluation_result: Optional[dict] = None,
-    formats: List[str] = None,
-) -> Dict[str, str]:
-    """便捷的报告生成函数 - 保持向后兼容"""
-
+    test_results: list | None = None,
+    evaluation_result: dict | None = None,
+    formats: list[str] | None = None,
+) -> dict[str, str]:
+    """便捷的报告生成函数 - 保持向后兼容."""
     formats = formats or ["json", "html"]
 
     # 创建报告

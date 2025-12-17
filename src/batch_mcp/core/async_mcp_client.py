@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-异步 MCP 客户端封装
+"""异步 MCP 客户端封装.
 
 为 ValidationAgent 提供 awaitable 的 list_tools/call_tool 接口，
 基于 SimpleMCPCommunicator.send_request 实现。
@@ -13,11 +12,11 @@ from __future__ import annotations
 
 import asyncio
 import time
-from typing import Any, Dict, Optional
+from typing import Any
 
 
 class AsyncMCPClient:
-    """将同步的 SimpleMCPCommunicator 封装为异步接口。
+    """将同步的 SimpleMCPCommunicator 封装为异步接口。.
 
     约定返回格式：
     - list_tools() -> {"success": bool, "tools": list, "error"?: str, "raw"?: Any}
@@ -30,10 +29,10 @@ class AsyncMCPClient:
     async def _send(
         self,
         method: str,
-        params: Optional[Dict[str, Any]] = None,
+        params: dict[str, Any] | None = None,
         timeout: float = 30.0,
-    ) -> Dict[str, Any]:
-        """在线程池中调用同步 send_request，返回原始结构。"""
+    ) -> dict[str, Any]:
+        """在线程池中调用同步 send_request，返回原始结构。."""
         loop = asyncio.get_running_loop()
         request = {
             "jsonrpc": "2.0",
@@ -48,8 +47,8 @@ class AsyncMCPClient:
 
         return await loop.run_in_executor(None, _call)
 
-    async def list_tools(self, timeout: float = 30.0) -> Dict[str, Any]:
-        """获取工具列表并规范化结构。"""
+    async def list_tools(self, timeout: float = 30.0) -> dict[str, Any]:
+        """获取工具列表并规范化结构。."""
         try:
             res = await self._send("tools/list", None, timeout=timeout)
             if not res.get("success"):
@@ -73,10 +72,10 @@ class AsyncMCPClient:
     async def call_tool(
         self,
         name: str,
-        arguments: Optional[Dict[str, Any]] = None,
+        arguments: dict[str, Any] | None = None,
         timeout: float = 60.0,
-    ) -> Dict[str, Any]:
-        """调用指定工具并规范化结构。"""
+    ) -> dict[str, Any]:
+        """调用指定工具并规范化结构。."""
         try:
             params = {"name": name, "arguments": arguments or {}}
             res = await self._send("tools/call", params, timeout=timeout)

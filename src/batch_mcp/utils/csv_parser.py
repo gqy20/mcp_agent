@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-CSV数据解析器
+"""CSV数据解析器.
 
 从data/mcp_database/mcp.csv解析MCP工具信息，提供结构化的数据访问接口
 
@@ -12,19 +11,19 @@ import json
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import pandas as pd
 from rich.console import Console
 
-from ..core.github_mcp_analyzer import GitHubMCPAnalyzer
+from batch_mcp.core.github_mcp_analyzer import GitHubMCPAnalyzer
 
 console = Console()
 
 
 @dataclass
 class MCPToolInfo:
-    """MCP工具信息数据类"""
+    """MCP工具信息数据类."""
 
     name: str
     url: str
@@ -33,38 +32,36 @@ class MCPToolInfo:
     description: str
     deployment_method: str
     category: str = ""
-    package_name: Optional[str] = None
+    package_name: str | None = None
     requires_api_key: bool = False
-    install_command: Optional[str] = None
-    run_command: Optional[str] = None
-    api_requirements: List[str] = field(default_factory=list)
-    final_score: Optional[int] = None
-    sustainability_score: Optional[int] = None
-    popularity_score: Optional[int] = None
+    install_command: str | None = None
+    run_command: str | None = None
+    api_requirements: list[str] = field(default_factory=list)
+    final_score: int | None = None
+    sustainability_score: int | None = None
+    popularity_score: int | None = None
 
     # LobeHub评分信息
-    lobehub_url: Optional[str] = None
-    lobehub_evaluate: Optional[str] = None  # 优质/良好/欠佳
-    lobehub_score: Optional[float] = None  # 具体评分数字
-    lobehub_star_count: Optional[int] = None  # GitHub星标数
-    lobehub_fork_count: Optional[int] = None  # GitHub分支数
+    lobehub_url: str | None = None
+    lobehub_evaluate: str | None = None  # 优质/良好/欠佳
+    lobehub_score: float | None = None  # 具体评分数字
+    lobehub_star_count: int | None = None  # GitHub星标数
+    lobehub_fork_count: int | None = None  # GitHub分支数
 
 
 class MCPDataParser:
-    """MCP数据解析器"""
+    """MCP数据解析器."""
 
-    def __init__(self, csv_path: str):
+    def __init__(self, csv_path: str) -> None:
         self.csv_path = Path(csv_path)
         self.df = None
         self.tools_cache = {}
         self.github_analyzer = GitHubMCPAnalyzer()
 
-    def normalize_field_names(self, row: Dict[str, Any]) -> Dict[str, Any]:
+    def normalize_field_names(self, row: dict[str, Any]) -> dict[str, Any]:
+        """将mcp.csv的字段名标准化为期望的字段名
+        这样可以统一处理两种CSV格式，消除特殊情况.
         """
-        将mcp.csv的字段名标准化为期望的字段名
-        这样可以统一处理两种CSV格式，消除特殊情况
-        """
-
         # mcp.csv -> expected field mapping
         field_mapping = {
             "extracted_deployment_methods": "deployment_method",
@@ -93,7 +90,7 @@ class MCPDataParser:
 
         # Handle special cases for deployment_method
         if "deployment_method" in normalized and pd.notna(
-            normalized["deployment_method"]
+            normalized["deployment_method"],
         ):
             # Extract the first deployment method if multiple exist
             deploy_val = str(normalized["deployment_method"])
@@ -121,7 +118,7 @@ class MCPDataParser:
         return normalized
 
     def load_data(self) -> bool:
-        """加载CSV数据"""
+        """加载CSV数据."""
         try:
             if not self.csv_path.exists():
                 console.print(f"[red]❌ CSV文件不存在: {self.csv_path}[/red]")
@@ -138,9 +135,12 @@ class MCPDataParser:
             return False
 
     def extract_package_name(
-        self, install_command: str, run_command: str, deployment_method: str
-    ) -> Optional[str]:
-        """从命令中提取包名"""
+        self,
+        install_command: str,
+        run_command: str,
+        deployment_method: str,
+    ) -> str | None:
+        """从命令中提取包名."""
         if deployment_method not in ["npm", "npx"]:
             return None
 
@@ -162,8 +162,8 @@ class MCPDataParser:
 
         return None
 
-    def parse_tool(self, row) -> Optional[MCPToolInfo]:
-        """解析单个工具信息"""
+    def parse_tool(self, row: dict) -> MCPToolInfo | None:
+        """解析单个工具信息."""
         try:
             # 标准化字段名
             normalized_row = self.normalize_field_names(dict(row))
@@ -186,58 +186,80 @@ class MCPDataParser:
                 github_url=str(normalized_row.get("github_url", "")).strip(),
                 description=str(normalized_row.get("description", "")).strip(),
                 deployment_method=str(
-                    normalized_row.get("deployment_method", "")
+                    normalized_row.get("deployment_method", ""),
                 ).strip(),
                 package_name=package_name,
                 requires_api_key=bool(normalized_row.get("requires_api_key")),
                 install_command=install_command,
                 run_command=str(normalized_row.get("run_command", "")).strip(),
                 final_score=pd.to_numeric(
-                    normalized_row.get("final_score"), errors="coerce"
+                    normalized_row.get("final_score"),
+                    errors="coerce",
                 ),
                 sustainability_score=pd.to_numeric(
-                    normalized_row.get("sustainability_score"), errors="coerce"
+                    normalized_row.get("sustainability_score"),
+                    errors="coerce",
                 ),
                 popularity_score=pd.to_numeric(
-                    normalized_row.get("popularity_score"), errors="coerce"
+                    normalized_row.get("popularity_score"),
+                    errors="coerce",
                 ),
                 # LobeHub评分信息
-                lobehub_url=str(normalized_row.get("url", "")).strip()
-                if pd.notna(normalized_row.get("url"))
-                else None,
-                lobehub_evaluate=str(normalized_row.get("evaluate", "")).strip()
-                if pd.notna(normalized_row.get("evaluate"))
-                else None,
-                lobehub_score=pd.to_numeric(
-                    normalized_row.get("Unnamed: 5"), errors="coerce"
-                )
-                if pd.notna(normalized_row.get("Unnamed: 5"))
-                else None,
-                lobehub_star_count=int(
-                    pd.to_numeric(normalized_row.get("star_count"), errors="coerce")
-                )
-                if pd.notna(
-                    pd.to_numeric(normalized_row.get("star_count"), errors="coerce")
-                )
-                else 0,
-                lobehub_fork_count=int(
-                    pd.to_numeric(normalized_row.get("fork_count"), errors="coerce")
-                )
-                if pd.notna(
-                    pd.to_numeric(normalized_row.get("fork_count"), errors="coerce")
-                )
-                else 0,
+                lobehub_url=(
+                    str(normalized_row.get("url", "")).strip()
+                    if pd.notna(normalized_row.get("url"))
+                    else None
+                ),
+                lobehub_evaluate=(
+                    str(normalized_row.get("evaluate", "")).strip()
+                    if pd.notna(normalized_row.get("evaluate"))
+                    else None
+                ),
+                lobehub_score=(
+                    pd.to_numeric(normalized_row.get("Unnamed: 5"), errors="coerce")
+                    if pd.notna(normalized_row.get("Unnamed: 5"))
+                    else None
+                ),
+                lobehub_star_count=(
+                    int(
+                        pd.to_numeric(
+                            normalized_row.get("star_count"),
+                            errors="coerce",
+                        ),
+                    )
+                    if pd.notna(
+                        pd.to_numeric(
+                            normalized_row.get("star_count"),
+                            errors="coerce",
+                        ),
+                    )
+                    else 0
+                ),
+                lobehub_fork_count=(
+                    int(
+                        pd.to_numeric(
+                            normalized_row.get("fork_count"),
+                            errors="coerce",
+                        ),
+                    )
+                    if pd.notna(
+                        pd.to_numeric(
+                            normalized_row.get("fork_count"),
+                            errors="coerce",
+                        ),
+                    )
+                    else 0
+                ),
             )
 
         except Exception as e:
             console.print(f"[yellow]⚠️ 解析工具信息失败: {e} for row {row}[/yellow]")
             return None
 
-    def get_all_tools(self) -> List[MCPToolInfo]:
-        """获取所有有效的MCP工具"""
-        if self.df is None:
-            if not self.load_data():
-                return []
+    def get_all_tools(self) -> list[MCPToolInfo]:
+        """获取所有有效的MCP工具."""
+        if self.df is None and not self.load_data():
+            return []
 
         tools = []
         for _, row in self.df.iterrows():
@@ -248,11 +270,10 @@ class MCPDataParser:
         console.print(f"[green]📦 解析出 {len(tools)} 个可部署的MCP工具[/green]")
         return tools
 
-    def find_tool_by_url(self, url: str) -> Optional[MCPToolInfo]:
-        """根据URL查找工具 - 支持多种URL格式"""
-        if self.df is None:
-            if not self.load_data():
-                return None
+    def find_tool_by_url(self, url: str) -> MCPToolInfo | None:
+        """根据URL查找工具 - 支持多种URL格式."""
+        if self.df is None and not self.load_data():
+            return None
 
         # 尝试多种URL匹配方式
         matches = self.df[self.df["github_url"] == url]
@@ -271,8 +292,8 @@ class MCPDataParser:
         # 如果在CSV中找不到，尝试从GitHub获取信息
         return self._fetch_from_github(url)
 
-    def find_tool_by_package(self, package_name: str) -> Optional[MCPToolInfo]:
-        """根据包名查找工具 - 支持模糊匹配"""
+    def find_tool_by_package(self, package_name: str) -> MCPToolInfo | None:
+        """根据包名查找工具 - 支持模糊匹配."""
         tools = self.get_all_tools()
 
         # 1. 精确匹配
@@ -298,13 +319,13 @@ class MCPDataParser:
 
         return None
 
-    def get_tools_by_category(self, category: str) -> List[MCPToolInfo]:
-        """根据类别获取工具"""
+    def get_tools_by_category(self, category: str) -> list[MCPToolInfo]:
+        """根据类别获取工具."""
         tools = self.get_all_tools()
         return [tool for tool in tools if category.lower() in tool.category.lower()]
 
-    def _fetch_from_github(self, url: str) -> Optional[MCPToolInfo]:
-        """当CSV中找不到工具时，尝试从GitHub获取信息"""
+    def _fetch_from_github(self, url: str) -> MCPToolInfo | None:
+        """当CSV中找不到工具时，尝试从GitHub获取信息."""
         try:
             console.print(f"[yellow]🔍 尝试从GitHub获取工具信息: {url}[/yellow]")
 
@@ -315,14 +336,14 @@ class MCPDataParser:
                 record = result.get("record")
                 if record:
                     console.print(
-                        f"[green]✅ 成功从GitHub获取工具信息: {record.get('name', 'Unknown')}[/green]"
+                        f"[green]✅ 成功从GitHub获取工具信息: {record.get('name', 'Unknown')}[/green]",
                     )
 
                     # 将GitHub返回的记录转换为MCPToolInfo格式
                     return self._github_record_to_tool_info(record)
 
             console.print(
-                f"[red]❌ 无法从GitHub获取工具信息: {result.get('error', 'Unknown error') if result else 'Analysis failed'}[/red]"
+                f"[red]❌ 无法从GitHub获取工具信息: {result.get('error', 'Unknown error') if result else 'Analysis failed'}[/red]",
             )
             return None
 
@@ -330,8 +351,8 @@ class MCPDataParser:
             console.print(f"[red]❌ 从GitHub获取工具信息时发生异常: {e}[/red]")
             return None
 
-    def _github_record_to_tool_info(self, record: Dict[str, Any]) -> MCPToolInfo:
-        """将GitHub分析记录转换为MCPToolInfo对象"""
+    def _github_record_to_tool_info(self, record: dict[str, Any]) -> MCPToolInfo:
+        """将GitHub分析记录转换为MCPToolInfo对象."""
         return MCPToolInfo(
             name=record.get("name", ""),
             url=record.get("url", ""),
@@ -355,8 +376,8 @@ class MCPDataParser:
             lobehub_fork_count=record.get("lobehub_fork_count"),
         )
 
-    def search_tools(self, query: str) -> List[MCPToolInfo]:
-        """搜索工具"""
+    def search_tools(self, query: str) -> list[MCPToolInfo]:
+        """搜索工具."""
         tools = self.get_all_tools()
         query_lower = query.lower()
 
@@ -381,10 +402,11 @@ CSVParser = MCPDataParser
 
 
 def get_mcp_parser() -> MCPDataParser:
-    """获取全局MCP解析器实例"""
+    """获取全局MCP解析器实例."""
     global _parser_instance
     if _parser_instance is None:
-        from ..core.config import get_mcp_csv_path
+        from batch_mcp.core.config import get_mcp_csv_path
+
         csv_path = get_mcp_csv_path()
         _parser_instance = MCPDataParser(str(csv_path))
     return _parser_instance

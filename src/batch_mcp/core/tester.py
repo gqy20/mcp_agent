@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-MCP 测试核心逻辑 - 简洁版
+"""MCP 测试核心逻辑 - 简洁版.
 
 遵循 Linus 的"好品味"原则：
 - 消除所有特殊情况
@@ -14,7 +13,6 @@ MCP 测试核心逻辑 - 简洁版
 
 import time
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple
 
 from batch_mcp.core.report_generator import TestResult
 from batch_mcp.utils.csv_parser import MCPToolInfo
@@ -22,7 +20,7 @@ from batch_mcp.utils.csv_parser import MCPToolInfo
 
 @dataclass
 class TestConfig:
-    """测试配置 - 统一数据结构"""
+    """测试配置 - 统一数据结构."""
 
     timeout: int = 600
     verbose: bool = False
@@ -34,14 +32,14 @@ class TestConfig:
 
 
 class MCPTester:
-    """MCP测试器 - 核心测试逻辑"""
+    """MCP测试器 - 核心测试逻辑."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.parser = None
         self.deployer = None
 
     def _get_services(self):
-        """延迟加载服务 - 避免循环导入"""
+        """延迟加载服务 - 避免循环导入."""
         if not self.parser:
             from batch_mcp.core.simple_mcp_deployer import get_simple_mcp_deployer
             from batch_mcp.utils.csv_parser import get_mcp_parser
@@ -50,13 +48,18 @@ class MCPTester:
             self.deployer = get_simple_mcp_deployer()
         return self.parser, self.deployer
 
-    def find_tool_by_url(self, url: str) -> Optional[MCPToolInfo]:
-        """根据URL查找工具信息"""
+    def find_tool_by_url(self, url: str) -> MCPToolInfo | None:
+        """根据URL查找工具信息."""
         parser, _ = self._get_services()
         return parser.find_tool_by_url(url)
 
-    def deploy_tool(self, package_name: str, timeout: int, run_command: str = None):
-        """部署MCP工具"""
+    def deploy_tool(
+        self,
+        package_name: str,
+        timeout: int,
+        run_command: str | None = None,
+    ):
+        """部署MCP工具."""
         parser, deployer = self._get_services()
 
         # 如果没有提供run_command，尝试从CSV中查找工具信息获取正确的运行命令
@@ -68,19 +71,20 @@ class MCPTester:
                 and tool_info.run_command
             ):
                 run_command = tool_info.run_command
-                print(f"📋 使用CSV中的运行命令: {run_command}")
 
         return deployer.deploy_package(package_name, timeout, run_command)
 
     def cleanup_server(self, server_id: str):
-        """清理服务器"""
+        """清理服务器."""
         _, deployer = self._get_services()
         return deployer.cleanup_server(server_id)
 
     def run_basic_test(
-        self, server_info, timeout: int = 10
-    ) -> Tuple[bool, List[TestResult]]:
-        """基础连通性测试 - 简化版"""
+        self,
+        server_info,
+        timeout: int = 10,
+    ) -> tuple[bool, list[TestResult]]:
+        """基础连通性测试 - 简化版."""
         test_results = []
 
         # 1. MCP协议通信测试
@@ -98,7 +102,7 @@ class MCPTester:
         return True, test_results
 
     def _test_mcp_communication(self, server_info, timeout: int) -> TestResult:
-        """MCP协议通信测试 - 单一职责"""
+        """MCP协议通信测试 - 单一职责."""
         start_time = time.time()
 
         request = {"jsonrpc": "2.0", "id": 999, "method": "tools/list", "params": {}}
@@ -114,7 +118,7 @@ class MCPTester:
         )
 
     def _test_first_tool(self, server_info, timeout: int) -> TestResult:
-        """测试第一个可用工具 - 智能参数生成"""
+        """测试第一个可用工具 - 智能参数生成."""
         first_tool = server_info.available_tools[0]
         tool_name = first_tool.get("name", "unknown")
 
@@ -141,7 +145,7 @@ class MCPTester:
         )
 
     def _generate_test_arguments(self, tool_info: dict) -> dict:
-        """为工具生成基本测试参数 - Linus式简单逻辑"""
+        """为工具生成基本测试参数 - Linus式简单逻辑."""
         tool_name = tool_info.get("name", "")
         input_schema = tool_info.get("inputSchema", {})
         properties = input_schema.get("properties", {})
@@ -180,7 +184,7 @@ class MCPTester:
                         arguments[prop_name] = "/tmp/test"
                     else:
                         arguments[prop_name] = "test_value"
-                elif prop_type == "number" or prop_type == "integer":
+                elif prop_type in {"number", "integer"}:
                     arguments[prop_name] = 1000 if "token" in prop_name.lower() else 1
                 elif prop_type == "boolean":
                     arguments[prop_name] = True
@@ -192,9 +196,12 @@ class MCPTester:
         return arguments
 
     async def run_smart_test(
-        self, tool_info: MCPToolInfo, server_info, verbose: bool
-    ) -> Tuple[bool, List[TestResult]]:
-        """智能测试 - 简化版"""
+        self,
+        tool_info: MCPToolInfo,
+        server_info,
+        verbose: bool,
+    ) -> tuple[bool, list[TestResult]]:
+        """智能测试 - 简化版."""
         try:
             # 动态导入，避免强依赖
             from batch_mcp.agents.test_agent import get_test_generator
@@ -206,7 +213,8 @@ class MCPTester:
 
             # 生成测试用例
             test_cases = test_generator.generate_test_cases(
-                tool_info, server_info.available_tools
+                tool_info,
+                server_info.available_tools,
             )
 
             if not test_cases:
@@ -215,7 +223,8 @@ class MCPTester:
             # 执行智能验证
             mcp_client = AsyncMCPClient(server_info.communicator)
             ai_results = await validation_agent.execute_test_suite(
-                test_cases, mcp_client
+                test_cases,
+                mcp_client,
             )
 
             # 转换结果格式 - 增强版，包含详细信息
@@ -242,7 +251,7 @@ class MCPTester:
                         ai_analysis=r.analysis,
                         ai_confidence=0.95,  # 默认置信度，AI分析成功时会更新
                         test_category=test_category,
-                    )
+                    ),
                 )
 
             passed = sum(1 for r in ai_results if r.status.value == "pass")
@@ -260,5 +269,5 @@ _tester = MCPTester()
 
 
 def get_mcp_tester() -> MCPTester:
-    """获取全局测试器实例"""
+    """获取全局测试器实例."""
     return _tester

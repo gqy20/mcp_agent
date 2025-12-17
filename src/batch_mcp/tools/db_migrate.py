@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-数据库迁移和初始化工具
+"""数据库迁移和初始化工具.
 
 用于初始化Supabase数据库和运行数据迁移
 
@@ -9,30 +8,21 @@
 版本: 0.1.0
 """
 
-import os
 from pathlib import Path
-from typing import Optional
 
 import typer
 from rich import print as rprint
 from rich.console import Console
 
+# 导入配置系统
+try:
+    from batch_mcp.core.config import get_config
 
-# 加载 .env 文件
-def load_env_file():
-    """加载 .env 文件"""
-    env_path = Path(__file__).parent.parent.parent / ".env"
-    if env_path.exists():
-        with open(env_path, "r", encoding="utf-8") as f:
-            for line in f:
-                line = line.strip()
-                if line and not line.startswith("#") and "=" in line:
-                    key, value = line.split("=", 1)
-                    os.environ[key.strip()] = value.strip()
-
-
-# 在导入之前加载环境变量
-load_env_file()
+    CONFIG_AVAILABLE = True
+    config = get_config() if CONFIG_AVAILABLE else None
+except ImportError:
+    CONFIG_AVAILABLE = False
+    config = None
 
 # 尝试导入Supabase客户端
 try:
@@ -47,24 +37,24 @@ app = typer.Typer(name="db-migrate", help="数据库迁移工具")
 console = Console()
 
 
-def get_supabase_client() -> Optional[Client]:
-    """获取Supabase客户端"""
+def get_supabase_client() -> Client | None:
+    """获取Supabase客户端."""
     if not SUPABASE_AVAILABLE:
         return None
 
-    url = os.getenv("SUPABASE_URL")
-    service_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
-
-    if not url or not service_key:
-        rprint("[red]❌ 请在.env文件中配置SUPABASE_URL和SUPABASE_SERVICE_ROLE_KEY[/red]")
+    if not CONFIG_AVAILABLE or not config.database.has_supabase_config:
+        rprint("[red]❌ 请在配置中设置SUPABASE_URL和SUPABASE_SERVICE_ROLE_KEY[/red]")
         return None
 
-    return create_client(url, service_key)
+    return create_client(
+        config.database.supabase_url,
+        config.database.supabase_service_role_key,
+    )
 
 
 @app.command("init")
-def init_database():
-    """初始化数据库结构"""
+def init_database() -> None:
+    """初始化数据库结构."""
     rprint("[bold blue]🚀 初始化数据库结构...[/bold blue]")
 
     client = get_supabase_client()
@@ -72,14 +62,19 @@ def init_database():
         return
 
     # 读取SQL初始化脚本
-    sql_file = Path(__file__).parent.parent.parent / "database" / "supabase_init.sql"
+    if CONFIG_AVAILABLE:
+        sql_file = config.paths.project_root / "database" / "supabase_init.sql"
+    else:
+        sql_file = (
+            Path(__file__).parent.parent.parent / "database" / "supabase_init.sql"
+        )
 
     if not sql_file.exists():
         rprint(f"[red]❌ 找不到SQL初始化文件: {sql_file}[/red]")
         raise typer.Exit(1)
 
     try:
-        with open(sql_file, "r", encoding="utf-8") as f:
+        with open(sql_file, encoding="utf-8") as f:
             sql_content = f.read()
 
         # 分割SQL语句（简单处理）
@@ -92,13 +87,15 @@ def init_database():
             try:
                 if statement.upper().startswith(("CREATE", "ALTER", "INSERT")):
                     # 对于DDL语句，使用rpc调用
-                    result = client.rpc("exec_sql", {"sql": statement}).execute()
+                    client.rpc("exec_sql", {"sql": statement}).execute()
                     rprint(f"[green]✅ ({i}/{len(statements)}) 执行成功[/green]")
                 else:
-                    rprint(f"[yellow]⏭️ ({i}/{len(statements)}) 跳过注释或空语句[/yellow]")
+                    rprint(
+                        f"[yellow]⏭️ ({i}/{len(statements)}) 跳过注释或空语句[/yellow]",
+                    )
             except Exception as e:
                 rprint(
-                    f"[yellow]⚠️ ({i}/{len(statements)}) 语句执行警告: {str(e)[:100]}...[/yellow]"
+                    f"[yellow]⚠️ ({i}/{len(statements)}) 语句执行警告: {str(e)[:100]}...[/yellow]",
                 )
                 # 继续执行其他语句
                 continue
@@ -111,8 +108,8 @@ def init_database():
 
 
 @app.command("test")
-def test_connection():
-    """测试数据库连接"""
+def test_connection() -> None:
+    """测试数据库连接."""
     rprint("[bold blue]🔍 测试数据库连接...[/bold blue]")
 
     client = get_supabase_client()
@@ -121,7 +118,7 @@ def test_connection():
 
     try:
         # 测试基本查询
-        result = client.table("mcp_tools").select("count").limit(1).execute()
+        client.table("mcp_tools").select("count").limit(1).execute()
         rprint("[green]✅ 数据库连接成功![/green]")
 
         # 测试表是否存在
@@ -137,7 +134,7 @@ def test_connection():
 
         for table in tables_to_check:
             try:
-                result = client.table(table).select("count").limit(1).execute()
+                client.table(table).select("count").limit(1).execute()
                 rprint(f"[green]✅ 表 {table} 存在[/green]")
             except Exception as e:
                 rprint(f"[red]❌ 表 {table} 不存在或有问题: {e}[/red]")
@@ -148,8 +145,8 @@ def test_connection():
 
 
 @app.command("seed")
-def seed_data():
-    """填充示例数据"""
+def seed_data() -> None:
+    """填充示例数据."""
     rprint("[bold blue]🌱 填充示例数据...[/bold blue]")
 
     client = get_supabase_client()
@@ -195,7 +192,7 @@ def seed_data():
                 )
 
                 if not existing.data:
-                    result = client.table("mcp_tools").insert(tool_data).execute()
+                    client.table("mcp_tools").insert(tool_data).execute()
                     rprint(f"[green]✅ 插入工具: {tool_data['name']}[/green]")
                 else:
                     rprint(f"[yellow]⏭️ 工具已存在: {tool_data['name']}[/yellow]")
@@ -210,8 +207,10 @@ def seed_data():
 
 
 @app.command("clean")
-def clean_data(confirm: bool = typer.Option(False, "--confirm", help="确认删除所有数据")):
-    """清理测试数据"""
+def clean_data(
+    confirm: bool = typer.Option(False, "--confirm", help="确认删除所有数据"),
+) -> None:
+    """清理测试数据."""
     if not confirm:
         rprint("[yellow]⚠️ 此操作将删除所有测试数据！[/yellow]")
         rprint("[yellow]请使用 --confirm 参数确认删除[/yellow]")
@@ -236,7 +235,7 @@ def clean_data(confirm: bool = typer.Option(False, "--confirm", help="确认删�
 
         for table in tables_to_clean:
             try:
-                result = (
+                (
                     client.table(table)
                     .delete()
                     .neq("id", "00000000-0000-0000-0000-000000000000")
@@ -254,8 +253,8 @@ def clean_data(confirm: bool = typer.Option(False, "--confirm", help="确认删�
 
 
 @app.command("status")
-def show_status():
-    """显示数据库状态"""
+def show_status() -> None:
+    """显示数据库状态."""
     rprint("[bold blue]📊 数据库状态概览...[/bold blue]")
 
     client = get_supabase_client()
@@ -280,8 +279,10 @@ def show_status():
             try:
                 result = client.table(table).select("*", count="exact").execute()
                 count = result.count
-                console.print(f"  • {description} ({table}): [cyan]{count}[/cyan] 条记录")
-            except Exception as e:
+                console.print(
+                    f"  • {description} ({table}): [cyan]{count}[/cyan] 条记录",
+                )
+            except Exception:
                 console.print(f"  • {description} ({table}): [red]查询失败[/red]")
 
         # 显示最近的测试报告
@@ -301,7 +302,7 @@ def show_status():
                         "green" if report["overall_status"] == "success" else "red"
                     )
                     console.print(
-                        f"  • [{status_color}]{report['overall_status']}[/{status_color}] {report['tool_name']} - {report['created_at'][:19]}"
+                        f"  • [{status_color}]{report['overall_status']}[/{status_color}] {report['tool_name']} - {report['created_at'][:19]}",
                     )
         except Exception as e:
             console.print(f"\n[red]❌ 无法获取最近报告: {e}[/red]")
