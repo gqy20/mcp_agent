@@ -10,7 +10,8 @@ import pytest
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from src.main import app
+# Use the correct import path
+from src.batch_mcp.main import app
 
 
 class TestMainApplication:
@@ -36,34 +37,34 @@ class TestMainApplication:
     @patch("typer.run")
     def test_main_entry_point(self, mock_typer_run):
         """Test main entry point execution."""
-        from src.main import main
+        from src.batch_mcp.main import main
 
         main()
         mock_typer_run.assert_called_once()
 
-    @patch("src.main.batch_mcp")
+    @patch("main_module.batch_mcp")
     def test_batch_command_exists(self, mock_batch_mcp):
         """Test that batch command exists."""
         # Import the command function
-        from src.main import batch_mcp
+        from src.batch_mcp.main import batch_mcp
 
         assert callable(batch_mcp)
 
-    @patch("src.main.deploy_mcp")
+    @patch("main_module.deploy_mcp")
     def test_deploy_command_exists(self, mock_deploy_mcp):
         """Test that deploy command exists."""
-        from src.main import deploy_mcp
+        from src.batch_mcp.main import deploy_mcp
 
         assert callable(deploy_mcp)
 
-    @patch("src.main.test_mcp")
+    @patch("main_module.test_mcp")
     def test_test_command_exists(self, mock_test_mcp):
         """Test that test command exists."""
-        from src.main import test_mcp
+        from src.batch_mcp.main import test_mcp
 
         assert callable(test_mcp)
 
-    @patch("src.main.evaluat_mcp")
+    @patch("main_module.evaluat_mcp")
     def test_evaluate_command_exists(self, mock_evaluate_mcp):
         """Test that evaluate command exists."""
         assert callable(evaluate_mcp)
@@ -72,7 +73,7 @@ class TestMainApplication:
         """Test CLI help functionality."""
         with patch("sys.argv", ["batch-mcp", "--help"]):
             with patch("typer.run") as mock_run:
-                from src.main import main
+                from src.batch_mcp.main import main
 
                 main()
                 mock_run.assert_called_once()
@@ -81,15 +82,15 @@ class TestMainApplication:
         """Test CLI version functionality."""
         with patch("sys.argv", ["batch-mcp", "--version"]):
             with patch("typer.run") as mock_run:
-                from src.main import main
+                from src.batch_mcp.main import main
 
                 main()
                 mock_run.assert_called_once()
 
-    @patch("src.main.deploy_mcp")
+    @patch("main_module.deploy_mcp")
     def test_deploy_command_with_arguments(self, mock_deploy_mcp):
         """Test deploy command with arguments."""
-        from src.main import deploy_mcp
+        from src.batch_mcp.main import deploy_mcp
 
         # Mock typer Context
         mock_ctx = Mock()
@@ -99,10 +100,10 @@ class TestMainApplication:
         # Verify the function was called with correct arguments
         # (The actual implementation would need to be tested based on real functionality)
 
-    @patch("src.main.test_mcp")
+    @patch("main_module.test_mcp")
     def test_test_command_with_arguments(self, mock_test_mcp):
         """Test test command with arguments."""
-        from src.main import test_mcp
+        from src.batch_mcp.main import test_mcp
 
         mock_ctx = Mock()
 
@@ -110,10 +111,10 @@ class TestMainApplication:
 
         # Verify the function was called with correct arguments
 
-    @patch("src.main.evaluat_mcp")
+    @patch("main_module.evaluat_mcp")
     def test_evaluate_command_with_arguments(self, mock_evaluate_mcp):
         """Test evaluate command with arguments."""
-        from src.main import evaluat_mcp
+        from src.batch_mcp.main import evaluat_mcp
 
         mock_ctx = Mock()
 
@@ -125,14 +126,14 @@ class TestMainApplication:
         """Test error handling for invalid arguments."""
         with patch("sys.argv", ["batch-mcp", "invalid-command"]):
             with patch("typer.run") as mock_run:
-                from src.main import main
+                from src.batch_mcp.main import main
 
                 main()
                 mock_run.assert_called_once()
 
     def test_configuration_file_loading(self):
         """Test configuration file loading functionality."""
-        from src.main import load_config
+        from src.batch_mcp.main import load_config
 
         # Mock file reading
         with patch("builtins.open", mock_open(read_data='{"key": "value"}')):
@@ -144,14 +145,14 @@ class TestMainApplication:
 
     def test_configuration_file_not_found(self):
         """Test handling of missing configuration file."""
-        from src.main import load_config
+        from src.batch_mcp.main import load_config
 
         with pytest.raises(FileNotFoundError):
             load_config("nonexistent_config.json")
 
     def test_configuration_validation(self):
         """Test configuration validation."""
-        from src.main import validate_config
+        from src.batch_mcp.main import validate_config
 
         valid_config = {"timeout": 30, "max_retries": 3, "log_level": "INFO"}
 
@@ -165,7 +166,7 @@ class TestMainApplication:
 
     def test_logging_configuration(self):
         """Test logging configuration."""
-        from src.main import configure_logging
+        from src.batch_mcp.main import configure_logging
 
         # Test that logging configuration doesn't raise errors
         try:
@@ -176,7 +177,7 @@ class TestMainApplication:
 
     def test_environment_variable_handling(self):
         """Test environment variable handling."""
-        from src.main import get_env_var
+        from src.batch_mcp.main import get_env_var
 
         with patch.dict(os.environ, {"TEST_VAR": "test_value"}):
             value = get_env_var("TEST_VAR", "default_value")
@@ -187,7 +188,7 @@ class TestMainApplication:
 
     def test_application_initialization(self):
         """Test application initialization."""
-        from src.main import initialize_app
+        from src.batch_mcp.main import initialize_app
 
         # Test that initialization doesn't raise errors
         try:
@@ -198,7 +199,7 @@ class TestMainApplication:
 
     def test_cleanup_functionality(self):
         """Test cleanup functionality."""
-        from src.main import cleanup
+        from src.batch_mcp.main import cleanup
 
         # Test that cleanup doesn't raise errors
         try:
@@ -209,7 +210,7 @@ class TestMainApplication:
 
     def test_signal_handling(self):
         """Test signal handling."""
-        from src.main import setup_signal_handlers
+        from src.batch_mcp.main import setup_signal_handlers
 
         # Test that signal handler setup doesn't raise errors
         try:
@@ -259,13 +260,13 @@ def mock_setup_signal_handlers():
     """Mock signal handler setup function."""
 
 
-# Add mock functions to src.main module
-import src.main
-
-src.main.load_config = mock_load_config
-src.main.validate_config = mock_validate_config
-src.main.configure_logging = mock_configure_logging
-src.main.get_env_var = mock_get_env_var
-src.main.initialize_app = mock_initialize_app
-src.main.cleanup = mock_cleanup
-src.main.setup_signal_handlers = mock_setup_signal_handlers
+# Note: Skip adding mock functions as they don't exist in the actual module
+# The actual module has a different structure than expected by these tests
+# import src.batch_mcp.main as main_module
+# main_module.load_config = mock_load_config
+# main_module.validate_config = mock_validate_config
+# main_module.configure_logging = mock_configure_logging
+# main_module.get_env_var = mock_get_env_var
+# main_module.initialize_app = mock_initialize_app
+# main_module.cleanup = mock_cleanup
+# main_module.setup_signal_handlers = mock_setup_signal_handlers

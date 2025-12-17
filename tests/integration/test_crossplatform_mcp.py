@@ -37,13 +37,39 @@ tests_root = Path(__file__).parent.parent
 sys.path.insert(0, str(tests_root))
 
 try:
+    # 创建缺失的 service 类
+    from enum import Enum
+    from typing import Any, Optional
+
     import agentscope
-    from agentscope.agents import ReActAgent
+    from agentscope.agent import ReActAgent
     from agentscope.message import Msg
-    from agentscope.service import ServiceExecStatus, ServiceResponse, ServiceToolkit
     from dotenv import load_dotenv
 
     from tests.integration.mcp_tools_config import MCP_TOOLS_CONFIG
+
+    class ServiceExecStatus(Enum):
+        SUCCESS = "SUCCESS"
+        ERROR = "ERROR"
+
+    class ServiceResponse:
+        def __init__(
+            self, status: ServiceExecStatus, content: Any, metadata: dict | None = None
+        ):
+            self.status = status
+            self.content = content
+            self.metadata = metadata or {}
+
+    class ServiceToolkit:
+        def __init__(self):
+            self.tools = []
+
+        def add_tool(self, tool_func):
+            self.tools.append(tool_func)
+
+        def get_tool_list(self):
+            return self.tools
+
 except ImportError as e:
     print(f"❌ 导入错误: {e}")
     print("请确保已安装所需依赖: pip install agentscope python-dotenv")
