@@ -125,22 +125,22 @@ SUPABASE_SERVICE_ROLE_KEY=your_supabase_key
 
 ```bash
 # 🎯 测试单个 GitHub MCP 项目 (默认启用 AI 智能测试、数据库导出和代码质量评估)
-uv run python -m src.main test-url "https://github.com/upstash/context7"
+uv run python -m src.batch_mcp test-url "https://github.com/upstash/context7"
 
 # 🔧 禁用特定功能
-uv run python -m src.main test-url "https://github.com/upstash/context7" --no-smart --no-db-export --no-evaluate
+uv run python -m src.batch_mcp test-url "https://github.com/upstash/context7" --no-smart --no-db-export --no-evaluate
 
 # 📦 直接测试 MCP 包 (默认启用全部高级功能)
-uv run python -m src.main test-package "@upstash/context7-mcp"
+uv run python -m src.batch_mcp test-package "@upstash/context7-mcp"
 
 # ⚡ 快速测试模式 (禁用评估，提升测试速度)
-uv run python -m src.main test-package "@upstash/context7-mcp" --no-evaluate
+uv run python -m src.batch_mcp test-package "@upstash/context7-mcp" --no-evaluate
 
 # 🔍 列出数据库中的 MCP 工具
-uv run python -m src.main list-tools --limit 10
+uv run python -m src.batch_mcp list-tools --limit 10
 
 # 🔍 搜索特定工具
-uv run python -m src.main list-tools --search "github"
+uv run python -m src.batch_mcp list-tools --search "github"
 ```
 
 ### 🎛️ 默认参数说明
@@ -197,7 +197,7 @@ uv run python -m src.main list-tools --search "github"
 
 ```bash
 # 启用 AI 智能测试
-uv run python -m src.main test-url "https://github.com/example/mcp-tool" --smart
+uv run python -m src.batch_mcp test-url "https://github.com/example/mcp-tool" --smart
 ```
 
 ## 📊 代码质量评估
@@ -231,10 +231,10 @@ uv run python -m src.main test-url "https://github.com/example/mcp-tool" --smart
 
 ```bash
 # 执行完整评估 (默认启用)
-uv run python -m src.main test-package "@upstash/context7-mcp"
+uv run python -m src.batch_mcp test-package "@upstash/context7-mcp"
 
 # 快速测试 (禁用评估)
-uv run python -m src.main test-package "@upstash/context7-mcp" --no-evaluate
+uv run python -m src.batch_mcp test-package "@upstash/context7-mcp" --no-evaluate
 ```
 
 ## 🏗️ 项目架构
@@ -242,22 +242,27 @@ uv run python -m src.main test-package "@upstash/context7-mcp" --no-evaluate
 ```
 mcp_agent/
 ├── src/                          # 源代码
-│   ├── main.py                   # CLI 入口点
-│   ├── core/                     # 核心模块
-│   │   ├── simple_mcp_deployer.py    # MCP 部署器
-│   │   ├── async_mcp_client.py       # 异步 MCP 客户端
-│   │   ├── url_mcp_processor.py      # URL 处理器
-│   │   ├── tester.py                 # 测试执行器
-│   │   ├── evaluator.py              # 代码质量评估器
-│   │   ├── report_generator.py       # 报告生成器
-│   │   ├── github_mcp_analyzer.py    # GitHub 分析器
-│   │   └── cli_handlers.py          # CLI 处理器
-│   ├── agents/                   # AI 智能代理
-│   │   ├── test_agent.py         # 测试生成代理
-│   │   └── validation_agent.py   # 验证执行代理
-│   └── utils/                    # 工具函数
-│       ├── csv_parser.py         # CSV 数据解析
-│       └── config_loader.py      # 配置加载
+│   └── batch_mcp/               # 主包 (新的 src layout)
+│       ├── main.py              # CLI 入口点
+│       ├── __main__.py          # 模块执行入口
+│       ├── core/                # 核心模块
+│       │   ├── simple_mcp_deployer.py    # MCP 部署器
+│       │   ├── async_mcp_client.py       # 异步 MCP 客户端
+│       │   ├── url_mcp_processor.py      # URL 处理器
+│       │   ├── tester.py                 # 测试执行器
+│       │   ├── evaluator.py              # 代码质量评估器
+│       │   ├── report_generator.py       # 报告生成器
+│       │   ├── github_mcp_analyzer.py    # GitHub 分析器
+│       │   └── cli_handlers.py          # CLI 处理器
+│       ├── agents/              # AI 智能代理
+│       │   ├── test_agent.py         # 测试生成代理
+│       │   └── validation_agent.py   # 验证执行代理
+│       ├── utils/               # 工具函数
+│       │   ├── csv_parser.py         # CSV 数据解析
+│       │   └── config_loader.py      # 配置加载
+│       └── tools/               # 工具脚本
+│           ├── setup_validator.py     # 环境验证
+│           └── verify_database.py     # 数据库验证
 ├── data/                         # 数据目录
 │   ├── mcp.csv                   # 5000+ MCP 工具数据库
 │   ├── test_results/             # 测试结果和报告
@@ -304,10 +309,10 @@ mcp_agent/
 
 ```bash
 # Context7 文档工具
-uv run python -m src.main test-url "https://github.com/upstash/context7"
+uv run python -m src.batch_mcp test-url "https://github.com/upstash/context7"
 
 # Svelte 文档工具
-uv run python -m src.main test-url "https://github.com/spences10/mcp-svelte-docs"
+uv run python -m src.batch_mcp test-url "https://github.com/spences10/mcp-svelte-docs"
 ```
 
 ## 📊 测试报告
@@ -332,7 +337,7 @@ uv run python -m src.main test-url "https://github.com/spences10/mcp-svelte-docs
 
 ```bash
 # 测试并导出到数据库
-uv run python -m src.main test-url "https://github.com/upstash/context7" --db-export
+uv run python -m src.batch_mcp test-url "https://github.com/upstash/context7" --db-export
 
 # 批量导入现有测试结果
 python import_test_results.py
@@ -394,7 +399,7 @@ uv run pytest
 uv run black src/
 
 # 环境检查
-uv run python -m src.main init-env
+uv run python -m src.batch_mcp init-env
 ```
 
 ## 🚀 GitHub Actions 工作流
