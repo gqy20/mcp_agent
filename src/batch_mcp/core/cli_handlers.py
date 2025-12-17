@@ -399,17 +399,12 @@ class CLIHandler:
                 else:
                     smart_success = False
 
-            # 数据库导出
-            if config.db_export and success:
-                self._export_to_database(
-                    http_config["url"], test_results, "http_mcp", config
-                )
-
             # 生成报告
+            report_files = {}
             if config.save_report:
                 from .report_generator import generate_test_report
 
-                generate_test_report(
+                report_files = generate_test_report(
                     url=http_config["url"],
                     tool_info=tool_info,
                     server_info=client,
@@ -422,6 +417,15 @@ class CLIHandler:
                     ),
                     evaluation_result=None,  # HTTP端点通常不需要评估
                 )
+
+            # 数据库导出
+            if config.db_export and success:
+                json_report = report_files.get("json")
+                if json_report:
+                    self._export_to_database(
+                        json_report,
+                        evaluation_result=None,
+                    )
 
             return success
 
