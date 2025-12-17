@@ -62,8 +62,8 @@ def test_environment_config():
 def test_agent_initialization():
     """测试代理初始化"""
     try:
-        from src.agents.test_agent import get_test_generator
-        from src.agents.validation_agent import get_validation_agent
+        from src.batch_mcp.agents.test_agent import get_test_generator
+        from src.batch_mcp.agents.validation_agent import get_validation_agent
 
         print("🤖 正在初始化测试生成代理...")
         test_gen = get_test_generator()
@@ -83,7 +83,7 @@ def test_agent_initialization():
 def test_basic_csv_parsing():
     """测试CSV解析功能"""
     try:
-        from src.utils.csv_parser import get_mcp_parser
+        from src.batch_mcp.utils.csv_parser import get_mcp_parser
 
         parser = get_mcp_parser()
         tools = parser.get_all_tools()
@@ -113,7 +113,7 @@ def test_smart_test_generation():
         if not test_tool:
             return False
 
-        from src.agents.test_agent import get_test_generator
+        from src.batch_mcp.agents.test_agent import get_test_generator
 
         print("🎯 正在生成智能测试用例...")
         test_gen = get_test_generator()

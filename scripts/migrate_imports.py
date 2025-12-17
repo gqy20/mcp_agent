@@ -21,13 +21,13 @@ class ImportMigrator:
 
         # 需要处理的导入模式
         self.patterns = [
-            # from core.xxx import Yyy -> from batch_mcp.core.xxx import Yyy
+            # from batch_mcp.core.xxx import Yyy -> from batch_mcp.core.xxx import Yyy
             (r'from\s+(core|agents|utils|tools)\.', r'from batch_mcp.\1.'),
 
-            # import core.xxx -> import batch_mcp.core.xxx
+            # import batch_mcp.core.xxx -> import batch_mcp.core.xxx
             (r'import\s+(core|agents|utils|tools)\.', r'import batch_mcp.\1.'),
 
-            # from src.core.xxx -> from src.batch_mcp.core.xxx
+            # from src.batch_mcp.core.xxx -> from src.batch_mcp.core.xxx
             (r'from\s+src\.(core|agents|utils|tools)', r'from src.batch_mcp.\1'),
 
             # relative imports inside the package

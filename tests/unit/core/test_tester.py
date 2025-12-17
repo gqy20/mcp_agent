@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
-from src.core.tester import MCPTester
+from src.batch_mcp.core.tester import MCPTester
 
 
 class TestMCTester:

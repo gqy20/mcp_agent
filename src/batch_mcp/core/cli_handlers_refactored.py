@@ -7,14 +7,15 @@ CLI 命令处理器重构 - 模块化版本
 
 import os
 from datetime import datetime
+from typing import Any, Optional
 
 from rich import print as rprint
 from supabase import create_client
 
-from src.core.evaluator import evaluate_full_repository_with_comprehensive_score
-from src.core.report_generator import generate_test_report
-from src.core.tester import TestConfig, get_mcp_tester
-from src.utils.csv_parser import MCPToolInfo, get_mcp_parser
+from batch_mcp.core.evaluator import evaluate_full_repository_with_comprehensive_score
+from batch_mcp.core.report_generator import generate_test_report
+from batch_mcp.core.tester import TestConfig, get_mcp_tester
+from batch_mcp.utils.csv_parser import MCPToolInfo, get_mcp_parser
 
 
 class SupabaseClientManager:

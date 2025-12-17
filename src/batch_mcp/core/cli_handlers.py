@@ -19,10 +19,10 @@ from typing import List, Optional
 
 from rich import print as rprint
 
-from src.core.evaluator import evaluate_full_repository_with_comprehensive_score
-from src.core.report_generator import generate_test_report
-from src.core.tester import TestConfig, get_mcp_tester
-from src.utils.csv_parser import MCPToolInfo, get_mcp_parser
+from batch_mcp.core.evaluator import evaluate_full_repository_with_comprehensive_score
+from batch_mcp.core.report_generator import generate_test_report
+from batch_mcp.core.tester import TestConfig, get_mcp_tester
+from batch_mcp.utils.csv_parser import MCPToolInfo, get_mcp_parser
 
 
 class CLIHandler:
@@ -324,7 +324,7 @@ class CLIHandler:
 
             # 使用GitHub项目分析器获取工具信息
             try:
-                from src.core.mcp_table_updater import MCPTableUpdater
+                from batch_mcp.core.mcp_table_updater import MCPTableUpdater
 
                 updater = MCPTableUpdater()
 
@@ -402,7 +402,7 @@ class CLIHandler:
 
         if config.smart_test and tool_info:
             try:
-                from src.agents.test_agent import get_test_generator
+                from batch_mcp.agents.test_agent import get_test_generator
 
                 rprint("[blue]🤖 启用AI智能测试模式...[/blue]")
                 return asyncio.run(
@@ -522,7 +522,7 @@ class CLIHandler:
                 return ""
 
             # 使用CSV解析器查找工具
-            from src.utils.csv_parser import get_mcp_parser
+            from batch_mcp.utils.csv_parser import get_mcp_parser
 
             parser = get_mcp_parser()
             if not parser.load_data():

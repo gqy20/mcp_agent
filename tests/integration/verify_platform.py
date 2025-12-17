@@ -60,15 +60,15 @@ def test_module_imports():
 
     try:
         # 核心模块
-        from src.core.simple_mcp_deployer import SimpleMCPDeployer
+        from src.batch_mcp.core.simple_mcp_deployer import SimpleMCPDeployer
 
         print("✅ SimpleMCPDeployer 导入成功")
 
-        from src.utils.csv_parser import MCPDataParser
+        from src.batch_mcp.utils.csv_parser import MCPDataParser
 
         print("✅ MCPDataParser 导入成功")
 
-        from src.core.url_mcp_processor import URLMCPProcessor
+        from src.batch_mcp.core.url_mcp_processor import URLMCPProcessor
 
         print("✅ URLMCPProcessor 导入成功")
 
@@ -84,7 +84,7 @@ def test_csv_data_loading():
     print("\n📊 测试CSV数据加载...")
 
     try:
-        from src.utils.csv_parser import get_mcp_parser
+        from src.batch_mcp.utils.csv_parser import get_mcp_parser
 
         parser = get_mcp_parser()
         if parser.load_data():
@@ -115,7 +115,7 @@ def test_platform_detection():
     print("\n🖥️ 测试平台检测...")
 
     try:
-        from src.core.simple_mcp_deployer import detect_simple_platform
+        from src.batch_mcp.core.simple_mcp_deployer import detect_simple_platform
 
         platform_info = detect_simple_platform()
         print(f"✅ 平台: {platform_info['system']}")

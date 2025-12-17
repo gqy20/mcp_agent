@@ -3,8 +3,8 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from src.agents.test_agent import TestGeneratorAgent
-from src.agents.validation_agent import ValidationAgent
+from src.batch_mcp.agents.test_agent import TestGeneratorAgent
+from src.batch_mcp.agents.validation_agent import ValidationAgent
 
 
 class TestTestGeneratorAgent:

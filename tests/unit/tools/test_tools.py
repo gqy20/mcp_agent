@@ -6,9 +6,9 @@ from unittest.mock import MagicMock, Mock, mock_open, patch
 
 import pytest
 
-from src.tools.db_migrate import DatabaseMigrator
-from src.tools.setup_validator import SetupValidator
-from src.tools.verify_database import DatabaseVerifier
+from src.batch_mcp.tools.db_migrate import DatabaseMigrator
+from src.batch_mcp.tools.setup_validator import SetupValidator
+from src.batch_mcp.tools.verify_database import DatabaseVerifier
 
 
 class TestDatabaseVerifier:

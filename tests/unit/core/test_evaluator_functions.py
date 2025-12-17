@@ -3,7 +3,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from src.core.evaluator import (
+from src.batch_mcp.core.evaluator import (
     analyze_frequency,
     analyze_recency,
     evaluate_full_repository_profile,

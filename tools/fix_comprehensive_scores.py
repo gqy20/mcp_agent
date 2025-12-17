@@ -15,7 +15,7 @@ from dotenv import load_dotenv
 from rich.console import Console
 from supabase import create_client
 
-from src.core.evaluator import calculate_comprehensive_score_from_tests
+from src.batch_mcp.core.evaluator import calculate_comprehensive_score_from_tests
 
 
 def main():

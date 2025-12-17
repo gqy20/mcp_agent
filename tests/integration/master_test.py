@@ -141,9 +141,9 @@ class MasterTester:
             print("1. 核心模块测试...")
             sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
-            from core.cli_handlers import get_cli_handler
-            from core.tester import TestConfig, get_mcp_tester
-            from utils.csv_parser import get_mcp_parser
+            from batch_mcp.core.cli_handlers import get_cli_handler
+            from batch_mcp.core.tester import TestConfig, get_mcp_tester
+            from batch_mcp.utils.csv_parser import get_mcp_parser
 
             # 2. 配置测试
             config = TestConfig(timeout=120, db_export=True)

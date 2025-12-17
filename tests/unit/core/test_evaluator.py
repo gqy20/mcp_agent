@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
-from src.core.evaluator import ToolEvaluator
+from src.batch_mcp.core.evaluator import ToolEvaluator
 
 
 class TestToolEvaluator:

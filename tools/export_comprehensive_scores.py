@@ -20,7 +20,7 @@ from rich.progress import track
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
-from src.core.evaluator import calculate_comprehensive_score_from_tests
+from src.batch_mcp.core.evaluator import calculate_comprehensive_score_from_tests
 
 
 def main():

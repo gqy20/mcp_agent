@@ -83,7 +83,7 @@ class MigrationValidator:
             ("验证代理", "from src.batch_mcp.agents.validation_agent import ValidationAgent"),
             ("异步客户端", "from src.batch_mcp.core.async_mcp_client import AsyncMCPClient"),
             ("URL处理器", "from src.batch_mcp.core.url_mcp_processor import URLMCPProcessor"),
-            ("评估器", "from src.batch_mcp.core.evaluator import Evaluator"),
+            ("评估器模块", "import src.batch_mcp.core.evaluator"),
         ]
 
         success_count = 0

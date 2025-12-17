@@ -19,7 +19,7 @@ from pathlib import Path
 
 # 导入工具信息类型
 try:
-    from src.utils.csv_parser import MCPToolInfo
+    from batch_mcp.utils.csv_parser import MCPToolInfo
 except ImportError:
 
     @dataclass

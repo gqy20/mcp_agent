@@ -11,7 +11,7 @@ from pathlib import Path
 # 添加src目录到路径
 sys.path.append(str(Path(__file__).parent.parent))
 
-from src.core.supabase_connector import SupabaseConnector
+from batch_mcp.core.supabase_connector import SupabaseConnector
 
 
 def main():

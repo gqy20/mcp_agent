@@ -16,8 +16,8 @@ import time
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple
 
-from src.core.report_generator import TestResult
-from src.utils.csv_parser import MCPToolInfo
+from batch_mcp.core.report_generator import TestResult
+from batch_mcp.utils.csv_parser import MCPToolInfo
 
 
 @dataclass
@@ -43,8 +43,8 @@ class MCPTester:
     def _get_services(self):
         """延迟加载服务 - 避免循环导入"""
         if not self.parser:
-            from src.core.simple_mcp_deployer import get_simple_mcp_deployer
-            from src.utils.csv_parser import get_mcp_parser
+            from batch_mcp.core.simple_mcp_deployer import get_simple_mcp_deployer
+            from batch_mcp.utils.csv_parser import get_mcp_parser
 
             self.parser = get_mcp_parser()
             self.deployer = get_simple_mcp_deployer()
@@ -197,9 +197,9 @@ class MCPTester:
         """智能测试 - 简化版"""
         try:
             # 动态导入，避免强依赖
-            from src.agents.test_agent import get_test_generator
-            from src.agents.validation_agent import get_validation_agent
-            from src.core.async_mcp_client import AsyncMCPClient
+            from batch_mcp.agents.test_agent import get_test_generator
+            from batch_mcp.agents.validation_agent import get_validation_agent
+            from batch_mcp.core.async_mcp_client import AsyncMCPClient
 
             test_generator = get_test_generator()
             validation_agent = get_validation_agent()

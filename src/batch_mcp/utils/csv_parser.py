@@ -385,7 +385,7 @@ def get_mcp_parser() -> MCPDataParser:
     global _parser_instance
     if _parser_instance is None:
         csv_path = (
-            Path(__file__).parent.parent.parent / "data" / "mcp_database" / "mcp.csv"
+            Path(__file__).parent.parent.parent.parent / "data" / "mcp_database" / "mcp.csv"
         )
         _parser_instance = MCPDataParser(str(csv_path))
     return _parser_instance

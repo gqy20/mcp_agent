@@ -3,7 +3,7 @@ from unittest.mock import Mock, mock_open, patch
 
 import pytest
 
-from src.utils.csv_parser import MCPDataParser
+from src.batch_mcp.utils.csv_parser import MCPDataParser
 
 
 class TestMCPDataParser:

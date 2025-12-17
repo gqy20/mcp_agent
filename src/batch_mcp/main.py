@@ -33,8 +33,8 @@ try:
 except ImportError:
     pass  # python-dotenv 不是必须依赖
 
-from src.core.cli_handlers import get_cli_handler
-from src.core.tester import TestConfig
+from batch_mcp.core.cli_handlers import get_cli_handler
+from batch_mcp.core.tester import TestConfig
 
 app = typer.Typer(
     name="batch-mcp",
@@ -134,7 +134,7 @@ def analyze_github_repos(
     rprint("[bold green]🔍 开始分析GitHub项目...[/bold green]")
 
     try:
-        from src.core.mcp_table_updater import MCPTableUpdater
+        from batch_mcp.core.mcp_table_updater import MCPTableUpdater
 
         # 检查输入是文件还是直接URLs
         if urls.endswith(".txt") or urls.endswith(".csv"):
@@ -185,8 +185,8 @@ def init_environment():
     rprint("[bold green]🔧 初始化测试环境...[/bold green]")
     # 简化的环境检查
     try:
-        from src.core.simple_mcp_deployer import get_simple_mcp_deployer
-        from src.utils.csv_parser import get_mcp_parser
+        from batch_mcp.core.simple_mcp_deployer import get_simple_mcp_deployer
+        from batch_mcp.utils.csv_parser import get_mcp_parser
 
         parser = get_mcp_parser()
         tools = parser.get_all_tools()

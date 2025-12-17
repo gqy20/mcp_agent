@@ -25,7 +25,7 @@ except ImportError as e:
     print(f"❌ AgentScope导入失败: {e}")
     print("请确保已安装 agentscope 和 python-dotenv")
 
-from src.agents.test_agent import TestCase
+from batch_mcp.agents.test_agent import TestCase
 
 
 class TestResultStatus(Enum):

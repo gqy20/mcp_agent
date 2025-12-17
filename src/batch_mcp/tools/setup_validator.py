@@ -63,7 +63,7 @@ def validate_supabase_connection():
     print("\n🔗 测试Supabase连接...")
 
     try:
-        from core.supabase_connector import SupabaseConnector
+        from batch_mcp.core.supabase_connector import SupabaseConnector
 
         connector = SupabaseConnector()
 
@@ -87,7 +87,7 @@ def validate_database_schema():
     print("\n🗄️ 检查数据库表结构...")
 
     try:
-        from core.supabase_connector import SupabaseConnector
+        from batch_mcp.core.supabase_connector import SupabaseConnector
 
         connector = SupabaseConnector()
 

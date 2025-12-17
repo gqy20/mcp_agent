@@ -10,7 +10,7 @@ import sys
 
 sys.path.insert(0, ".")
 
-from src.utils.csv_parser import get_mcp_parser
+from src.batch_mcp.utils.csv_parser import get_mcp_parser
 
 
 def main():

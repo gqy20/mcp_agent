@@ -4,15 +4,15 @@ from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
-from src.core.async_mcp_client import AsyncMCPClient
-from src.core.error_handler import (
+from src.batch_mcp.core.async_mcp_client import AsyncMCPClient
+from src.batch_mcp.core.error_handler import (
     CommunicationError,
     DeploymentError,
     ValidationError,
     retry_on_exception,
     validate_input,
 )
-from src.core.simple_mcp_deployer import SimpleMCPCommunicator, SimpleMCPDeployer
+from src.batch_mcp.core.simple_mcp_deployer import SimpleMCPCommunicator, SimpleMCPDeployer
 
 
 class TestSimpleMCPDeployerEnhanced:

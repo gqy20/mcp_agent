@@ -13,8 +13,8 @@ from pathlib import Path
 import pandas as pd
 from rich.console import Console
 
-from src.core.github_mcp_analyzer import GitHubMCPAnalyzer
-from src.utils.csv_parser import MCPDataParser
+from src.batch_mcp.core.github_mcp_analyzer import GitHubMCPAnalyzer
+from src.batch_mcp.utils.csv_parser import MCPDataParser
 
 console = Console()
 

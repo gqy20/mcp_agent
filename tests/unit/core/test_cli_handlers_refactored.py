@@ -3,7 +3,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from src.core.cli_handlers_refactored import (
+from src.batch_mcp.core.cli_handlers_refactored import (
     CLIToolEvaluator,
     EvaluationResultProcessor,
     SupabaseClientManager,

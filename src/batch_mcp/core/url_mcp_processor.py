@@ -29,8 +29,8 @@ except ImportError:
 
     Console = None
 
-from src.core.simple_mcp_deployer import get_simple_mcp_deployer
-from src.utils.csv_parser import MCPToolInfo, get_mcp_parser
+from batch_mcp.core.simple_mcp_deployer import get_simple_mcp_deployer
+from batch_mcp.utils.csv_parser import MCPToolInfo, get_mcp_parser
 
 
 @dataclass
@@ -424,8 +424,8 @@ class URLMCPProcessor:
 
             # 尝试导入智能代理
             try:
-                from src.agents.test_agent import get_test_generator
-                from src.agents.validation_agent import get_validation_agent
+                from batch_mcp.agents.test_agent import get_test_generator
+                from batch_mcp.agents.validation_agent import get_validation_agent
 
                 # 智能测试逻辑（简化版）
                 rprint("[yellow]⚠️ 智能测试功能开发中，使用增强基础测试[/yellow]")
