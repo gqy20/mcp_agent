@@ -38,23 +38,3 @@ repos:
       - id: bandit
         args: [-r, src/, -f, json]
         exclude: ^tests/
-
-  # 注意：git-safety 主要用于 Poetry，我们使用 UV
-# 安全检查通过 bandit 进行，如需要额外安全检查可手动运行：
-# uv run safety check
-  # - repo: https://github.com/Lucas-C/pre-commit-hooks-safety
-  #   rev: v1.4.2  # 最新稳定版本
-  #   hooks:
-  #     - id: python-safety-dependencies-check
-
-ci:
-  autofix_commit_msg: |
-    [pre-commit.ci] auto fixes from pre-commit.com hooks
-
-    for more information, see https://pre-commit.ci
-  autofix_prs: true
-  autoupdate_branch: ''
-  autoupdate_commit_msg: '[pre-commit.ci] pre-commit autoupdate'
-  autoupdate_schedule: weekly
-  skip: []
-  submodules: false
