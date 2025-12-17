@@ -35,6 +35,9 @@ class HttpMCPClient:
         if headers:
             self.headers.update(headers)
 
+        # 存储最后获取的工具列表
+        self.last_tools_response = None
+
     async def list_tools(self) -> dict[str, Any]:
         """获取工具列表."""
         async with httpx.AsyncClient(timeout=self.timeout) as client:
@@ -71,20 +74,26 @@ class HttpMCPClient:
             # 尝试解析响应，支持标准JSON和SSE格式
             try:
                 result = tools_response.json()
-                return {
+                response = {
                     "success": True,
                     "tools": result.get("result", {}).get("tools", []),
                     "raw": result,
                 }
+                # 存储结果到实例属性
+                self.last_tools_response = result.get("result", {})
+                return response
             except json.JSONDecodeError:
                 # 如果JSON解析失败，尝试SSE格式
                 sse_result = self._parse_sse_response(tools_response.text)
                 if "result" in sse_result:
-                    return {
+                    response = {
                         "success": True,
                         "tools": sse_result.get("result", {}).get("tools", []),
                         "raw": sse_result,
                     }
+                    # 存储结果到实例属性
+                    self.last_tools_response = sse_result.get("result", {})
+                    return response
                 return {
                     "success": False,
                     "error": f"无法解析响应: {sse_result}",

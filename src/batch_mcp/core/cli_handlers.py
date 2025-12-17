@@ -422,6 +422,20 @@ class CLIHandler:
             if config.db_export and success:
                 json_report = report_files.get("json")
                 if json_report:
+                    # 为HTTP客户端添加available_tools属性以兼容报告生成器
+                    if hasattr(client, 'last_tools_response') and client.last_tools_response:
+                        client.available_tools = client.last_tools_response.get("tools", [])
+                    elif test_results and "basic_tests" in test_results:
+                        # 从测试结果中提取工具数量
+                        basic_tests = test_results["basic_tests"]
+                        available_tools = []
+                        for test in basic_tests:
+                            if test.get("tool"):
+                                available_tools.append(test["tool"])
+                        client.available_tools = available_tools
+                    else:
+                        client.available_tools = []
+
                     self._export_to_database(
                         json_report,
                         evaluation_result=None,
