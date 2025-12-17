@@ -329,7 +329,7 @@ class SimpleMCPDeployer:
         """
         parsed = urlparse(url)
         config = {
-            "url": f"{parsed.scheme}://{parsed.netloc}{parsed.path}",
+            "url": url,  # 使用完整的 URL，包括查询参数
             "headers": {},
             "timeout": 30,
         }

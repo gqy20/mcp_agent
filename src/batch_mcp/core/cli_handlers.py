@@ -16,9 +16,7 @@ import json
 import time
 from datetime import UTC, datetime
 from pathlib import Path
-from types import SimpleNamespace
 from typing import Any
-from unittest.mock import MagicMock
 
 from rich import print as rprint
 
@@ -179,6 +177,9 @@ class CLIHandler:
                 if (
                     config.db_export
                     and CONFIG_AVAILABLE
+                    and hasattr(config, 'database')
+                    and config.database
+                    and hasattr(config.database, 'has_supabase_config')
                     and config.database.has_supabase_config
                 ):
                     try:
@@ -207,7 +208,7 @@ class CLIHandler:
                     server_info,
                     success,
                     test_results,
-                    server_info.start_time,
+                    getattr(server_info, 'start_time', time.time()),
                     evaluation_result,
                 )
 
@@ -260,6 +261,9 @@ class CLIHandler:
                 if (
                     config.db_export
                     and CONFIG_AVAILABLE
+                    and hasattr(config, 'database')
+                    and config.database
+                    and hasattr(config.database, 'has_supabase_config')
                     and config.database.has_supabase_config
                 ):
                     try:
@@ -288,7 +292,7 @@ class CLIHandler:
                     server_info,
                     success,
                     test_results,
-                    server_info.start_time,
+                    getattr(server_info, 'start_time', time.time()),
                     evaluation_result,
                 )
 
