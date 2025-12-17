@@ -769,7 +769,7 @@ class CLIHandler:
         rprint(f"[blue]📦 包名: {tool_info.package_name}[/blue]")
         rprint(f"[blue]📂 类别: {tool_info.category}[/blue]")
         rprint(f"[blue]📝 描述: {tool_info.description[:100]}...[/blue]")
-        
+
         # 显示 LobeHub 评分信息
         if tool_info.lobehub_evaluate:
             rprint(f"[yellow]⭐ LobeHub 评分: {tool_info.lobehub_evaluate}[/yellow]")

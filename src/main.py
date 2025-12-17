@@ -123,52 +123,57 @@ def list_available_tools(
 @app.command("analyze-github")
 def analyze_github_repos(
     urls: str = typer.Argument(..., help="GitHub URLs，用逗号分隔或提供文件路径"),
-    output: str = typer.Option("auto_update_report.json", "--output", "-o", help="输出报告文件"),
-    update_tables: bool = typer.Option(True, "--update-tables/--no-update-tables", help="是否更新MCP表格"),
+    output: str = typer.Option(
+        "auto_update_report.json", "--output", "-o", help="输出报告文件"
+    ),
+    update_tables: bool = typer.Option(
+        True, "--update-tables/--no-update-tables", help="是否更新MCP表格"
+    ),
 ):
     """分析GitHub项目并自动添加MCP工具到表格"""
     rprint("[bold green]🔍 开始分析GitHub项目...[/bold green]")
-    
+
     try:
         from src.core.mcp_table_updater import MCPTableUpdater
-        
+
         # 检查输入是文件还是直接URLs
-        if urls.endswith('.txt') or urls.endswith('.csv'):
+        if urls.endswith(".txt") or urls.endswith(".csv"):
             # 从文件读取URLs
-            with open(urls, 'r', encoding='utf-8') as f:
+            with open(urls, "r", encoding="utf-8") as f:
                 github_urls = [line.strip() for line in f if line.strip()]
             rprint(f"[dim]📄 从文件读取 {len(github_urls)} 个URLs[/dim]")
         else:
             # 直接解析URLs
-            github_urls = [url.strip() for url in urls.split(',') if url.strip()]
+            github_urls = [url.strip() for url in urls.split(",") if url.strip()]
             rprint(f"[dim]📋 解析到 {len(github_urls)} 个URLs[/dim]")
-        
+
         if not github_urls:
             rprint("[red]❌ 没有找到有效的GitHub URLs[/red]")
             raise typer.Exit(1)
-        
+
         # 初始化更新器
         updater = MCPTableUpdater()
-        
+
         # 执行更新
         results = updater.update_with_new_repos(github_urls)
-        
+
         # 生成报告
         updater.generate_report(results)
-        
+
         # 保存结果到文件
         import json
-        with open(output, 'w', encoding='utf-8') as f:
+
+        with open(output, "w", encoding="utf-8") as f:
             json.dump(results, f, indent=2, ensure_ascii=False)
         rprint(f"[green]📄 报告已保存到: {output}[/green]")
-        
+
         # 如果没有新增MCP工具，输出提示
-        if not results['added_tools']:
+        if not results["added_tools"]:
             rprint("[yellow]💡 没有发现新的MCP工具。可能的原因：[/yellow]")
             rprint("[yellow]   • 这些项目已经在表格中[/yellow]")
             rprint("[yellow]   • 这些项目不是MCP工具[/yellow]")
             rprint("[yellow]   • GitHub API访问限制[/yellow]")
-        
+
     except Exception as e:
         rprint(f"[red]❌ 分析失败: {e}[/red]")
         raise typer.Exit(1)
