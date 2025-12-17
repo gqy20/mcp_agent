@@ -57,12 +57,29 @@ class HttpMCPClient:
             )
             tools_response.raise_for_status()
 
-            result = tools_response.json()
-            return {
-                "success": True,
-                "tools": result.get("result", {}).get("tools", []),
-                "raw": result,
-            }
+            # 尝试解析响应，支持标准JSON和SSE格式
+            try:
+                result = tools_response.json()
+                return {
+                    "success": True,
+                    "tools": result.get("result", {}).get("tools", []),
+                    "raw": result,
+                }
+            except Exception:
+                # 如果JSON解析失败，尝试SSE格式
+                sse_result = self._parse_sse_response(tools_response.text)
+                if "result" in sse_result:
+                    return {
+                        "success": True,
+                        "tools": sse_result.get("result", {}).get("tools", []),
+                        "raw": sse_result,
+                    }
+                else:
+                    return {
+                        "success": False,
+                        "error": f"无法解析响应: {sse_result}",
+                        "raw": tools_response.text,
+                    }
 
     async def call_tool(
         self, name: str, arguments: dict[str, Any] | None = None
@@ -81,10 +98,41 @@ class HttpMCPClient:
             )
             response.raise_for_status()
 
-            result = response.json()
-            return {
-                "success": "error" not in result,
-                "result": result.get("result"),
-                "error": result.get("error"),
-                "raw": result,
-            }
+            # 尝试解析响应，支持标准JSON和SSE格式
+            try:
+                result = response.json()
+                return {
+                    "success": "error" not in result,
+                    "result": result.get("result"),
+                    "error": result.get("error"),
+                    "raw": result,
+                }
+            except Exception:
+                # 如果JSON解析失败，尝试SSE格式
+                sse_result = self._parse_sse_response(response.text)
+                if "error" in sse_result:
+                    return {
+                        "success": False,
+                        "error": sse_result["error"],
+                        "raw": sse_result,
+                    }
+                else:
+                    return {
+                        "success": True,
+                        "result": sse_result.get("result"),
+                        "raw": sse_result,
+                    }
+
+    def _parse_sse_response(self, response_text: str) -> dict:
+        """解析 SSE 响应格式"""
+        import json
+
+        lines = response_text.strip().split('\n')
+        for line in reversed(lines):
+            if line.startswith('data:'):
+                try:
+                    json_str = line[5:].strip()
+                    return json.loads(json_str)
+                except json.JSONDecodeError:
+                    continue
+        return {"error": "No valid data found in SSE response"}

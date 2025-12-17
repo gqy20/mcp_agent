@@ -338,6 +338,10 @@ class CLIHandler:
 
     def _find_tool_info(self, url: str) -> MCPToolInfo | None:
         """查找工具信息 - 单一职责."""
+        # 检查是否为 HTTP MCP 端点
+        if self._is_http_mcp_endpoint(url):
+            return self._create_http_tool_info(url)
+
         rprint("[blue]🔍 在数据库中查找对应的MCP工具...[/blue]")
         tool_info = self.tester.find_tool_by_url(url)
 
@@ -382,6 +386,10 @@ class CLIHandler:
 
     def _deploy_tool(self, tool_info: MCPToolInfo, config: TestConfig):
         """部署工具 - 单一职责."""
+        # 检查是否为 HTTP MCP 端点
+        if getattr(tool_info, 'transport', None) == 'http':
+            return self._deploy_http_mcp(tool_info, config)
+
         # 尝试从run_command中提取包名（如果package_name为空）
         package_name = tool_info.package_name
         run_command = getattr(tool_info, "run_command", None)
@@ -423,6 +431,10 @@ class CLIHandler:
     ):
         """执行测试 - 支持无tool_info场景."""
         rprint("[yellow]🧪 执行基础连通性测试...[/yellow]")
+
+        # 检查是否为 HTTP MCP 客户端
+        if self._is_http_client(server_info):
+            return self._run_http_tests(tool_info, server_info, config)
 
         if config.smart_test and tool_info:
             try:
@@ -936,6 +948,191 @@ class CLIHandler:
             table.add_row(*row_data)
 
         console.print(table)
+
+    def _is_http_mcp_endpoint(self, url: str) -> bool:
+        """检测是否为 HTTP MCP 端点."""
+        if url.startswith(('http://', 'https://')):
+            # 排除 GitHub URLs
+            if 'github.com' not in url:
+                # 检查是否包含 MCP 相关路径
+                return '/mcp' in url or '/api/mcp' in url or url.endswith('/mcp')
+        return False
+
+    def _create_http_tool_info(self, url: str) -> MCPToolInfo:
+        """为 HTTP MCP 端点创建工具信息."""
+        from urllib.parse import urlparse, parse_qs
+
+        parsed = urlparse(url)
+
+        # 生成工具名称
+        tool_name = f"http-mcp-{parsed.netloc.replace('.', '-')}"
+
+        # 从查询参数提取配置
+        headers = {}
+        query_params = parse_qs(parsed.query)
+
+        if 'api_key' in query_params:
+            headers['Authorization'] = f"Bearer {query_params['api_key'][0]}"
+        elif 'token' in query_params:
+            headers['Authorization'] = f"Bearer {query_params['token'][0]}"
+
+        return MCPToolInfo(
+            name=tool_name,
+            url=url,  # 使用 HTTP URL 作为 URL
+            author="HTTP MCP Provider",
+            github_url=url,  # 使用 HTTP URL 作为 github_url
+            description=f"HTTP MCP endpoint at {parsed.netloc}",
+            deployment_method="http",  # HTTP 部署方法
+            category="HTTP MCP",
+            package_name=tool_name,
+            requires_api_key=bool(headers),  # 如果有headers则认为需要API key
+            run_command=None,  # 不适用于 HTTP 端点
+            install_command=None,
+            api_requirements=["httpx"],  # HTTP客户端依赖
+        )
+
+    def _deploy_http_mcp(self, tool_info: MCPToolInfo, config: TestConfig):
+        """部署 HTTP MCP 端点."""
+        rprint("[blue]🚀 正在部署 HTTP MCP 端点...[/blue]")
+
+        try:
+            from .simple_mcp_deployer import SimpleMCPDeployer
+
+            deployer = SimpleMCPDeployer()
+
+            # 从 URL 重新解析配置
+            method, http_config = deployer.detect_deployment_method(tool_info.url)
+
+            # 合并配置参数
+            http_config['timeout'] = config.timeout
+
+            # 部署 HTTP 客户端
+            client = deployer.deploy_http_mcp(http_config)
+
+            rprint("[green]✅ HTTP MCP 端点部署成功！[/green]")
+            return client
+
+        except Exception as e:
+            rprint(f"[red]❌ HTTP MCP 端点部署失败: {e}[/red]")
+            return None
+
+    def _is_http_client(self, client) -> bool:
+        """检测是否为 HTTP MCP 客户端."""
+        try:
+            from .http_mcp_client import HttpMCPClient
+            return isinstance(client, HttpMCPClient)
+        except ImportError:
+            return False
+
+    async def _run_http_tests(self, tool_info: MCPToolInfo | None, client, config: TestConfig):
+        """运行 HTTP MCP 测试."""
+        try:
+            rprint("[blue]🔗 测试 HTTP MCP 连接...[/blue]")
+
+            # 1. 获取工具列表
+            tools_result = await client.list_tools()
+            if not tools_result['success']:
+                rprint(f"[red]❌ 获取工具列表失败: {tools_result.get('error', 'Unknown error')}[/red]")
+                return False, {}
+
+            tools = tools_result.get('tools', [])
+            rprint(f"[green]✅ 找到 {len(tools)} 个工具[/green]")
+
+            # 显示工具列表
+            if tools:
+                rprint("[blue]🛠️ 可用工具:[/blue]")
+                for i, tool in enumerate(tools, 1):
+                    tool_name = tool.get('name', 'Unknown')
+                    tool_desc = tool.get('description', 'No description')[:50]
+                    rprint(f"  {i}. {tool_name} - {tool_desc}...")
+
+            # 2. 基础测试通过，运行智能测试（如果启用）
+            test_results = {
+                'connection': True,
+                'tools_found': len(tools),
+                'tools': tools
+            }
+
+            if config.smart_test and tools:
+                rprint("[blue]🤖 启用AI智能测试...[/blue]")
+                smart_results = await self._run_http_smart_tests(client, tools, config)
+                test_results['smart_tests'] = smart_results
+
+            rprint("[green]✅ HTTP MCP 测试完成！[/green]")
+            return True, test_results
+
+        except Exception as e:
+            rprint(f"[red]❌ HTTP MCP 测试失败: {e}[/red]")
+            return False, {'error': str(e)}
+
+    async def _run_http_smart_tests(self, client, tools: list, config: TestConfig):
+        """运行 HTTP 智能测试."""
+        smart_results = []
+
+        for tool in tools[:3]:  # 限制测试前3个工具
+            tool_name = tool.get('name')
+            if not tool_name:
+                continue
+
+            try:
+                rprint(f"[blue]🧪 测试工具: {tool_name}[/blue]")
+
+                # 构造测试参数
+                test_args = self._construct_test_args(tool)
+
+                # 调用工具
+                call_result = await client.call_tool(tool_name, test_args)
+
+                test_success = call_result.get('success', False)
+                smart_results.append({
+                    'tool_name': tool_name,
+                    'success': test_success,
+                    'result': call_result.get('result'),
+                    'error': call_result.get('error')
+                })
+
+                if test_success:
+                    rprint(f"[green]  ✅ {tool_name} 测试成功[/green]")
+                else:
+                    rprint(f"[red]  ❌ {tool_name} 测试失败: {call_result.get('error')}[/red]")
+
+            except Exception as e:
+                smart_results.append({
+                    'tool_name': tool_name,
+                    'success': False,
+                    'error': str(e)
+                })
+                rprint(f"[red]  ❌ {tool_name} 测试异常: {e}[/red]")
+
+        return smart_results
+
+    def _construct_test_args(self, tool: dict) -> dict:
+        """为工具构造测试参数."""
+        input_schema = tool.get('inputSchema', {})
+        properties = input_schema.get('properties', {})
+        required = input_schema.get('required', [])
+
+        args = {}
+        for prop_name, prop_info in properties.items():
+            prop_type = prop_info.get('type', 'string')
+
+            if prop_type == 'string':
+                if 'query' in prop_name.lower() or 'prompt' in prop_name.lower() or 'input' in prop_name.lower():
+                    args[prop_name] = "Hello, this is a test message"
+                elif prop_name in required:
+                    args[prop_name] = "test_value"
+            elif prop_type == 'number':
+                args[prop_name] = 42
+            elif prop_type == 'boolean':
+                args[prop_name] = True
+            elif prop_type == 'array':
+                args[prop_name] = []
+
+        # 如果没有构造出参数，使用默认参数
+        if not args:
+            return {"input": "test input from HTTP MCP test"}
+
+        return args
 
 
 # 全局处理器实例
