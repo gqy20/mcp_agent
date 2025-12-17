@@ -16,6 +16,7 @@ import json
 import time
 from datetime import UTC, datetime
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 from unittest.mock import MagicMock
 
@@ -440,7 +441,7 @@ class CLIHandler:
 
         # 检查是否为 HTTP MCP 客户端
         if self._is_http_client(server_info):
-            return self._run_http_tests(tool_info, server_info, config)
+            return asyncio.run(self._run_http_tests(tool_info, server_info, config))
 
         if config.smart_test and tool_info:
             try:
@@ -1018,7 +1019,9 @@ class CLIHandler:
             rprint("[green]✅ HTTP MCP 端点部署成功！[/green]")
 
             # 创建一个兼容的server_info对象
-            server_info = MagicMock()
+            from types import SimpleNamespace
+
+            server_info = SimpleNamespace()
             server_info.server_id = f"http-mcp-{tool_info.name}"
             server_info.client = client
             server_info.available_tools = []  # 将在测试时填充
