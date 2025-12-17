@@ -1,0 +1,33 @@
+{
+  "openai_response": {
+    "choices": [{
+      "message": {
+        "content": "Test response"
+      }
+    }]
+  },
+  "mcp_tool_list": {
+    "tools": [
+      {"name": "test_tool", "description": "A test tool"},
+      {"name": "search_tool", "description": "Search functionality"},
+      {"name": "data_processor", "description": "Data processing tool"}
+    ]
+  },
+  "github_repo_info": {
+    "name": "test-repo",
+    "stargazers_count": 100,
+    "forks_count": 50,
+    "watchers_count": 25,
+    "open_issues_count": 10,
+    "created_at": "2024-01-01T00:00:00Z",
+    "updated_at": "2025-09-14T10:00:00Z",
+    "pushed_at": "2025-09-13T15:30:00Z",
+    "language": "Python",
+    "topics": ["mcp", "testing", "tools"]
+  },
+  "error_responses": {
+    "not_found": {"error": "Repository not found", "status": 404},
+    "timeout": {"error": "Request timeout", "status": 408},
+    "invalid_request": {"error": "Invalid request format", "status": 400}
+  }
+}

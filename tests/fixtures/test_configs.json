@@ -1,0 +1,47 @@
+{
+  "valid_mcp_config": {
+    "mcpServers": {
+      "test_server": {
+        "command": "node",
+        "args": ["test-script.js", "--stdio"]
+      }
+    }
+  },
+  "invalid_mcp_config": {
+    "mcpServers": {
+      "test_server": {
+        "command": "",
+        "args": []
+      }
+    }
+  },
+  "simple_tool_info": {
+    "name": "test_tool",
+    "package": "@test/tool",
+    "description": "A test tool for evaluation",
+    "author": "Test Author",
+    "github_url": "https://github.com/test/tool",
+    "homepage": "https://test-tool.example.com",
+    "requires_api_key": false
+  },
+  "evaluation_criteria": {
+    "functionality": {"weight": 0.4, "max_score": 100},
+    "documentation": {"weight": 0.2, "max_score": 100},
+    "performance": {"weight": 0.2, "max_score": 100},
+    "usability": {"weight": 0.2, "max_score": 100}
+  },
+  "test_scenarios": {
+    "happy_path": {
+      "description": "Normal operation with valid inputs",
+      "expected_success": true
+    },
+    "error_handling": {
+      "description": "Error conditions and edge cases",
+      "expected_success": false
+    },
+    "performance_test": {
+      "description": "Load and stress testing",
+      "expected_success": true
+    }
+  }
+}
