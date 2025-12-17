@@ -16,7 +16,7 @@ from typing import Any
 import pandas as pd
 from rich.console import Console
 
-from batch_mcp.core.github_mcp_analyzer import GitHubMCPAnalyzer
+from src.batch_mcp.core.github_mcp_analyzer import GitHubMCPAnalyzer
 
 console = Console()
 
@@ -405,7 +405,7 @@ def get_mcp_parser() -> MCPDataParser:
     """获取全局MCP解析器实例."""
     global _parser_instance
     if _parser_instance is None:
-        from batch_mcp.core.config import get_mcp_csv_path
+        from src.batch_mcp.core.config import get_mcp_csv_path
 
         csv_path = get_mcp_csv_path()
         _parser_instance = MCPDataParser(str(csv_path))

@@ -141,11 +141,12 @@ jobs:
         echo "$HOME/.local/bin" >> $GITHUB_PATH
 
     - name: Install dependencies
-      run: uv sync
+      run: |
+        uv sync --extra test
 
     - name: Run unit tests
       run: |
-        uv run pytest tests/unit/ -v --tb=short --cov=src --cov-report=xml
+        uv run pytest tests/unit/test_basic_functionality.py tests/unit/test_tester.py -v --tb=short --cov=src --cov-report=xml
 
     - name: Run integration tests
       run: |

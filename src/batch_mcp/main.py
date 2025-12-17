@@ -39,8 +39,8 @@ except ImportError:
     project_root = Path(__file__).parent.parent
     sys.path.insert(0, str(project_root))
 
-from batch_mcp.core.cli_handlers import get_cli_handler
-from batch_mcp.core.tester import TestConfig
+from src.batch_mcp.core.cli_handlers import get_cli_handler
+from src.batch_mcp.core.tester import TestConfig
 
 app = typer.Typer(
     name="batch-mcp",
@@ -187,7 +187,7 @@ def analyze_github_repos(
     rprint("[bold green]🔍 开始分析GitHub项目...[/bold green]")
 
     try:
-        from batch_mcp.core.mcp_table_updater import MCPTableUpdater
+        from src.batch_mcp.core.mcp_table_updater import MCPTableUpdater
 
         # 检查输入是文件还是直接URLs
         if urls.endswith((".txt", ".csv")):
@@ -238,8 +238,8 @@ def init_environment() -> None:
     rprint("[bold green]🔧 初始化测试环境...[/bold green]")
     # 简化的环境检查
     try:
-        from batch_mcp.core.simple_mcp_deployer import get_simple_mcp_deployer
-        from batch_mcp.utils.csv_parser import get_mcp_parser
+        from src.batch_mcp.core.simple_mcp_deployer import get_simple_mcp_deployer
+        from src.batch_mcp.utils.csv_parser import get_mcp_parser
 
         parser = get_mcp_parser()
         tools = parser.get_all_tools()

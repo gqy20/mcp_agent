@@ -13,7 +13,7 @@ sys.path.append(str(Path(__file__).parent.parent))
 
 # 导入配置系统
 try:
-    from batch_mcp.core.config import get_config
+    from src.batch_mcp.core.config import get_config
 
     CONFIG_AVAILABLE = True
     config = get_config() if CONFIG_AVAILABLE else None
@@ -43,7 +43,7 @@ def validate_environment() -> bool:
 def validate_supabase_connection() -> bool | None:
     """验证Supabase连接."""
     try:
-        from batch_mcp.core.supabase_connector import SupabaseConnector
+        from src.batch_mcp.core.supabase_connector import SupabaseConnector
 
         connector = SupabaseConnector()
 
@@ -60,7 +60,7 @@ def validate_supabase_connection() -> bool | None:
 def validate_database_schema() -> bool | None:
     """验证数据库表结构."""
     try:
-        from batch_mcp.core.supabase_connector import SupabaseConnector
+        from src.batch_mcp.core.supabase_connector import SupabaseConnector
 
         connector = SupabaseConnector()
 

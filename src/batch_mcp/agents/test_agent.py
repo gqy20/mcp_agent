@@ -21,11 +21,11 @@ try:
 except ImportError:
     pass
 
-from batch_mcp.utils.csv_parser import MCPToolInfo
+from src.batch_mcp.utils.csv_parser import MCPToolInfo
 
 # 导入配置系统
 try:
-    from batch_mcp.core.config import get_config
+    from src.batch_mcp.core.config import get_config
 
     CONFIG_AVAILABLE = True
     config = get_config() if CONFIG_AVAILABLE else None

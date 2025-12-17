@@ -18,10 +18,12 @@ from pathlib import Path
 
 from rich import print as rprint
 
-from batch_mcp.core.evaluator import evaluate_full_repository_with_comprehensive_score
-from batch_mcp.core.report_generator import generate_test_report
-from batch_mcp.core.tester import TestConfig, get_mcp_tester
-from batch_mcp.utils.csv_parser import MCPToolInfo, get_mcp_parser
+from src.batch_mcp.core.evaluator import (
+    evaluate_full_repository_with_comprehensive_score,
+)
+from src.batch_mcp.core.report_generator import generate_test_report
+from src.batch_mcp.core.tester import TestConfig, get_mcp_tester
+from src.batch_mcp.utils.csv_parser import MCPToolInfo, get_mcp_parser
 
 try:
     from .config import get_config
@@ -345,7 +347,7 @@ class CLIHandler:
 
             # 使用GitHub项目分析器获取工具信息
             try:
-                from batch_mcp.core.mcp_table_updater import MCPTableUpdater
+                from src.batch_mcp.core.mcp_table_updater import MCPTableUpdater
 
                 updater = MCPTableUpdater()
 
@@ -541,7 +543,7 @@ class CLIHandler:
                 return ""
 
             # 使用CSV解析器查找工具
-            from batch_mcp.utils.csv_parser import get_mcp_parser
+            from src.batch_mcp.utils.csv_parser import get_mcp_parser
 
             parser = get_mcp_parser()
             if not parser.load_data():

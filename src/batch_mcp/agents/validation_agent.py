@@ -23,11 +23,11 @@ try:
 except ImportError:
     pass
 
-from batch_mcp.agents.test_agent import TestCase
+from src.batch_mcp.agents.test_agent import TestCase
 
 # 导入配置系统
 try:
-    from batch_mcp.core.config import get_config
+    from src.batch_mcp.core.config import get_config
 
     CONFIG_AVAILABLE = True
     config = get_config() if CONFIG_AVAILABLE else None

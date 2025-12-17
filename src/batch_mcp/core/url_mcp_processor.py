@@ -26,8 +26,8 @@ except ImportError:
 
     Console = None
 
-from batch_mcp.core.simple_mcp_deployer import get_simple_mcp_deployer
-from batch_mcp.utils.csv_parser import MCPToolInfo, get_mcp_parser
+from src.batch_mcp.core.simple_mcp_deployer import get_simple_mcp_deployer
+from src.batch_mcp.utils.csv_parser import MCPToolInfo, get_mcp_parser
 
 
 @dataclass

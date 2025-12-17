@@ -16,7 +16,7 @@ from rich.console import Console
 
 # 导入配置系统
 try:
-    from batch_mcp.core.config import get_config
+    from src.batch_mcp.core.config import get_config
 
     CONFIG_AVAILABLE = True
     config = get_config() if CONFIG_AVAILABLE else None

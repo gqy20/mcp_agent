@@ -8,7 +8,7 @@ from pathlib import Path
 # 添加src目录到路径
 sys.path.append(str(Path(__file__).parent.parent))
 
-from batch_mcp.core.supabase_connector import SupabaseConnector
+from src.batch_mcp.core.supabase_connector import SupabaseConnector
 
 
 def test_direct_db_save() -> bool | None:
