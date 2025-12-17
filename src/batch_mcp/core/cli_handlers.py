@@ -407,19 +407,28 @@ class CLIHandler:
                 rprint("[blue]🔍 正在评估HTTP MCP端点...[/blue]")
 
                 # 计算平均响应时间
+                basic_tests = test_results.get("basic_tests", [])
                 total_duration = sum(
-                    test.get("duration", 0)
-                    for test in test_results.get("test_results", [])
+                    getattr(test, "duration", 0) for test in basic_tests
                 )
-                avg_response_time = total_duration / len(
-                    test_results.get("test_results", [1])
+                avg_response_time = (
+                    total_duration / len(basic_tests) if basic_tests else 0
                 )
 
-                # 构建测试结果用于评估
+                # 将TestResult对象转换为字典用于评估
                 evaluation_test_results = {
                     "deployment_success": True,
                     "communication_success": success,
-                    "test_results": test_results.get("test_results", []),
+                    "test_results": [
+                        {
+                            "test_name": getattr(test, "test_name", ""),
+                            "success": getattr(test, "success", False),
+                            "duration": getattr(test, "duration", 0),
+                            "test_category": getattr(test, "test_category", ""),
+                            "ai_confidence": getattr(test, "ai_confidence", 0.0),
+                        }
+                        for test in basic_tests
+                    ],
                 }
 
                 # 调用HTTP MCP评估
@@ -440,17 +449,30 @@ class CLIHandler:
             if config.save_report:
                 from .report_generator import generate_test_report
 
+                # 将TestResult对象转换为列表用于报告
+                basic_tests_dict = [
+                    {
+                        "test_name": getattr(test, "test_name", ""),
+                        "success": getattr(test, "success", False),
+                        "duration": getattr(test, "duration", 0),
+                        "test_category": getattr(test, "test_category", ""),
+                        "tool_name": getattr(test, "tool_name", None),
+                        "parameters": getattr(test, "parameters", {}),
+                        "actual_response": getattr(test, "actual_response", None),
+                        "error_message": getattr(test, "error_message", None),
+                        "ai_analysis": getattr(test, "ai_analysis", ""),
+                        "ai_confidence": getattr(test, "ai_confidence", 0.0),
+                    }
+                    for test in test_results.get("basic_tests", [])
+                ]
+
                 report_files = generate_test_report(
                     url=http_config["url"],
                     tool_info=tool_info,
                     server_info=client,
                     test_success=success,
                     duration=0.0,  # 这里可以计算实际持续时间
-                    test_results=(
-                        test_results.get("test_results", [])
-                        if "test_results" in test_results
-                        else []
-                    ),
+                    test_results=basic_tests_dict,
                     evaluation_result=evaluation_result,
                 )
 
