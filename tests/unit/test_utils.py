@@ -46,5 +46,5 @@ tool2,@test/tool2,Test tool 2,Author2"""
     def test_parse_invalid_csv(self):
         """Test invalid CSV parsing."""
         parser = MCPDataParser()
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Invalid CSV format"):
             parser.parse_string("invalid,data,without,headers")

@@ -1,8 +1,13 @@
 """Unit tests for tester functionality."""
 
-from unittest.mock import patch
+from unittest.mock import mock_open, patch
 
 import pytest
+
+try:
+    from src.batch_mcp.core.tester import MCTester
+except ImportError:
+    MCTester = None
 
 
 class TestMCTester:
@@ -39,7 +44,7 @@ class TestMCTester:
             patch.object(tester, "_start_mcp_server") as mock_start,
             patch.object(tester, "_check_server_health") as mock_health,
             patch.object(tester, "_list_server_tools") as mock_tools,
-            patch.object(tester, "_stop_mcp_server") as mock_stop,
+            patch.object(tester, "_stop_mcp_server"),
         ):
             mock_start.return_value = {"pid": 1234, "port": 8080}
             mock_health.return_value = {"healthy": True, "response_time": 0.5}
@@ -236,7 +241,7 @@ class TestMCTester:
         assert "comprehensive_test" in templates
         assert "performance_test" in templates
 
-        for template_name, template_config in templates.items():
+        for template_config in templates.values():
             assert isinstance(template_config, dict)
             assert "description" in template_config
             assert "tests" in template_config

@@ -16,7 +16,7 @@ class TestTestGeneratorAgent:
 
     def test_agent_name_validation(self):
         """Test agent name validation."""
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Name cannot be empty"):
             TestGeneratorAgent(name="", config={})
 
     def test_generate_test_cases(self, sample_mcp_config):

@@ -1,41 +1,38 @@
 """Basic functionality tests that should pass."""
 
+from src.batch_mcp.core.async_mcp_client import AsyncMCPClient
+from src.batch_mcp.core.error_handler import (
+    CommunicationError,
+    DeploymentError,
+    ValidationError,
+)
+from src.batch_mcp.core.evaluator import (
+    evaluate_popularity,
+    evaluate_sustainability,
+    parse_github_url,
+)
+from src.batch_mcp.core.simple_mcp_deployer import SimpleMCPDeployer
+
 
 class TestBasicImports:
     """Test that basic imports work."""
 
     def test_import_simple_mcp_deployer(self):
         """Test importing SimpleMCPDeployer."""
-        from src.batch_mcp.core.simple_mcp_deployer import SimpleMCPDeployer
-
         assert SimpleMCPDeployer is not None
 
     def test_import_async_mcp_client(self):
         """Test importing AsyncMCPClient."""
-        from src.batch_mcp.core.async_mcp_client import AsyncMCPClient
-
         assert AsyncMCPClient is not None
 
     def test_import_evaluator(self):
         """Test importing evaluator functions."""
-        from src.batch_mcp.core.evaluator import (
-            evaluate_popularity,
-            evaluate_sustainability,
-            parse_github_url,
-        )
-
         assert parse_github_url is not None
         assert evaluate_popularity is not None
         assert evaluate_sustainability is not None
 
     def test_import_error_handler(self):
         """Test importing error handler."""
-        from src.batch_mcp.core.error_handler import (
-            CommunicationError,
-            DeploymentError,
-            ValidationError,
-        )
-
         assert CommunicationError is not None
         assert DeploymentError is not None
         assert ValidationError is not None
@@ -46,32 +43,24 @@ class TestGitHubUrlParser:
 
     def test_parse_valid_github_url(self):
         """Test parsing valid GitHub URLs."""
-        from src.batch_mcp.core.evaluator import parse_github_url
-
         owner, repo = parse_github_url("https://github.com/test/repo")
         assert owner == "test"
         assert repo == "repo"
 
     def test_parse_github_url_with_git(self):
         """Test parsing GitHub URL with .git extension."""
-        from src.batch_mcp.core.evaluator import parse_github_url
-
         owner, repo = parse_github_url("https://github.com/test/repo.git")
         assert owner == "test"
         assert repo == "repo"
 
     def test_parse_invalid_github_url(self):
         """Test parsing invalid GitHub URLs."""
-        from src.batch_mcp.core.evaluator import parse_github_url
-
         owner, repo = parse_github_url("https://example.com/test/repo")
         assert owner is None
         assert repo is None
 
     def test_parse_none_url(self):
         """Test parsing None URL."""
-        from src.batch_mcp.core.evaluator import parse_github_url
-
         owner, repo = parse_github_url(None)
         assert owner is None
         assert repo is None
@@ -82,8 +71,6 @@ class TestErrorHandling:
 
     def test_deployment_error_creation(self):
         """Test DeploymentError creation."""
-        from src.batch_mcp.core.error_handler import DeploymentError
-
         error = DeploymentError("Test deployment error", {"cmd": "test"})
         assert error.error_code == "DEPLOYMENT_ERROR"
         assert error.message == "Test deployment error"
@@ -91,16 +78,12 @@ class TestErrorHandling:
 
     def test_communication_error_creation(self):
         """Test CommunicationError creation."""
-        from src.batch_mcp.core.error_handler import CommunicationError
-
         error = CommunicationError("Test communication error")
         assert error.error_code == "COMMUNICATION_ERROR"
         assert error.message == "Test communication error"
 
     def test_validation_error_creation(self):
         """Test ValidationError creation."""
-        from src.batch_mcp.core.error_handler import ValidationError
-
         error = ValidationError("Test validation error")
         assert error.error_code == "VALIDATION_ERROR"
         assert error.message == "Test validation error"
