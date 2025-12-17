@@ -378,12 +378,14 @@ class CLIHandler:
                 tool_info, server_info, config
             )
 
+            # 获取工具列表 (用于智能测试和评估)
+            tools_result = await client.list_tools()
+            tools_list = tools_result.get("tools", [])
+            tools_count = len(tools_list)
+
             # 如果启用智能测试，运行AI测试
             if config.smart_test and success:
                 rprint("[blue]🤖 开始 AI 智能测试...[/blue]")
-                # 获取工具列表用于智能测试
-                tools_result = await client.list_tools()
-                tools_list = tools_result.get("tools", [])
 
                 smart_results = await self._run_http_smart_tests(
                     client, tools_list, config
@@ -399,6 +401,40 @@ class CLIHandler:
                 else:
                     smart_success = False
 
+            # 3.5. 评估HTTP MCP端点
+            evaluation_result = None
+            if config.evaluate:
+                rprint("[blue]🔍 正在评估HTTP MCP端点...[/blue]")
+
+                # 计算平均响应时间
+                total_duration = sum(
+                    test.get("duration", 0)
+                    for test in test_results.get("test_results", [])
+                )
+                avg_response_time = total_duration / len(
+                    test_results.get("test_results", [1])
+                )
+
+                # 构建测试结果用于评估
+                evaluation_test_results = {
+                    "deployment_success": True,
+                    "communication_success": success,
+                    "test_results": test_results.get("test_results", []),
+                }
+
+                # 调用HTTP MCP评估
+                from .evaluator import evaluate_http_mcp_endpoint
+
+                evaluation_result = evaluate_http_mcp_endpoint(
+                    test_results=evaluation_test_results,
+                    tools_count=tools_count,
+                    response_time=avg_response_time,
+                    tool_info=tool_info.__dict__ if tool_info else None,
+                )
+
+                # 显示评估结果
+                self._display_http_evaluation_result(evaluation_result)
+
             # 生成报告
             report_files = {}
             if config.save_report:
@@ -411,11 +447,11 @@ class CLIHandler:
                     test_success=success,
                     duration=0.0,  # 这里可以计算实际持续时间
                     test_results=(
-                        test_results.get("basic_tests", [])
-                        if "basic_tests" in test_results
+                        test_results.get("test_results", [])
+                        if "test_results" in test_results
                         else []
                     ),
-                    evaluation_result=None,  # HTTP端点通常不需要评估
+                    evaluation_result=evaluation_result,
                 )
 
             # 数据库导出
@@ -424,7 +460,7 @@ class CLIHandler:
                 if json_report:
                     self._export_to_database(
                         json_report,
-                        evaluation_result=None,
+                        evaluation_result=evaluation_result,
                     )
 
             return success
@@ -1422,6 +1458,122 @@ class CLIHandler:
             return {"input": "test input from HTTP MCP test"}
 
         return args
+
+    def _display_http_evaluation_result(self, evaluation_result: dict) -> None:
+        """显示HTTP MCP端点评估结果."""
+        from rich.console import Console
+        from rich.panel import Panel
+        from rich.progress import BarColumn, Progress, TextColumn
+        from rich.table import Table
+
+        console = Console()
+
+        # 显示总体评分
+        scoring_breakdown = evaluation_result.get("scoring_breakdown", {})
+        final_score = scoring_breakdown.get("final_score", 0)
+        quality_grade = evaluation_result.get("quality_grade", "N/A")
+
+        # 创建评分面板
+        score_text = "[bold green]HTTP MCP 端点评估结果[/bold green]\n\n"
+        score_text += f"🎯 综合评分: [bold cyan]{final_score}[/bold cyan]/100\n"
+        score_text += f"🏆 质量等级: [bold yellow]{quality_grade}[/bold yellow]\n\n"
+
+        score_text += "[bold]详细评分:[/bold]\n"
+        score_text += f"🔗 连通性: {scoring_breakdown.get('connectivity_score', 0)}/100 (权重30%)\n"
+        score_text += f"⚙️  功能性: {scoring_breakdown.get('functionality_score', 0)}/100 (权重40%)\n"
+        score_text += (
+            f"⚡ 性能: {scoring_breakdown.get('performance_score', 0)}/100 (权重20%)\n"
+        )
+        score_text += (
+            f"📊 工具数量: {scoring_breakdown.get('quantity_score', 0)}/100 (权重10%)"
+        )
+
+        console.print(Panel(score_text, title="🔍 评估报告", border_style="green"))
+
+        # 创建详细评分表格
+        table = Table(title="评分明细")
+        table.add_column("评估维度", style="cyan", width=15)
+        table.add_column("得分", style="green", width=10)
+        table.add_column("权重", style="yellow", width=10)
+        table.add_column("说明", style="white", width=50)
+
+        # 连通性评分
+        connectivity_score = scoring_breakdown.get("connectivity_score", 0)
+        connectivity_desc = (
+            "服务连通性和稳定性" if connectivity_score == 100 else "服务连接存在问题"
+        )
+        table.add_row("连通性", f"{connectivity_score}/100", "30%", connectivity_desc)
+
+        # 功能性评分
+        functionality_score = scoring_breakdown.get("functionality_score", 0)
+        functionality_desc = (
+            "工具功能完整性" if functionality_score >= 80 else "工具功能需要改进"
+        )
+        table.add_row("功能性", f"{functionality_score}/100", "40%", functionality_desc)
+
+        # 性能评分
+        performance_score = scoring_breakdown.get("performance_score", 0)
+        if performance_score >= 85:
+            performance_desc = "响应速度优秀"
+        elif performance_score >= 70:
+            performance_desc = "响应速度良好"
+        elif performance_score >= 50:
+            performance_desc = "响应速度一般"
+        else:
+            performance_desc = "响应速度需要优化"
+        table.add_row("性能", f"{performance_score}/100", "20%", performance_desc)
+
+        # 工具数量评分
+        quantity_score = scoring_breakdown.get("quantity_score", 0)
+        details = scoring_breakdown.get("details", {})
+        tools_count = details.get("tools_count", 0)
+        quantity_desc = f"提供{tools_count}个工具" if tools_count > 0 else "未提供工具"
+        table.add_row("工具数量", f"{quantity_score}/100", "10%", quantity_desc)
+
+        console.print(table)
+
+        # 显示改进建议
+        recommendations = evaluation_result.get("recommendations", [])
+        if recommendations:
+            console.print("\n[bold yellow]💡 改进建议:[/bold yellow]")
+            for i, rec in enumerate(recommendations, 1):
+                console.print(f"  {i}. {rec}")
+
+        # 显示详细信息
+        if details:
+            console.print("\n[bold]📈 统计信息:[/bold]")
+            console.print(
+                f"  • 功能测试数量: {details.get('functional_tests_count', 0)}"
+            )
+            console.print(
+                f"  • 功能测试成功: {details.get('functional_tests_success', 0)}"
+            )
+            console.print(
+                f"  • 平均响应时间: {details.get('response_time_seconds', 0):.2f}秒"
+            )
+
+        # 显示评分进度条
+        console.print("\n[bold]📊 综合评分构成:[/bold]")
+        with Progress(
+            TextColumn("[progress.description]{task.description}"),
+            BarColumn(),
+            TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
+        ) as progress:
+            # 连通性进度条
+            connectivity_task = progress.add_task("连通性", total=100)
+            progress.update(connectivity_task, completed=connectivity_score)
+
+            # 功能性进度条
+            functionality_task = progress.add_task("功能性", total=100)
+            progress.update(functionality_task, completed=functionality_score)
+
+            # 性能进度条
+            performance_task = progress.add_task("性能", total=100)
+            progress.update(performance_task, completed=performance_score)
+
+            # 工具数量进度条
+            quantity_task = progress.add_task("工具数量", total=100)
+            progress.update(quantity_task, completed=quantity_score)
 
 
 # 全局处理器实例
