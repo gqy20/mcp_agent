@@ -401,7 +401,7 @@ class CLIHandler:
 
             # 数据库导出
             if config.db_export and success:
-                self._export_test_results_to_database(
+                self._export_to_database(
                     http_config["url"], test_results, "http_mcp", config
                 )
 
