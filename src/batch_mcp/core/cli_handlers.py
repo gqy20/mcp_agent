@@ -390,7 +390,25 @@ class CLIHandler:
                 smart_results = await self._run_http_smart_tests(
                     client, tools_list, config
                 )
-                test_results["smart_tests"] = smart_results
+
+                # 将智能测试结果转换为TestResult对象并添加到basic_tests中
+                from .report_generator import TestResult
+
+                for smart_result in smart_results:
+                    smart_test_result = TestResult(
+                        test_name=f"AI智能测试: {smart_result.get('tool_name', 'unknown')}",
+                        success=smart_result.get("success", False),
+                        duration=0.0,  # 智能测试暂不计算耗时
+                        test_category="AI智能测试",
+                        parameters={"smart_test": True},
+                        tool_name=smart_result.get("tool_name"),
+                        actual_response=smart_result.get("result"),
+                        error_message=smart_result.get("error"),
+                        ai_analysis=f"AI智能测试 {smart_result.get('tool_name', 'unknown')} {'成功' if smart_result.get('success') else '失败'}",
+                        ai_confidence=0.8 if smart_result.get("success") else 0.2,
+                    )
+                    # 将智能测试结果添加到basic_tests中
+                    test_results["basic_tests"].append(smart_test_result)
 
                 # 计算智能测试成功率
                 if smart_results:
@@ -449,22 +467,8 @@ class CLIHandler:
             if config.save_report:
                 from .report_generator import generate_test_report
 
-                # 将TestResult对象转换为列表用于报告
-                basic_tests_dict = [
-                    {
-                        "test_name": getattr(test, "test_name", ""),
-                        "success": getattr(test, "success", False),
-                        "duration": getattr(test, "duration", 0),
-                        "test_category": getattr(test, "test_category", ""),
-                        "tool_name": getattr(test, "tool_name", None),
-                        "parameters": getattr(test, "parameters", {}),
-                        "actual_response": getattr(test, "actual_response", None),
-                        "error_message": getattr(test, "error_message", None),
-                        "ai_analysis": getattr(test, "ai_analysis", ""),
-                        "ai_confidence": getattr(test, "ai_confidence", 0.0),
-                    }
-                    for test in test_results.get("basic_tests", [])
-                ]
+                # 直接传递TestResult对象列表，保持数据格式统一
+                basic_tests_list = test_results.get("basic_tests", [])
 
                 report_files = generate_test_report(
                     url=http_config["url"],
@@ -472,7 +476,7 @@ class CLIHandler:
                     server_info=client,
                     test_success=success,
                     duration=0.0,  # 这里可以计算实际持续时间
-                    test_results=basic_tests_dict,
+                    test_results=basic_tests_list,
                     evaluation_result=evaluation_result,
                 )
 

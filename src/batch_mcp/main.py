@@ -39,8 +39,8 @@ except ImportError:
     project_root = Path(__file__).parent.parent
     sys.path.insert(0, str(project_root))
 
-from src.batch_mcp.core.cli_handlers import get_cli_handler
-from src.batch_mcp.core.tester import TestConfig
+from .core.cli_handlers import get_cli_handler
+from .core.tester import TestConfig
 
 app = typer.Typer(
     name="batch-mcp",
