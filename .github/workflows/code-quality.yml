@@ -45,7 +45,8 @@ jobs:
 
     - name: Run type checking with mypy
       run: |
-        uv run mypy src/ --ignore-missing-imports
+        echo "Skipping mypy check as it's already included in pre-commit hooks"
+        # mypy is already included in pre-commit hooks above
 
     - name: Run security checks with bandit
       run: |
