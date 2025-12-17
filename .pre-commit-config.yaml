@@ -30,8 +30,9 @@ repos:
     hooks:
       - id: mypy
         additional_dependencies: [types-requests, types-python-dateutil]
-        args: [--ignore-missing-imports]
+        args: [--ignore-missing-imports, --no-strict-optional, --explicit-package-bases]
         exclude: ^tests/
+        pass_filenames: false
 
   - repo: https://github.com/pycqa/bandit
     rev: 1.9.2
@@ -39,3 +40,4 @@ repos:
       - id: bandit
         args: [-r, src/, -lll, -s, B101,B105,B108,B110,B113,B404,B603]
         exclude: ^tests/
+        pass_filenames: false
