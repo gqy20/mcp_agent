@@ -1,0 +1,339 @@
+name: 🌐 HTTP MCP Endpoint Testing
+
+on:
+  workflow_dispatch:
+    inputs:
+      http_url:
+        description: '🌐 HTTP MCP端点URL'
+        required: true
+        default: 'http://ai.sitianai.com/api/proxy/mcp?api_key=d4v8kgl26lc8ggculk9g'
+      auth_token:
+        description: '🔑 API认证Token (可选)'
+        required: false
+        type: string
+      timeout:
+        description: '⏱️ 超时时间（秒）'
+        required: false
+        type: string
+        default: '300'
+      enable_smart_testing:
+        description: '🧠 启用AI智能测试'
+        required: false
+        type: boolean
+        default: true
+      enable_evaluation:
+        description: '📊 启用代码评估'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  test-http-mcp:
+    runs-on: ubuntu-latest
+
+    env:
+      # AI模型配置
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      OPENAI_BASE_URL: ${{ secrets.OPENAI_BASE_URL }}
+      OPENAI_MODEL: ${{ secrets.OPENAI_MODEL }}
+      DASHSCOPE_API_KEY: ${{ secrets.DASHSCOPE_API_KEY }}
+      DASHSCOPE_BASE_URL: ${{ secrets.DASHSCOPE_BASE_URL }}
+      DASHSCOPE_MODEL: ${{ secrets.DASHSCOPE_MODEL }}
+
+      # Supabase数据库配置
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+
+    - name: Install UV
+      run: |
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+    - name: Verify runtime environments
+      run: |
+        echo "🔍 验证运行时环境..."
+
+        # 使用专门的验证脚本
+        uv run python scripts/verify_action_runtime.py
+
+        if [ $? -eq 0 ]; then
+          echo "✅ 运行时环境验证通过"
+        else
+          echo "❌ 运行时环境验证失败"
+          exit 1
+        fi
+
+    - name: Install dependencies
+      run: uv sync
+
+    - name: 🌐 HTTP MCP端点测试
+      id: test_http_mcp
+      run: |
+        HTTP_URL="${{ github.event.inputs.http_url }}"
+        AUTH_TOKEN="${{ github.event.inputs.auth_token }}"
+        TIMEOUT="${{ github.event.inputs.timeout }}"
+        ENABLE_SMART="${{ github.event.inputs.enable_smart_testing }}"
+        ENABLE_EVAL="${{ github.event.inputs.enable_evaluation }}"
+
+        echo "🌐 开始HTTP MCP端点测试"
+        echo "📍 测试URL: $HTTP_URL"
+        echo "⏱️ 超时时间: ${TIMEOUT}秒"
+        echo "🧠 智能测试: $ENABLE_SMART"
+        echo "📊 代码评估: $ENABLE_EVAL"
+
+        # 构建测试命令
+        TEST_CMD="uv run python -m src.batch_mcp.main test-http"
+        TEST_ARGS="$HTTP_URL --timeout $TIMEOUT --verbose"
+
+        # 添加认证token
+        if [ -n "$AUTH_TOKEN" ]; then
+          TEST_ARGS="$TEST_ARGS --auth-token \"$AUTH_TOKEN\""
+        fi
+
+        # 添加智能测试配置
+        if [ "$ENABLE_SMART" = "true" ]; then
+          echo "✅ AI智能测试已启用"
+          # 检查AI配置
+          if [ -n "$OPENAI_API_KEY" ] || [ -n "$DASHSCOPE_API_KEY" ]; then
+            echo "✅ AI配置已检测到"
+          else
+            echo "⚠️ 未检测到AI配置，智能测试可能失败"
+          fi
+        else
+          TEST_ARGS="$TEST_ARGS --no-smart"
+          echo "⚠️ AI智能测试已禁用"
+        fi
+
+        # 添加评估配置
+        if [ "$ENABLE_EVAL" = "true" ]; then
+          TEST_ARGS="$TEST_ARGS --evaluate"
+          echo "✅ 代码评估已启用"
+        fi
+
+        # 添加数据库配置
+        if [ -n "$SUPABASE_URL" ] && [ -n "$SUPABASE_SERVICE_ROLE_KEY" ]; then
+          echo "✅ Supabase数据库配置已检测到"
+          DATABASE_ENABLED="true"
+        else
+          TEST_ARGS="$TEST_ARGS --no-db-export"
+          echo "⚠️ 未检测到Supabase配置，禁用数据库导出"
+          DATABASE_ENABLED="false"
+        fi
+
+        echo "🚀 执行命令: $TEST_CMD $TEST_ARGS"
+
+        # 执行HTTP MCP测试
+        if eval "$TEST_CMD $TEST_ARGS --save-report"; then
+          echo "✅ HTTP MCP测试成功完成"
+          TEST_STATUS="success"
+        else
+          echo "❌ HTTP MCP测试失败，但继续处理结果"
+          TEST_STATUS="failed"
+        fi
+
+        # 检查报告生成
+        REPORT_DIR="data/test_results"
+        if [ -d "$REPORT_DIR" ]; then
+          LATEST_JSON=$(ls -t "$REPORT_DIR"/*.json 2>/dev/null | head -1)
+          LATEST_HTML=$(ls -t "$REPORT_DIR"/*.html 2>/dev/null | head -1)
+          LATEST_PDF=$(ls -t "$REPORT_DIR"/*.pdf 2>/dev/null | head -1)
+
+          if [ -n "$LATEST_JSON" ]; then
+            echo "json_report=$LATEST_JSON" >> $GITHUB_OUTPUT
+            echo "✅ JSON报告: $LATEST_JSON"
+          fi
+
+          if [ -n "$LATEST_HTML" ]; then
+            echo "html_report=$LATEST_HTML" >> $GITHUB_OUTPUT
+            echo "✅ HTML报告: $LATEST_HTML"
+          fi
+
+          if [ -n "$LATEST_PDF" ]; then
+            echo "pdf_report=$LATEST_PDF" >> $GITHUB_OUTPUT
+            echo "✅ PDF报告: $LATEST_PDF"
+          fi
+        fi
+
+        # 输出状态
+        echo "test_status=$TEST_STATUS" >> $GITHUB_OUTPUT
+        echo "database_enabled=$DATABASE_ENABLED" >> $GITHUB_OUTPUT
+
+    - name: 📊 Database Storage Verification
+      if: always() && steps.test_http_mcp.outputs.database_enabled == 'true'
+      id: verify_database
+      run: |
+        echo "🔍 验证数据库存储结果..."
+
+        # 使用Python脚本验证数据库存储
+        cat > verify_db_storage.py << 'EOF'
+        #!/usr/bin/env python3
+        import sys
+        import os
+        from datetime import datetime, timedelta
+        import json
+
+        try:
+            from supabase import create_client
+
+            # 检查环境变量
+            supabase_url = os.getenv('SUPABASE_URL')
+            supabase_key = os.getenv('SUPABASE_SERVICE_ROLE_KEY')
+
+            if not supabase_url or not supabase_key:
+                print("❌ 数据库配置不完整")
+                sys.exit(1)
+
+            # 创建Supabase客户端
+            client = create_client(supabase_url, supabase_key)
+            print("✅ Supabase客户端初始化成功")
+
+            # 获取最近10分钟的HTTP MCP测试记录
+            recent_cutoff = datetime.now() - timedelta(minutes=10)
+
+            # 查询mcp_test_results表，查找HTTP类型的测试
+            result = client.table('mcp_test_results')\
+                .select('test_id, test_timestamp, tool_identifier, tool_name, test_success, deployment_success, communication_success, available_tools_count, test_duration_seconds')\
+                .gte('test_timestamp', recent_cutoff.isoformat())\
+                .order('test_timestamp', desc=True)\
+                .execute()
+
+            recent_tests = result.data
+            total_recent = len(recent_tests)
+
+            if total_recent > 0:
+                success_count = sum(1 for test in recent_tests if test.get('test_success', False))
+                success_rate = (success_count / total_recent) * 100
+
+                # 统计工具信息
+                tools_found = set()
+                total_tools_available = 0
+                avg_duration = 0
+
+                for test in recent_tests:
+                    if test.get('tool_name'):
+                        tools_found.add(test['tool_name'])
+                    if test.get('available_tools_count'):
+                        total_tools_available += test['available_tools_count']
+                    if test.get('test_duration_seconds'):
+                        avg_duration += test['test_duration_seconds']
+
+                if total_recent > 0:
+                    avg_duration = avg_duration / total_recent
+
+                stats = {
+                    'total_recent_tests': total_recent,
+                    'successful_tests': success_count,
+                    'failed_tests': total_recent - success_count,
+                    'success_rate': round(success_rate, 2),
+                    'unique_tools_found': len(tools_found),
+                    'total_tools_available': total_tools_available,
+                    'average_duration_seconds': round(avg_duration, 2),
+                    'recent_tools': list(tools_found)[:5],
+                    'test_type': 'HTTP MCP'
+                }
+
+                print(f"📊 最近10分钟HTTP MCP测试记录: {total_recent} 条")
+                print(f"📈 总体成功率: {success_count}/{total_recent} ({success_rate:.1f}%)")
+                print(f"🔧 发现工具数量: {len(tools_found)} 个")
+                print(f"⏱️ 平均测试时长: {avg_duration:.1f}秒")
+
+                # 保存统计信息
+                with open('http_mcp_db_stats.json', 'w', encoding='utf-8') as f:
+                    json.dump(stats, f, ensure_ascii=False, indent=2)
+
+                print("✅ HTTP MCP数据库验证成功")
+            else:
+                print("⚠️ 未检测到最近的HTTP MCP测试记录")
+                stats = {
+                    'total_recent_tests': 0,
+                    'message': 'No recent HTTP MCP tests found',
+                    'test_type': 'HTTP MCP'
+                }
+
+                with open('http_mcp_db_stats.json', 'w', encoding='utf-8') as f:
+                    json.dump(stats, f, ensure_ascii=False, indent=2)
+
+        except Exception as e:
+            print(f"❌ 数据库操作失败: {e}")
+            sys.exit(1)
+        EOF
+
+        if uv run python verify_db_storage.py; then
+          echo "database_stats_available=true" >> $GITHUB_OUTPUT
+          echo "✅ HTTP MCP数据库统计信息已生成"
+        else
+          echo "database_verification_failed=true" >> $GITHUB_OUTPUT
+          echo "⚠️ HTTP MCP数据库验证失败"
+        fi
+
+    - name: Upload Test Reports
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: http-mcp-test-reports
+        path: |
+          data/test_results/
+          http_mcp_db_stats.json
+        retention-days: 30
+
+    - name: Create Summary
+      if: always()
+      run: |
+        echo "# 🌐 HTTP MCP端点测试结果" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**测试URL:** \`${{ github.event.inputs.http_url }}\`" >> $GITHUB_STEP_SUMMARY
+        echo "**测试状态:** ${{ steps.test_http_mcp.outputs.test_status || '未知' }}" >> $GITHUB_STEP_SUMMARY
+        echo "**智能测试:** ${{ github.event.inputs.enable_smart_testing == 'true' && '✅ 已启用' || '⚠️ 已禁用' }}" >> $GITHUB_STEP_SUMMARY
+        echo "**代码评估:** ${{ github.event.inputs.enable_evaluation == 'true' && '✅ 已启用' || '⚠️ 已禁用' }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+
+        # 数据库存储状态
+        if [ "${{ steps.test_http_mcp.outputs.database_enabled }}" = "true" ]; then
+          echo "**数据库存储:** ✅ 已启用" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ steps.verify_database.outputs.database_stats_available }}" = "true" ]; then
+            echo "**数据库验证:** ✅ 成功" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ steps.verify_database.outputs.database_verification_failed }}" = "true" ]; then
+            echo "**数据库验证:** ❌ 失败" >> $GITHUB_STEP_SUMMARY
+          fi
+        else
+          echo "**数据库存储:** ⚠️ 未启用" >> $GITHUB_STEP_SUMMARY
+        fi
+
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "## 📄 测试报告" >> $GITHUB_STEP_SUMMARY
+
+        if [ -n "${{ steps.test_http_mcp.outputs.json_report }}" ]; then
+          echo "- JSON报告: \`${{ steps.test_http_mcp.outputs.json_report }}\`" >> $GITHUB_STEP_SUMMARY
+
+          if [ -n "${{ steps.test_http_mcp.outputs.html_report }}" ]; then
+            echo "- HTML报告: \`${{ steps.test_http_mcp.outputs.html_report }}\`" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [ -n "${{ steps.test_http_mcp.outputs.pdf_report }}" ]; then
+            echo "- PDF报告: \`${{ steps.test_http_mcp.outputs.pdf_report }}\`" >> $GITHUB_STEP_SUMMARY
+          fi
+        else
+          echo "⚠️ 未生成测试报告，请查看Actions日志了解详情。" >> $GITHUB_STEP_SUMMARY
+        fi
+
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "## 📊 测试配置" >> $GITHUB_STEP_SUMMARY
+        echo "- **超时时间:** ${{ github.event.inputs.timeout }}秒" >> $GITHUB_STEP_SUMMARY
+        echo "- **认证Token:** ${{ github.event.inputs.auth_token && '已配置' || '未配置' }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "📦 完整HTTP MCP测试数据已作为构建产物保存，可在Actions页面下载。" >> $GITHUB_STEP_SUMMARY
