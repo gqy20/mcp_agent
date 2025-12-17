@@ -1179,7 +1179,7 @@ class CLIHandler:
     async def _run_http_tests(
         self, _tool_info: MCPToolInfo | None, server_info: Any, config: TestConfig
     ) -> tuple[bool, dict[str, Any]]:
-        """运行 HTTP MCP 测试."""
+        """运行 HTTP MCP 测试 - 与STDIO测试保持一致."""
         try:
             rprint("[blue]🔗 测试 HTTP MCP 连接...[/blue]")
 
@@ -1188,7 +1188,7 @@ class CLIHandler:
                 server_info.client if hasattr(server_info, "client") else server_info
             )
 
-            # 1. 获取工具列表
+            # 1. 获取工具列表 - 类似STDIO的_test_mcp_communication
             tools_result = await client.list_tools()
             if not tools_result["success"]:
                 rprint(
@@ -1211,57 +1211,140 @@ class CLIHandler:
                     tool_desc = tool.get("description", "No description")[:50]
                     rprint(f"  {i}. {tool_name} - {tool_desc}...")
 
-            # 2. 基础测试结果 - 创建TestResult对象
+            # 2. 创建真正的测试结果，复用TestResult结构
+            import time
+
             from .report_generator import TestResult
 
-            basic_tests = []
+            test_results = []
 
-            # 为每个工具创建基础测试结果
-            for tool in tools:
-                basic_tests.append(
-                    TestResult(
-                        test_name=f"tool_list_{tool.get('name', 'unknown')}",
-                        success=True,
-                        duration=0.0,
-                        tool_name=tool.get("name"),
-                        test_category="基础功能",
-                        parameters={},
-                        actual_response={"success": True, "tool": tool},
-                        ai_analysis=f"工具 {tool.get('name')} 已成功发现并可访问",
-                        ai_confidence=1.0,
-                    )
-                )
-
-            # 添加连接测试结果
-            basic_tests.append(
+            # 添加MCP协议通信测试结果
+            test_results.append(
                 TestResult(
-                    test_name="http_connection_test",
+                    test_name="MCP协议通信测试",
                     success=True,
                     duration=0.0,
+                    test_category="通信测试",
+                    parameters={"method": "tools/list"},
                     tool_name=None,
-                    test_category="连接测试",
-                    parameters={
-                        "url": str(client.url) if hasattr(client, "url") else "unknown"
-                    },
-                    actual_response={"success": True, "tools_count": len(tools)},
-                    ai_analysis=f"HTTP MCP连接成功，发现{len(tools)}个工具",
+                    ai_analysis=f"HTTP MCP通信成功，发现{len(tools)}个工具",
                     ai_confidence=1.0,
                 )
             )
 
-            test_results = {
-                "basic_tests": basic_tests,
+            # 3. 工具调用测试 - 类似STDIO的_test_first_tool
+            if tools:
+                first_tool = tools[0]
+                tool_name = first_tool.get("name", "unknown")
+
+                rprint(f"[blue]🧪 测试工具调用: {tool_name}[/blue]")
+
+                start_time = time.time()
+
+                # 复用STDIO的参数生成逻辑
+                arguments = self._generate_test_arguments(first_tool)
+
+                # 使用HTTP客户端的call_tool方法
+                call_result = await client.call_tool(tool_name, arguments)
+                duration = time.time() - start_time
+
+                tool_test_success = call_result.get("success", False)
+
+                test_results.append(
+                    TestResult(
+                        test_name=f"工具调用测试: {tool_name}",
+                        success=tool_test_success,
+                        duration=duration,
+                        test_category="功能测试",
+                        parameters=arguments,
+                        tool_name=tool_name,
+                        actual_response=call_result,
+                        error_message=call_result.get("error")
+                        if not tool_test_success
+                        else None,
+                        ai_analysis=f"工具 {tool_name} {'调用成功' if tool_test_success else '调用失败'}",
+                        ai_confidence=0.9 if tool_test_success else 0.1,
+                    )
+                )
+
+                if tool_test_success:
+                    rprint(f"[green]✅ 工具 {tool_name} 调用成功[/green]")
+                else:
+                    rprint(
+                        f"[yellow]⚠️ 工具 {tool_name} 调用失败: {call_result.get('error', 'Unknown error')}[/yellow]"
+                    )
+
+            rprint("[green]✅ HTTP MCP 基础测试完成！[/green]")
+
+            # 返回与STDIO格式一致的结果
+            return True, {
+                "basic_tests": test_results,
                 "connection": True,
                 "tools_found": len(tools),
                 "tools": tools,
             }
 
-            rprint("[green]✅ HTTP MCP 基础测试完成！[/green]")
-            return True, test_results
-
         except Exception as e:
             rprint(f"[red]❌ HTTP MCP 测试失败: {e}[/red]")
             return False, {"error": str(e)}
+
+    def _generate_test_arguments(self, tool_info: dict) -> dict:
+        """为工具生成基本测试参数 - 复用STDIO的参数生成逻辑."""
+        tool_name = tool_info.get("name", "")
+        input_schema = tool_info.get("inputSchema", {})
+        properties = input_schema.get("properties", {})
+        required = input_schema.get("required", [])
+
+        arguments = {}
+
+        # 特殊工具的精确参数
+        if tool_name == "resolve-library-id":
+            arguments = {"libraryName": "react"}
+        elif tool_name == "get-library-docs":
+            arguments = {"context7CompatibleLibraryID": "/facebook/react"}
+        elif "topic" in tool_name.lower() and "research" in tool_name.lower():
+            # 针对研究主题助手工具的特殊处理 - 放在前面避免被query匹配
+            arguments = {
+                "Query": "请帮我分析人工智能在医疗领域的应用前景，包括当前的技术发展状况、潜在的挑战和未来的机遇。"
+            }
+        elif "library" in tool_name.lower():
+            arguments = {"library": "react"}
+        elif "query" in tool_name.lower():
+            arguments = {"query": "test"}
+        elif "search" in tool_name.lower():
+            arguments = {"query": "example"}
+        elif "file" in tool_name.lower():
+            arguments = {"path": "/tmp/test.txt"}
+        else:
+            # 根据schema和required字段生成参数
+            for prop_name in required:
+                prop_info = properties.get(prop_name, {})
+                prop_type = prop_info.get("type", "string")
+
+                if prop_type == "string":
+                    # 基于属性名称的启发式
+                    if "name" in prop_name.lower():
+                        arguments[prop_name] = "test"
+                    elif "id" in prop_name.lower():
+                        arguments[prop_name] = "/test/example"
+                    elif "query" in prop_name.lower():
+                        arguments[prop_name] = "example query"
+                    elif "path" in prop_name.lower():
+                        arguments[prop_name] = "/tmp/test"
+                    elif "topic" in prop_name.lower():
+                        arguments[prop_name] = "test topic"
+                    elif "prompt" in prop_name.lower():
+                        arguments[prop_name] = "test prompt"
+                    else:
+                        arguments[prop_name] = "test_value"
+                elif prop_type == "number":
+                    arguments[prop_name] = 1
+                elif prop_type == "boolean":
+                    arguments[prop_name] = True
+                elif prop_type == "array":
+                    arguments[prop_name] = []
+
+        return arguments
 
     async def _run_http_smart_tests(
         self, client: Any, tools: list[dict[str, Any]], _config: TestConfig
