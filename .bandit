@@ -1,3 +1,0 @@
-[bandit]
-exclude_dirs = tests
-skips = S106, S108
