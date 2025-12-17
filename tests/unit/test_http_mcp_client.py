@@ -17,10 +17,10 @@ from src.batch_mcp.core.http_mcp_client import HttpMCPClient
 
 
 class TestHttpMCPClient:
-    """HTTP MCP 客户端测试类"""
+    """HTTP MCP 客户端测试类."""
 
     def test_init_with_required_params(self):
-        """测试：必需参数初始化"""
+        """测试：必需参数初始化."""
         # 这个测试会失败，因为 HttpMCPClient 还不存在
         client = HttpMCPClient(url="https://api.example.com/mcp")
 
@@ -29,7 +29,7 @@ class TestHttpMCPClient:
         assert client.timeout == 30
 
     def test_init_with_all_params(self):
-        """测试：完整参数初始化"""
+        """测试：完整参数初始化."""
         headers = {"Authorization": "Bearer token123"}
         client = HttpMCPClient(
             url="https://api.example.com/mcp", headers=headers, timeout=60
@@ -41,7 +41,7 @@ class TestHttpMCPClient:
 
     @pytest.mark.asyncio
     async def test_list_tools_success(self):
-        """测试：成功获取工具列表"""
+        """测试：成功获取工具列表."""
         # 模拟 HTTP 响应
         mock_init_response = AsyncMock()
         mock_init_response.status_code = 200
@@ -84,7 +84,7 @@ class TestHttpMCPClient:
 
     @pytest.mark.asyncio
     async def test_list_tools_http_error(self):
-        """测试：获取工具列表时 HTTP 错误"""
+        """测试：获取工具列表时 HTTP 错误."""
         with patch("httpx.AsyncClient") as mock_client:
             mock_client_instance = AsyncMock()
             mock_client.return_value.__aenter__.return_value = mock_client_instance
@@ -97,7 +97,7 @@ class TestHttpMCPClient:
 
     @pytest.mark.asyncio
     async def test_call_tool_success(self):
-        """测试：成功调用工具"""
+        """测试：成功调用工具."""
         mock_response = AsyncMock()
         mock_response.status_code = 200
         mock_response.raise_for_status = AsyncMock()
@@ -120,7 +120,7 @@ class TestHttpMCPClient:
 
     @pytest.mark.asyncio
     async def test_call_tool_with_error_response(self):
-        """测试：调用工具收到错误响应"""
+        """测试：调用工具收到错误响应."""
         mock_response = AsyncMock()
         mock_response.status_code = 200
         mock_response.raise_for_status = AsyncMock()
@@ -140,7 +140,7 @@ class TestHttpMCPClient:
             assert result["error"]["message"] == "Tool not found"
 
     def test_headers_are_sent_correctly(self):
-        """测试：请求头正确发送"""
+        """测试：请求头正确发送."""
         headers = {"Authorization": "Bearer token123", "X-Custom": "value"}
         client = HttpMCPClient(url="https://api.example.com/mcp", headers=headers)
 

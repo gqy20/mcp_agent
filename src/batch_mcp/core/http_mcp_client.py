@@ -1,7 +1,6 @@
-#!/usr/bin/env python3
 """HTTP MCP 客户端实现.
 
-基于 TDD 原则实现，让单元测试通过。
+基于 TDD 原则实现，让单元测试通过.
 
 作者: AI Assistant
 日期: 2025-12-17
@@ -15,16 +14,18 @@ import httpx
 
 
 class HttpMCPClient:
-    """简化的 HTTP MCP 客户端 - 无状态，每次调用新建连接"""
+    """简化的 HTTP MCP 客户端 - 无状态，每次调用新建连接."""
 
-    def __init__(self, url: str, headers: dict[str, str] = None, timeout: float = 30):
-        """初始化 HTTP MCP 客户端"""
+    def __init__(
+        self, url: str, headers: dict[str, str] | None = None, timeout: float = 30
+    ) -> None:
+        """初始化 HTTP MCP 客户端."""
         self.url = url
         self.headers = headers or {}
         self.timeout = timeout
 
     async def list_tools(self) -> dict[str, Any]:
-        """获取工具列表"""
+        """获取工具列表."""
         async with httpx.AsyncClient(timeout=self.timeout) as client:
             # MCP 标准初始化请求
             init_request = {
@@ -64,9 +65,9 @@ class HttpMCPClient:
             }
 
     async def call_tool(
-        self, name: str, arguments: dict[str, Any] = None
+        self, name: str, arguments: dict[str, Any] | None = None
     ) -> dict[str, Any]:
-        """调用工具"""
+        """调用工具."""
         async with httpx.AsyncClient(timeout=self.timeout) as client:
             call_request = {
                 "jsonrpc": "2.0",
