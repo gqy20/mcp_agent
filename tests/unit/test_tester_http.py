@@ -256,9 +256,9 @@ class TestMCPTesterHTTPSupport:
 
             # 验证包含预期的键
             for key in test_case["expected_keys"]:
-                assert key in args, (
-                    f"Test case {i}: Expected key '{key}' not found in args"
-                )
+                assert (
+                    key in args
+                ), f"Test case {i}: Expected key '{key}' not found in args"
 
             # 验证参数不为空
             assert args, f"Test case {i}: Args should not be empty"

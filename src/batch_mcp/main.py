@@ -271,7 +271,7 @@ def test_http_endpoint(
 ) -> None:
     """测试 HTTP MCP 端点."""
     # URL验证
-    if not (url.startswith("http://") or url.startswith("https://")):
+    if not (url.startswith(("http://", "https://"))):
         rprint("[red]❌ URL 必须以 http:// 或 https:// 开头[/red]")
         raise typer.Exit(1)
 
@@ -290,7 +290,7 @@ def test_http_endpoint(
     success = handler.test_http_endpoint(url, config, auth_token)
 
     if success:
-        rprint(f"\n[bold green]🎉 HTTP MCP 端点测试完成！[/bold green]")
+        rprint("\n[bold green]🎉 HTTP MCP 端点测试完成！[/bold green]")
     else:
         raise typer.Exit(1)
 

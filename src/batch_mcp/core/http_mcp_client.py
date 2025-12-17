@@ -28,7 +28,7 @@ class HttpMCPClient:
         self.headers = {
             "Content-Type": "application/json",
             "Accept": "application/json, text/event-stream",  # 支持流式HTTP MCP
-            "User-Agent": "batch-mcp-testing-framework/1.0"
+            "User-Agent": "batch-mcp-testing-framework/1.0",
         }
 
         # 合并用户提供的头

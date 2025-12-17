@@ -313,7 +313,9 @@ class CLIHandler:
             rprint(f"[red]❌ 测试过程发生错误: {e}[/red]")
             return False
 
-    def test_http_endpoint(self, url: str, config: TestConfig, auth_token: str | None = None) -> bool:
+    def test_http_endpoint(
+        self, url: str, config: TestConfig, auth_token: str | None = None
+    ) -> bool:
         """测试 HTTP MCP 端点."""
         try:
             rprint(f"[blue]🔗 准备测试 HTTP MCP 端点: {url}[/blue]")
@@ -339,14 +341,15 @@ class CLIHandler:
                 rprint("[blue]🔐 已配置认证令牌[/blue]")
 
             # 运行测试
-            success = asyncio.run(self._run_http_tests_direct(tool_info, http_config, config))
-
-            return success
+            return asyncio.run(
+                self._run_http_tests_direct(tool_info, http_config, config)
+            )
 
         except Exception as e:
             rprint(f"[red]❌ HTTP MCP 测试失败: {e}[/red]")
             if config.verbose:
                 import traceback
+
                 rprint(f"[red]{traceback.format_exc()}[/red]")
             return False
 
@@ -354,7 +357,7 @@ class CLIHandler:
         self,
         tool_info: MCPToolInfo | None,
         http_config: dict[str, Any],
-        config: TestConfig
+        config: TestConfig,
     ) -> bool:
         """运行 HTTP MCP 测试的专用方法."""
         try:
@@ -364,14 +367,16 @@ class CLIHandler:
             client = HttpMCPClient(
                 url=http_config["url"],
                 headers=http_config["headers"],
-                timeout=http_config["timeout"]
+                timeout=http_config["timeout"],
             )
 
             # 创建server_info对象来包装client
-            server_info = type('ServerInfo', (), {'client': client})()
+            server_info = type("ServerInfo", (), {"client": client})()
 
             # 运行基础测试
-            success, test_results = await self._run_http_tests(tool_info, server_info, config)
+            success, test_results = await self._run_http_tests(
+                tool_info, server_info, config
+            )
 
             # 如果启用智能测试，运行AI测试
             if config.smart_test and success:
@@ -387,7 +392,9 @@ class CLIHandler:
 
                 # 计算智能测试成功率
                 if smart_results:
-                    smart_success = all(result.get("success", False) for result in smart_results)
+                    smart_success = all(
+                        result.get("success", False) for result in smart_results
+                    )
                     success = success and smart_success
                 else:
                     smart_success = False
@@ -401,13 +408,18 @@ class CLIHandler:
             # 生成报告
             if config.save_report:
                 from .report_generator import generate_test_report
+
                 generate_test_report(
                     url=http_config["url"],
                     tool_info=tool_info,
                     server_info=client,
                     test_success=success,
                     duration=0.0,  # 这里可以计算实际持续时间
-                    test_results=test_results.get("basic_tests", []) if "basic_tests" in test_results else [],
+                    test_results=(
+                        test_results.get("basic_tests", [])
+                        if "basic_tests" in test_results
+                        else []
+                    ),
                     evaluation_result=None,  # HTTP端点通常不需要评估
                 )
 
@@ -417,6 +429,7 @@ class CLIHandler:
             rprint(f"[red]❌ HTTP 测试执行失败: {e}[/red]")
             if config.verbose:
                 import traceback
+
                 rprint(f"[red]{traceback.format_exc()}[/red]")
             return False
 
