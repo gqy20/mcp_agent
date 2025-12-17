@@ -17,6 +17,7 @@ import time
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
+from unittest.mock import MagicMock
 
 from rich import print as rprint
 
@@ -392,7 +393,7 @@ class CLIHandler:
     def _deploy_tool(self, tool_info: MCPToolInfo, config: TestConfig):
         """部署工具 - 单一职责."""
         # 检查是否为 HTTP MCP 端点
-        if getattr(tool_info, "transport", None) == "http":
+        if getattr(tool_info, "deployment_method", None) == "http":
             return self._deploy_http_mcp(tool_info, config)
 
         # 尝试从run_command中提取包名（如果package_name为空）
@@ -1015,27 +1016,46 @@ class CLIHandler:
             client = deployer.deploy_http_mcp(http_config)
 
             rprint("[green]✅ HTTP MCP 端点部署成功！[/green]")
-            return client
+
+            # 创建一个兼容的server_info对象
+            server_info = MagicMock()
+            server_info.server_id = f"http-mcp-{tool_info.name}"
+            server_info.client = client
+            server_info.available_tools = []  # 将在测试时填充
+
+            return server_info
 
         except Exception as e:
             rprint(f"[red]❌ HTTP MCP 端点部署失败: {e}[/red]")
             return None
 
-    def _is_http_client(self, client: Any) -> bool:
+    def _is_http_client(self, server_info: Any) -> bool:
         """检测是否为 HTTP MCP 客户端."""
         try:
+            # 检查是否为HTTP部署的server_info对象
+            if hasattr(server_info, "client"):
+                from .http_mcp_client import HttpMCPClient
+
+                return isinstance(server_info.client, HttpMCPClient)
+
+            # 直接检查是否为HTTP客户端（兼容性）
             from .http_mcp_client import HttpMCPClient
 
-            return isinstance(client, HttpMCPClient)
+            return isinstance(server_info, HttpMCPClient)
         except ImportError:
             return False
 
     async def _run_http_tests(
-        self, tool_info: MCPToolInfo | None, client: Any, config: TestConfig
+        self, _tool_info: MCPToolInfo | None, server_info: Any, config: TestConfig
     ) -> tuple[bool, dict[str, Any]]:
         """运行 HTTP MCP 测试."""
         try:
             rprint("[blue]🔗 测试 HTTP MCP 连接...[/blue]")
+
+            # 获取HTTP客户端
+            client = (
+                server_info.client if hasattr(server_info, "client") else server_info
+            )
 
             # 1. 获取工具列表
             tools_result = await client.list_tools()
@@ -1047,6 +1067,10 @@ class CLIHandler:
 
             tools = tools_result.get("tools", [])
             rprint(f"[green]✅ 找到 {len(tools)} 个工具[/green]")
+
+            # 更新server_info的available_tools
+            if hasattr(server_info, "available_tools"):
+                server_info.available_tools = tools
 
             # 显示工具列表
             if tools:
@@ -1076,7 +1100,7 @@ class CLIHandler:
             return False, {"error": str(e)}
 
     async def _run_http_smart_tests(
-        self, client: Any, tools: list[dict[str, Any]], config: TestConfig
+        self, client: Any, tools: list[dict[str, Any]], _config: TestConfig
     ) -> list[dict[str, Any]]:
         """运行 HTTP 智能测试."""
         smart_results = []
