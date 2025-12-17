@@ -26,7 +26,7 @@ sys.path.insert(0, str(project_root))
 try:
     from tests.integration.test_crossplatform_mcp import (
         MCP_TOOLS_CONFIG,
-        test_single_mcp_tool,
+        run_single_mcp_tool_test,
     )
 except ImportError as e:
     print(f"❌ 导入错误: {e}")
@@ -69,7 +69,7 @@ def main():
 
     # 执行测试
     try:
-        success = test_single_mcp_tool(args.tool)
+        success = run_single_mcp_tool_test(args.tool)
 
         if success:
             print(f"\n🎉 {args.tool} 测试成功！")
