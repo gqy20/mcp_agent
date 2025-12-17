@@ -70,7 +70,7 @@ jobs:
         echo "uv sync" >> release_notes.md
         echo "" >> release_notes.md
         echo "# 基础使用" >> release_notes.md
-        echo "uv run python -m src.main --help" >> release_notes.md
+        echo "uv run python -m src.batch_mcp.main --help" >> release_notes.md
         echo '```' >> release_notes.md
 
         echo "" >> release_notes.md

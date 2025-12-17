@@ -240,7 +240,7 @@ jobs:
         # 执行完整智能测试（强制启用所有功能）
         START_TIME=$(date +%s)
 
-        if timeout "${TIMEOUT}s" uv run python -m src.main test-package "$PACKAGE" --timeout "$TIMEOUT" --verbose; then
+        if timeout "${TIMEOUT}s" uv run python -m src.batch_mcp.main test-package "$PACKAGE" --timeout "$TIMEOUT" --verbose; then
           STATUS="success"
           echo "✅ 完整智能测试成功: $NAME"
         else

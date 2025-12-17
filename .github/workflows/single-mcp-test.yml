@@ -91,7 +91,7 @@ jobs:
         fi
 
         # 执行完整测试
-        if uv run python -m src.main test-url "$GITHUB_URL" --timeout 600 --verbose $USE_SMART $USE_DB; then
+        if uv run python -m src.batch_mcp.main test-url "$GITHUB_URL" --timeout 600 --verbose $USE_SMART $USE_DB; then
           echo "✅ 测试成功完成"
           TEST_STATUS="success"
         else
