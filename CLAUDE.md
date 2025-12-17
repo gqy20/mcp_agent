@@ -2,6 +2,8 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+**📝 文档管理规则**: 不允许在主目录中随意增加md文件，所有文档应放在 docs/ 目录下。
+
 ## Development Environment
 
 This is a Python 3.12+ project using UV as the package manager. The project is a comprehensive MCP (Model Context Protocol) testing framework that can automatically deploy, test, and evaluate MCP tools from GitHub repositories.

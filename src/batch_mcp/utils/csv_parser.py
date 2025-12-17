@@ -384,8 +384,7 @@ def get_mcp_parser() -> MCPDataParser:
     """获取全局MCP解析器实例"""
     global _parser_instance
     if _parser_instance is None:
-        csv_path = (
-            Path(__file__).parent.parent.parent.parent / "data" / "mcp_database" / "mcp.csv"
-        )
+        from ..core.config import get_mcp_csv_path
+        csv_path = get_mcp_csv_path()
         _parser_instance = MCPDataParser(str(csv_path))
     return _parser_instance
