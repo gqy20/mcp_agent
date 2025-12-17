@@ -15,8 +15,8 @@ def analyze_hidden_gems():
     print("=== 他山MCP冷门推荐分析 ===\n")
 
     # 读取数据
-    tashan_df = pd.read_csv("data/tashan_verified_mcp.csv")
-    lobehub_df = pd.read_csv("data/mcp.csv")
+    tashan_df = pd.read_csv("../../mcp_database/tashan_verified_mcp.csv")
+    lobehub_df = pd.read_csv("../../mcp_database/mcp.csv")
 
     print(f"他山项目总数: {len(tashan_df)}")
     print(f"Lobehub项目总数: {len(lobehub_df)}")

@@ -21,7 +21,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 # 测试数据目录
-TEST_DATA_DIR = Path(__file__).parent.parent / "test_data"
+TEST_DATA_DIR = Path(__file__).parent.parent / "data" / "test_samples"
 TEST_DATA_DIR.mkdir(exist_ok=True)
 
 
