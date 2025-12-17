@@ -1,6 +1,6 @@
 """Unit tests for evaluator functionality."""
-import json
-from unittest.mock import MagicMock, Mock, patch
+
+from unittest.mock import patch
 
 import pytest
 
@@ -34,11 +34,11 @@ class TestToolEvaluator:
 
     def test_evaluate_tool_with_valid_info(self, evaluator, sample_tool_info):
         """Test tool evaluation with valid information."""
-        with patch.object(evaluator, "_check_github_repo") as mock_github, patch.object(
-            evaluator, "_analyze_documentation"
-        ) as mock_docs, patch.object(
-            evaluator, "_check_package_installation"
-        ) as mock_install:
+        with (
+            patch.object(evaluator, "_check_github_repo") as mock_github,
+            patch.object(evaluator, "_analyze_documentation") as mock_docs,
+            patch.object(evaluator, "_check_package_installation") as mock_install,
+        ):
             mock_github.return_value = {"exists": True, "stars": 100}
             mock_docs.return_value = {"has_readme": True, "quality": 0.8}
             mock_install.return_value = {"installable": True, "dependencies": 5}
@@ -54,11 +54,10 @@ class TestToolEvaluator:
         """Test tool evaluation without GitHub URL."""
         sample_tool_info.pop("github_url")
 
-        with patch.object(
-            evaluator, "_analyze_documentation"
-        ) as mock_docs, patch.object(
-            evaluator, "_check_package_installation"
-        ) as mock_install:
+        with (
+            patch.object(evaluator, "_analyze_documentation") as mock_docs,
+            patch.object(evaluator, "_check_package_installation") as mock_install,
+        ):
             mock_docs.return_value = {"has_readme": True, "quality": 0.8}
             mock_install.return_value = {"installable": True, "dependencies": 5}
 
@@ -169,9 +168,10 @@ class TestToolEvaluator:
             "evaluation_status": "completed",
         }
 
-        with patch("builtins.open", mock_open()) as mock_file, patch(
-            "json.dump"
-        ) as mock_json_dump:
+        with (
+            patch("builtins.open", mock_open()) as mock_file,
+            patch("json.dump") as mock_json_dump,
+        ):
             evaluator.save_evaluation_result(evaluation_result, "test_result.json")
 
             mock_file.assert_called_once_with("test_result.json", "w")

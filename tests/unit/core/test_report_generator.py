@@ -1,8 +1,8 @@
 """Unit tests for report generator functionality."""
+
 import json
 from datetime import datetime
-from pathlib import Path
-from unittest.mock import Mock, mock_open, patch
+from unittest.mock import Mock
 
 import pytest
 
@@ -202,7 +202,7 @@ class TestMCPReportGenerator:
             assert concise_path.name.endswith("_concise.json")
 
             # Load and verify content
-            with open(concise_path, "r", encoding="utf-8") as f:
+            with open(concise_path, encoding="utf-8") as f:
                 data = json.load(f)
 
             # Verify it's concise format
@@ -299,7 +299,7 @@ class TestMCPReportGenerator:
             assert json_path.name.endswith(".json")
 
             # Load and verify content
-            with open(json_path, "r", encoding="utf-8") as f:
+            with open(json_path, encoding="utf-8") as f:
                 data = json.load(f)
 
             # Verify it contains full data
@@ -326,7 +326,7 @@ class TestMCPReportGenerator:
             assert html_path.name.endswith(".html")
 
             # Load and verify content
-            with open(html_path, "r", encoding="utf-8") as f:
+            with open(html_path, encoding="utf-8") as f:
                 html_content = f.read()
 
             # Verify HTML structure

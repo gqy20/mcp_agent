@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-验证脚本 - 检查src layout迁移后的功能完整性
+"""验证脚本 - 检查src layout迁移后的功能完整性
 
 用于验证 src/batch_mcp/ 结构的正确性和功能完整性。
 """
@@ -8,7 +7,6 @@
 import sys
 import traceback
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
 
 
 class MigrationValidator:
@@ -84,7 +82,10 @@ class MigrationValidator:
                 "验证代理",
                 "from src.batch_mcp.agents.validation_agent import ValidationAgent",
             ),
-            ("异步客户端", "from src.batch_mcp.core.async_mcp_client import AsyncMCPClient"),
+            (
+                "异步客户端",
+                "from src.batch_mcp.core.async_mcp_client import AsyncMCPClient",
+            ),
             (
                 "URL处理器",
                 "from src.batch_mcp.core.url_mcp_processor import URLMCPProcessor",
@@ -150,6 +151,7 @@ class MigrationValidator:
 
             result = subprocess.run(
                 [sys.executable, "-m", "src.batch_mcp", "--help"],
+                check=False,
                 capture_output=True,
                 text=True,
                 timeout=10,
@@ -160,9 +162,8 @@ class MigrationValidator:
                 success = "Usage:" in help_text and "Commands:" in help_text
                 self.log_test("CLI帮助", success, f"返回码: {result.returncode}")
                 return success
-            else:
-                self.log_test("CLI帮助", False, f"返回码: {result.returncode}")
-                return False
+            self.log_test("CLI帮助", False, f"返回码: {result.returncode}")
+            return False
         except subprocess.TimeoutExpired:
             self.log_test("CLI帮助", False, "命令超时")
             return False
@@ -185,7 +186,7 @@ class MigrationValidator:
         for file_path in critical_files:
             if Path(file_path).exists():
                 try:
-                    with open(file_path, "r", encoding="utf-8") as f:
+                    with open(file_path, encoding="utf-8") as f:
                         content = f.read()
 
                     # 检查是否包含新的导入路径
@@ -193,7 +194,9 @@ class MigrationValidator:
                         self.log_test(f"外部导入检查 ({file_path})", True)
                         success_count += 1
                     else:
-                        self.log_test(f"外部导入检查 ({file_path})", False, "未找到新的导入路径")
+                        self.log_test(
+                            f"外部导入检查 ({file_path})", False, "未找到新的导入路径"
+                        )
                 except Exception as e:
                     self.log_test(f"外部导入检查 ({file_path})", False, str(e))
             else:
@@ -219,14 +222,12 @@ class MigrationValidator:
                 expected_path = "src/batch_mcp/../../../data/mcp_database/mcp.csv"
                 actual_path = str(parser.csv_path)
                 if "mcp_database/mcp.csv" in actual_path:
-                    self.log_test("文件路径检查", True, f"CSV文件路径正确")
+                    self.log_test("文件路径检查", True, "CSV文件路径正确")
                     return True
-                else:
-                    self.log_test("文件路径检查", False, f"路径错误: {actual_path}")
-                    return False
-            else:
-                self.log_warning("文件路径检查: 无法访问csv_path")
-                return True
+                self.log_test("文件路径检查", False, f"路径错误: {actual_path}")
+                return False
+            self.log_warning("文件路径检查: 无法访问csv_path")
+            return True
 
         except Exception as e:
             self.log_test("文件路径检查", False, str(e))
@@ -276,10 +277,10 @@ class MigrationValidator:
         if self.warnings:
             print(f"⚠️  警告: {len(self.warnings)}")
 
-        print(f"成功率: {passed_tests/total_tests*100:.1f}%")
+        print(f"成功率: {passed_tests / total_tests * 100:.1f}%")
 
         if failed_tests > 0:
-            print(f"\n❌ 失败的测试:")
+            print("\n❌ 失败的测试:")
             for test in self.failed_tests:
                 print(f"  - {test['name']}: {test['message']}")
 

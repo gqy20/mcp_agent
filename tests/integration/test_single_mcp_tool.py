@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-单个MCP工具快速测试脚本
+"""单个MCP工具快速测试脚本
 
 用于快速验证单个MCP工具的功能
 基于通用跨平台框架的轻量化版本
@@ -80,7 +79,7 @@ def main():
             sys.exit(1)
 
     except KeyboardInterrupt:
-        print(f"\n⚠️ 用户中断测试")
+        print("\n⚠️ 用户中断测试")
         sys.exit(130)
     except Exception as e:
         print(f"\n💥 测试过程中发生异常: {e}")

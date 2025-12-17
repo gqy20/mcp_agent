@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-智能代理验证脚本
+"""智能代理验证脚本
 
 测试AgentScope集成是否正常工作
 
@@ -96,9 +95,8 @@ def test_basic_csv_parsing():
             test_tool = simple_tools[0]
             print(f"📦 测试工具: {test_tool.name} ({test_tool.package_name})")
             return test_tool
-        else:
-            print("⚠️ 未找到免API密钥的工具")
-            return None
+        print("⚠️ 未找到免API密钥的工具")
+        return None
 
     except Exception as e:
         print(f"❌ CSV解析失败: {e}")
@@ -131,9 +129,8 @@ def test_smart_test_generation():
             for i, tc in enumerate(test_cases[:3], 1):
                 print(f"  {i}. {tc.name}")
             return True
-        else:
-            print("❌ 未生成任何测试用例")
-            return False
+        print("❌ 未生成任何测试用例")
+        return False
 
     except Exception as e:
         print(f"❌ 智能测试生成失败: {e}")
@@ -168,7 +165,7 @@ def main():
         results.extend([False, False])
 
     # 总结
-    print(f"\n📊 验证结果:")
+    print("\n📊 验证结果:")
     tests = ["AgentScope导入", "环境配置", "CSV解析", "代理初始化", "智能测试生成"]
 
     for i, (test_name, result) in enumerate(zip(tests, results), 1):

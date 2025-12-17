@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-跨平台兼容性验证脚本
+"""跨平台兼容性验证脚本
 
 验证项目在不同平台上的基本功能
 """
@@ -9,7 +8,6 @@ import platform
 import shutil
 import subprocess
 import sys
-from pathlib import Path
 
 
 def check_system_requirements():
@@ -32,7 +30,11 @@ def check_system_requirements():
     # Node.js检查
     try:
         node_result = subprocess.run(
-            ["node", "--version"], capture_output=True, text=True, timeout=5
+            ["node", "--version"],
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=5,
         )
         if node_result.returncode == 0:
             print(f"✅ Node.js: {node_result.stdout.strip()}")
@@ -60,15 +62,10 @@ def test_module_imports():
 
     try:
         # 核心模块
-        from src.batch_mcp.core.simple_mcp_deployer import SimpleMCPDeployer
 
         print("✅ SimpleMCPDeployer 导入成功")
 
-        from src.batch_mcp.utils.csv_parser import MCPDataParser
-
         print("✅ MCPDataParser 导入成功")
-
-        from src.batch_mcp.core.url_mcp_processor import URLMCPProcessor
 
         print("✅ URLMCPProcessor 导入成功")
 
@@ -98,12 +95,10 @@ def test_csv_data_loading():
             if context7:
                 print(f"✅ Context7工具查找成功: {context7.package_name}")
                 return True
-            else:
-                print("⚠️ Context7工具未找到")
-                return False
-        else:
-            print("❌ CSV数据加载失败")
+            print("⚠️ Context7工具未找到")
             return False
+        print("❌ CSV数据加载失败")
+        return False
 
     except Exception as e:
         print(f"❌ CSV测试失败: {e}")
@@ -125,9 +120,8 @@ def test_platform_detection():
         if platform_info["node_available"]:
             print(f"✅ NPX路径: {platform_info['npx_path']}")
             return True
-        else:
-            print("❌ Node.js环境不可用")
-            return False
+        print("❌ Node.js环境不可用")
+        return False
 
     except Exception as e:
         print(f"❌ 平台检测失败: {e}")
@@ -161,9 +155,8 @@ def main():
     if all_passed:
         print("🎉 所有测试通过！项目在当前平台上可以正常运行")
         return 0
-    else:
-        print("❌ 部分测试失败，请检查上述错误信息")
-        return 1
+    print("❌ 部分测试失败，请检查上述错误信息")
+    return 1
 
 
 if __name__ == "__main__":

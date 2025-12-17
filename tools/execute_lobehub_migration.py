@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""
-LobeHub 数据库迁移脚本
+"""LobeHub 数据库迁移脚本
 执行数据库迁移以添加 LobeHub 评分字段
 """
+
 import os
 
 from supabase import Client, create_client
@@ -17,7 +17,9 @@ def main():
         url = os.getenv("SUPABASE_URL")
         key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 
-        print(f"🔍 检查环境变量: URL={'已设置' if url else '未设置'}, KEY={'已设置' if key else '未设置'}")
+        print(
+            f"🔍 检查环境变量: URL={'已设置' if url else '未设置'}, KEY={'已设置' if key else '未设置'}"
+        )
 
         if not url or not key:
             print("❌ 缺少 SUPABASE_URL 或 SUPABASE_SERVICE_ROLE_KEY 环境变量")
@@ -27,9 +29,7 @@ def main():
         print("✅ 数据库连接成功")
 
         # 读取迁移脚本
-        with open(
-            "database/migrations/add_lobehub_ratings.sql", "r", encoding="utf-8"
-        ) as f:
+        with open("database/migrations/add_lobehub_ratings.sql", encoding="utf-8") as f:
             migration_content = f.read()
 
         # 分解SQL语句（按分号分割）

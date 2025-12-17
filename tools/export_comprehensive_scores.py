@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-导出MCP工具综合评分数据到CSV文件
+"""导出MCP工具综合评分数据到CSV文件
 包含测试结果和GitHub评估的完整数据
 
 遵循Linus原则：数据就是一切，好的数据结构胜过花哨的代码
@@ -67,7 +66,9 @@ def main():
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         output_file = f"mcp_comprehensive_scores_{timestamp}.csv"
 
-        console.print(f"[green]✅ 找到 {len(tools)} 个工具，正在计算综合评分...[/green]")
+        console.print(
+            f"[green]✅ 找到 {len(tools)} 个工具，正在计算综合评分...[/green]"
+        )
 
         # CSV列定义
         fieldnames = [
@@ -132,11 +133,13 @@ def main():
                         f"[dim yellow]⚠️ 跳过无测试数据的工具: {tool_name}[/dim yellow]"
                     )
 
-        console.print(f"[green]✅ 成功导出 {exported_count} 个工具的综合评分数据[/green]")
+        console.print(
+            f"[green]✅ 成功导出 {exported_count} 个工具的综合评分数据[/green]"
+        )
         console.print(f"[blue]📄 输出文件: {output_file}[/blue]")
 
         # 显示统计信息
-        console.print(f"\n[bold]📊 导出统计[/bold]")
+        console.print("\n[bold]📊 导出统计[/bold]")
         console.print(f"  总工具数: {len(tools)}")
         console.print(f"  有效数据: {exported_count}")
         console.print(f"  数据时间: {timestamp}")
@@ -145,7 +148,9 @@ def main():
         file_size = os.path.getsize(output_file)
         console.print(f"  文件大小: {file_size:,} 字节")
 
-        console.print(f"\n[dim]💡 使用Excel或其他工具打开 {output_file} 进行进一步分析[/dim]")
+        console.print(
+            f"\n[dim]💡 使用Excel或其他工具打开 {output_file} 进行进一步分析[/dim]"
+        )
 
     except Exception as e:
         console.print(f"[red]❌ 导出失败: {e}[/red]")

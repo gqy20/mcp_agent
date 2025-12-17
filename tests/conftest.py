@@ -1,4 +1,5 @@
 """Pytest configuration for MCP Agent project."""
+
 import sys
 from pathlib import Path
 

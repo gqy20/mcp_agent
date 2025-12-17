@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-筛选不需要API key的MCP工具脚本
+"""筛选不需要API key的MCP工具脚本
 按照MVP原则，专注于基础功能工具
 """
 
@@ -130,7 +129,7 @@ def main():
         targets.append(
             {
                 "package": tool.package_name,
-                "name": tool.name or f"Tool_{i+1}",
+                "name": tool.name or f"Tool_{i + 1}",
                 "stars": tool.lobehub_star_count or 0,
                 "author": tool.author or "Unknown",
                 "quality": tool.lobehub_evaluate or "N/A",
@@ -146,7 +145,7 @@ def main():
     print("\n🔧 选定的前5个工具:")
     for i, tool in enumerate(test_tools[:5]):
         print(
-            f"{i+1}. {tool.name} ({tool.package_name}) - {tool.lobehub_evaluate or 'N/A'}"
+            f"{i + 1}. {tool.name} ({tool.package_name}) - {tool.lobehub_evaluate or 'N/A'}"
         )
 
     return len(targets)

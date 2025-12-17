@@ -1,5 +1,4 @@
 """Unit tests for agent functionality."""
-from unittest.mock import Mock, patch
 
 import pytest
 

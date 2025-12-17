@@ -1,11 +1,8 @@
 """Unit tests for tester functionality."""
-import asyncio
-from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+
+from unittest.mock import patch
 
 import pytest
-
-from src.batch_mcp.core.tester import MCPTester
 
 
 class TestMCTester:
@@ -38,13 +35,12 @@ class TestMCTester:
     @pytest.mark.asyncio
     async def test_test_mcp_server_success(self, tester, sample_mcp_config):
         """Test successful MCP server testing."""
-        with patch.object(tester, "_start_mcp_server") as mock_start, patch.object(
-            tester, "_check_server_health"
-        ) as mock_health, patch.object(
-            tester, "_list_server_tools"
-        ) as mock_tools, patch.object(
-            tester, "_stop_mcp_server"
-        ) as mock_stop:
+        with (
+            patch.object(tester, "_start_mcp_server") as mock_start,
+            patch.object(tester, "_check_server_health") as mock_health,
+            patch.object(tester, "_list_server_tools") as mock_tools,
+            patch.object(tester, "_stop_mcp_server") as mock_stop,
+        ):
             mock_start.return_value = {"pid": 1234, "port": 8080}
             mock_health.return_value = {"healthy": True, "response_time": 0.5}
             mock_tools.return_value = ["tool1", "tool2", "tool3"]
@@ -75,7 +71,7 @@ class TestMCTester:
     async def test_test_mcp_server_timeout(self, tester, sample_mcp_config):
         """Test MCP server timeout."""
         with patch.object(tester, "_start_mcp_server") as mock_start:
-            mock_start.side_effect = asyncio.TimeoutError("Server startup timeout")
+            mock_start.side_effect = TimeoutError("Server startup timeout")
 
             result = await tester.test_mcp_server(
                 sample_mcp_config["mcpServers"]["test_server"]
@@ -166,9 +162,10 @@ class TestMCTester:
             "stress_tests": False,
         }
 
-        with patch.object(tester, "test_mcp_server") as mock_server_test, patch.object(
-            tester, "test_mcp_tool"
-        ) as mock_tool_test:
+        with (
+            patch.object(tester, "test_mcp_server") as mock_server_test,
+            patch.object(tester, "test_mcp_tool") as mock_tool_test,
+        ):
             mock_server_test.return_value = {
                 "test_status": "success",
                 "startup_time": 1.2,
@@ -198,9 +195,10 @@ class TestMCTester:
             "summary": {"total": 10, "passed": 8, "failed": 2},
         }
 
-        with patch("builtins.open", mock_open()) as mock_file, patch(
-            "json.dump"
-        ) as mock_json_dump:
+        with (
+            patch("builtins.open", mock_open()) as mock_file,
+            patch("json.dump") as mock_json_dump,
+        ):
             tester.save_test_results(test_results, "test_results.json")
 
             mock_file.assert_called_once_with("test_results.json", "w")

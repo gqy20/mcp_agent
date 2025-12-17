@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-完整测试数据生成器 - 包含所有格式
+"""完整测试数据生成器 - 包含所有格式
 
 生成用于MCP工具测试的完整测试数据集：
 - CSV: 多种业务数据
@@ -24,12 +23,9 @@ from pathlib import Path
 
 import pandas as pd
 from docx import Document
-from docx.shared import Inches
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw
 from pptx import Presentation
-from pptx.util import Inches as PptxInches
-from reportlab.lib.pagesizes import A4, letter
-from reportlab.lib.units import inch
+from reportlab.lib.pagesizes import A4
 
 # 高级格式库
 from reportlab.pdfgen import canvas
@@ -71,9 +67,9 @@ def generate_comprehensive_excel():
                 "服务收入": [random.randint(10000, 25000) for _ in months],
             }
         )
-        revenue_data["总收入"] = revenue_data[["产品A收入", "产品B收入", "产品C收入", "服务收入"]].sum(
-            axis=1
-        )
+        revenue_data["总收入"] = revenue_data[
+            ["产品A收入", "产品B收入", "产品C收入", "服务收入"]
+        ].sum(axis=1)
         revenue_data.to_excel(writer, sheet_name="月度收入", index=False)
 
         # 成本明细
@@ -87,9 +83,9 @@ def generate_comprehensive_excel():
                 "其他成本": [random.randint(3000, 8000) for _ in months],
             }
         )
-        cost_data["总成本"] = cost_data[["人工成本", "材料成本", "运营成本", "营销成本", "其他成本"]].sum(
-            axis=1
-        )
+        cost_data["总成本"] = cost_data[
+            ["人工成本", "材料成本", "运营成本", "营销成本", "其他成本"]
+        ].sum(axis=1)
         cost_data.to_excel(writer, sheet_name="月度成本", index=False)
 
         # 利润分析
@@ -101,7 +97,9 @@ def generate_comprehensive_excel():
             }
         )
         profit_data["毛利润"] = profit_data["总收入"] - profit_data["总成本"]
-        profit_data["利润率"] = (profit_data["毛利润"] / profit_data["总收入"] * 100).round(2)
+        profit_data["利润率"] = (
+            profit_data["毛利润"] / profit_data["总收入"] * 100
+        ).round(2)
         profit_data.to_excel(writer, sheet_name="利润分析", index=False)
 
     # 2. 员工管理Excel
@@ -112,8 +110,8 @@ def generate_comprehensive_excel():
     for i in range(50):
         employee_data.append(
             {
-                "ID": f"EMP{i+1:03d}",
-                "姓名": f"员工{i+1}",
+                "ID": f"EMP{i + 1:03d}",
+                "姓名": f"员工{i + 1}",
                 "部门": random.choice(departments),
                 "职位": random.choice(positions),
                 "薪资": random.randint(8000, 35000),
@@ -212,7 +210,9 @@ def generate_word_document():
     title = doc.add_heading("MCP工具测试指南", 0)
 
     # 添加介绍段落
-    intro = doc.add_paragraph("本文档介绍如何使用MCP测试框架对Model Context Protocol工具进行自动化测试。")
+    intro = doc.add_paragraph(
+        "本文档介绍如何使用MCP测试框架对Model Context Protocol工具进行自动化测试。"
+    )
 
     # 添加子标题
     doc.add_heading("1. 快速开始", level=1)
@@ -284,8 +284,9 @@ def generate_powerpoint():
     subtitle = slide.shapes.placeholders[1]
 
     title.text = "MCP测试框架"
-    subtitle.text = "自动化Model Context Protocol工具测试解决方案\n" + datetime.now().strftime(
-        "%Y年%m月%d日"
+    subtitle.text = (
+        "自动化Model Context Protocol工具测试解决方案\n"
+        + datetime.now().strftime("%Y年%m月%d日")
     )
 
     # 幻灯片2: 概览
@@ -448,10 +449,34 @@ def generate_sample_files():
     # 2. 产品信息JSON（用于API工具测试）
     products = {
         "products": [
-            {"id": 1, "name": "笔记本电脑", "price": 5999, "category": "电子产品", "stock": 50},
-            {"id": 2, "name": "无线鼠标", "price": 199, "category": "配件", "stock": 200},
-            {"id": 3, "name": "机械键盘", "price": 599, "category": "配件", "stock": 80},
-            {"id": 4, "name": "显示器", "price": 1999, "category": "电子产品", "stock": 30},
+            {
+                "id": 1,
+                "name": "笔记本电脑",
+                "price": 5999,
+                "category": "电子产品",
+                "stock": 50,
+            },
+            {
+                "id": 2,
+                "name": "无线鼠标",
+                "price": 199,
+                "category": "配件",
+                "stock": 200,
+            },
+            {
+                "id": 3,
+                "name": "机械键盘",
+                "price": 599,
+                "category": "配件",
+                "stock": 80,
+            },
+            {
+                "id": 4,
+                "name": "显示器",
+                "price": 1999,
+                "category": "电子产品",
+                "stock": 30,
+            },
         ],
         "meta": {"total_products": 4, "last_updated": datetime.now().isoformat()},
     }
@@ -492,14 +517,14 @@ def main():
         generate_images()
         generate_sample_files()
 
-        print(f"\n✅ 完整测试数据集生成成功！")
+        print("\n✅ 完整测试数据集生成成功！")
         print(f"📁 所有文件保存在: {TEST_DATA_DIR}")
 
         # 统计生成的文件
         files = list(TEST_DATA_DIR.glob("*"))
         total_size = sum(f.stat().st_size for f in files if f.is_file())
 
-        print(f"\n📊 生成统计:")
+        print("\n📊 生成统计:")
         print(f"   📄 文件总数: {len(files)}")
         print(f"   💾 总大小: {total_size / 1024:.1f} KB")
 
@@ -512,19 +537,19 @@ def main():
                     file_types[ext] = []
                 file_types[ext].append(file.name)
 
-        print(f"\n📋 按类型分类:")
+        print("\n📋 按类型分类:")
         for ext, filenames in sorted(file_types.items()):
             print(f"   {ext or '无扩展名'}: {len(filenames)}个")
             for name in filenames:
                 print(f"      📄 {name}")
 
-        print(f"\n🚀 测试数据已就绪！现在可以测试各种MCP工具了：")
-        print(f"   • Excel工具: 使用 financial_report.xlsx 和 employee_management.xlsx")
-        print(f"   • PDF工具: 使用 mcp_test_report.pdf")
-        print(f"   • Word工具: 使用 mcp_test_guide.docx")
-        print(f"   • PowerPoint工具: 使用 mcp_framework_presentation.pptx")
-        print(f"   • 图片工具: 使用 *.png 文件")
-        print(f"   • CSV工具: 使用各种 *.csv 文件")
+        print("\n🚀 测试数据已就绪！现在可以测试各种MCP工具了：")
+        print("   • Excel工具: 使用 financial_report.xlsx 和 employee_management.xlsx")
+        print("   • PDF工具: 使用 mcp_test_report.pdf")
+        print("   • Word工具: 使用 mcp_test_guide.docx")
+        print("   • PowerPoint工具: 使用 mcp_framework_presentation.pptx")
+        print("   • 图片工具: 使用 *.png 文件")
+        print("   • CSV工具: 使用各种 *.csv 文件")
 
     except Exception as e:
         print(f"❌ 生成过程中出现错误: {e}")

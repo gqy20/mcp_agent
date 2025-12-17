@@ -1,8 +1,8 @@
 """Unit tests for refactored CLI handlers."""
+
 from unittest.mock import Mock, patch
 
 import pytest
-
 from src.batch_mcp.core.cli_handlers_refactored import (
     CLIToolEvaluator,
     EvaluationResultProcessor,
@@ -41,9 +41,7 @@ class TestSupabaseClientManager:
         mock_client = Mock()
         mock_result = Mock()
         mock_result.data = [{"id": 1}]
-        mock_client.table.return_value.update.return_value.eq.return_value.execute.return_value = (
-            mock_result
-        )
+        mock_client.table.return_value.update.return_value.eq.return_value.execute.return_value = mock_result
         mock_create_client.return_value = mock_client
 
         evaluation_result = {
@@ -260,9 +258,7 @@ class TestIntegration:
     def test_error_propagation(self):
         """Test that errors are properly propagated and handled."""
         # Test that errors in the chain are properly caught and handled
-        pass
 
     def test_concurrent_evaluation_safety(self):
         """Test that concurrent evaluations are thread-safe."""
         # Test thread safety of the evaluation process
-        pass

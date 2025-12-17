@@ -1,13 +1,11 @@
 #!/usr/bin/env python3
-"""
-智能MCP工具选择器
+"""智能MCP工具选择器
 支持多种筛选条件和灵活的测试配置
 """
 
 import json
 import os
 import sys
-from typing import Dict, List, Optional, Set
 
 import pandas as pd
 
@@ -46,7 +44,7 @@ class IntelligentToolSelector:
             print("❌ 读取CSV文件失败")
             sys.exit(1)
 
-    def parse_deployment_methods(self, extracted_methods: str) -> Set[str]:
+    def parse_deployment_methods(self, extracted_methods: str) -> set[str]:
         """解析部署方式"""
         if pd.isna(extracted_methods) or not extracted_methods:
             return set()
@@ -58,7 +56,7 @@ class IntelligentToolSelector:
                 methods.add(method)
         return methods
 
-    def parse_tech_stack(self, extracted_stack: str) -> Set[str]:
+    def parse_tech_stack(self, extracted_stack: str) -> set[str]:
         """解析技术栈"""
         if pd.isna(extracted_stack) or not extracted_stack:
             return set()
@@ -75,7 +73,7 @@ class IntelligentToolSelector:
                 tech_stack.add(tech)
         return tech_stack
 
-    def extract_package_name(self, mcp_config: str) -> Optional[str]:
+    def extract_package_name(self, mcp_config: str) -> str | None:
         """从MCP配置中提取包名"""
         try:
             if pd.isna(mcp_config) or not mcp_config:
@@ -138,11 +136,7 @@ class IntelligentToolSelector:
                             cmd: str = server_config["command"]
                             args = server_config.get("args", [])
 
-                            if cmd == "npx":
-                                for arg in args:
-                                    if not arg.startswith("-"):
-                                        return arg
-                            elif cmd == "uvx":
+                            if cmd == "npx" or cmd == "uvx":
                                 for arg in args:
                                     if not arg.startswith("-"):
                                         return arg
@@ -151,7 +145,7 @@ class IntelligentToolSelector:
         except Exception:
             return None
 
-    def extract_deployment_method(self, mcp_config: str) -> Optional[str]:
+    def extract_deployment_method(self, mcp_config: str) -> str | None:
         """从MCP配置中提取部署方式"""
         try:
             if pd.isna(mcp_config) or not mcp_config:
@@ -204,9 +198,8 @@ class IntelligentToolSelector:
         exclude_browser: bool = True,
         min_stars: int = 0,
         max_count: int = 100,
-    ) -> List[Dict]:
+    ) -> list[dict]:
         """根据条件筛选工具"""
-
         filtered_tools = []
         keyword_list = [
             k.strip().lower() for k in search_keywords.split(",") if k.strip()
@@ -278,21 +271,27 @@ class IntelligentToolSelector:
 
                 # API key要求筛选
                 requires_api = row.get("extracted_requires_api_key", False)
-                if require_api_key == "exclude" and requires_api in [
-                    True,
-                    "True",
-                    "true",
-                    1,
-                    "1",
-                ]:
-                    continue
-                elif require_api_key == "only" and requires_api not in [
-                    True,
-                    "True",
-                    "true",
-                    1,
-                    "1",
-                ]:
+                if (
+                    require_api_key == "exclude"
+                    and requires_api
+                    in [
+                        True,
+                        "True",
+                        "true",
+                        1,
+                        "1",
+                    ]
+                ) or (
+                    require_api_key == "only"
+                    and requires_api
+                    not in [
+                        True,
+                        "True",
+                        "true",
+                        1,
+                        "1",
+                    ]
+                ):
                     continue
 
                 # 浏览器工具排除
@@ -340,14 +339,12 @@ class IntelligentToolSelector:
                 continue
 
         # 按优先级排序
-        filtered_tools.sort(
-            key=lambda x: x["priority_score"], reverse=True
-        )  # type: ignore
+        filtered_tools.sort(key=lambda x: x["priority_score"], reverse=True)  # type: ignore
 
         # 限制数量
         return filtered_tools[:max_count]
 
-    def _calculate_priority_score(self, tool: Dict) -> float:
+    def _calculate_priority_score(self, tool: dict) -> float:
         """计算工具优先级得分"""
         score: float = 0.0
 
@@ -386,12 +383,12 @@ class IntelligentToolSelector:
 
         return round(score, 2)
 
-    def get_statistics(self, tools: List[Dict]) -> Dict[str, object]:
+    def get_statistics(self, tools: list[dict]) -> dict[str, object]:
         """获取筛选结果的统计信息"""
         if not tools:
             return {}
 
-        stats: Dict[str, object] = {
+        stats: dict[str, object] = {
             "total": len(tools),
             "quality_distribution": {},
             "deployment_method_distribution": {},
@@ -402,7 +399,7 @@ class IntelligentToolSelector:
             "min_stars": float("inf"),
         }
 
-        stars: List[float] = []
+        stars: list[float] = []
 
         for tool in tools:
             # 质量分布
@@ -503,7 +500,7 @@ def main() -> int:
     if filtered_tools:
         print("选定的前5个工具:")
         for i, tool in enumerate(filtered_tools[:5]):
-            print(f"{i+1}. {tool['name']} ({tool['package']})")
+            print(f"{i + 1}. {tool['name']} ({tool['package']})")
             print(
                 f"   质量: {tool['quality']} | 星数: {tool['stars']} | "
                 f"优先级: {tool['priority_score']}"

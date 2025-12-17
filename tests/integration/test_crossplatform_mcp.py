@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-跨平台MCP工具测试框架
+"""跨平台MCP工具测试框架
 
 支持Windows、Linux、macOS的通用MCP工具测试
 基于AgentScope + Model Context Protocol (MCP)的完整集成验证
@@ -27,7 +26,7 @@ import threading
 import time
 import uuid
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 # 添加项目根目录到 Python 路径
 project_root = Path(__file__).parent.parent.parent
@@ -93,8 +92,8 @@ class CrossPlatformMCPCommunicator:
         print(f"🔄 MCP通信读取线程已启动 (平台: {self.platform})")
 
     def send_request(
-        self, request: Dict[str, Any], timeout: float = 20.0
-    ) -> Dict[str, Any]:
+        self, request: dict[str, Any], timeout: float = 20.0
+    ) -> dict[str, Any]:
         """发送同步MCP请求"""
         with self.lock:
             try:
@@ -140,10 +139,10 @@ class CrossPlatformMCPCommunicator:
                     return {"success": False, "error": "请求超时"}
 
             except Exception as e:
-                return {"success": False, "error": f"通信异常: {str(e)}"}
+                return {"success": False, "error": f"通信异常: {e!s}"}
 
 
-def detect_platform_environment() -> Dict[str, Any]:
+def detect_platform_environment() -> dict[str, Any]:
     """检测平台环境和可用工具"""
     platform_info = {
         "system": platform.system(),
@@ -164,7 +163,11 @@ def detect_platform_environment() -> Dict[str, Any]:
 
             # 检查Node.js版本
             result = subprocess.run(
-                [npx_path, "--version"], capture_output=True, text=True, timeout=5
+                [npx_path, "--version"],
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=5,
             )
             if result.returncode == 0:
                 platform_info["npx_version"] = result.stdout.strip()
@@ -174,7 +177,7 @@ def detect_platform_environment() -> Dict[str, Any]:
     return platform_info
 
 
-def load_test_environment() -> Dict[str, Any]:
+def load_test_environment() -> dict[str, Any]:
     """加载测试环境配置"""
     env_path = project_root / ".env"
     if not env_path.exists():
@@ -196,7 +199,7 @@ def load_test_environment() -> Dict[str, Any]:
     return config
 
 
-def setup_mcp_server(tool_key: str, platform_info: Dict[str, Any]):
+def setup_mcp_server(tool_key: str, platform_info: dict[str, Any]):
     """设置指定的MCP服务器 - 跨平台兼容"""
     global global_mcp_process, global_initialized
 
@@ -314,7 +317,6 @@ def setup_mcp_server(tool_key: str, platform_info: Dict[str, Any]):
 
 def create_dynamic_mcp_tool(communicator, tool_key: str, available_tools: list):
     """创建动态MCP工具函数 - 自适应参数格式"""
-
     config = MCP_TOOLS_CONFIG[tool_key]
 
     # 动态创建参数处理函数
@@ -438,17 +440,16 @@ def create_dynamic_mcp_tool(communicator, tool_key: str, available_tools: list):
 - 协议状态: ✅ 真实{tool_key} MCP通信成功"""
 
                 return ServiceResponse(ServiceExecStatus.SUCCESS, response_text)
-            else:
-                error_text = f"""❌ {config['name']}调用失败:
+            error_text = f"""❌ {config['name']}调用失败:
 - 输入: {input_value}
 - 错误: {result.get('error', '未知错误')}
 - MCP服务器状态: 连接异常"""
 
-                return ServiceResponse(ServiceExecStatus.ERROR, error_text)
+            return ServiceResponse(ServiceExecStatus.ERROR, error_text)
 
         except Exception as e:
             return ServiceResponse(
-                ServiceExecStatus.ERROR, f"❌ {config['name']}调用异常: {str(e)}"
+                ServiceExecStatus.ERROR, f"❌ {config['name']}调用异常: {e!s}"
             )
 
     return create_tool_function()
@@ -566,18 +567,17 @@ def test_single_mcp_tool(tool_key: str) -> bool:
             print(f"\n🎉 {config['name']}验证成功！")
             print("✅ 验证要点:")
             print(f"   - 成功部署了真实的{config['name']}")
-            print(f"   - AgentScope通过MCP协议调用了真实工具")
+            print("   - AgentScope通过MCP协议调用了真实工具")
             print(f"   - 验证了端到端的{config['name']}集成")
             print(f"   - 获取了有效的{config['category']}结果")
             print(f"   - 跨平台兼容性: {platform_info['system']}")
             print(f"   - MCP调用状态: {'✅' if global_mcp_call_success else '🔍'}")
             return True
-        else:
-            print(f"\n⚠️ {config['name']}验证失败")
-            print(f"MCP调用标志: {global_mcp_call_success}")
-            print(f"最终响应长度: {len(response.content)} 字符")
-            print(f"对话历史长度: {len(conversation_history)} 字符")
-            return False
+        print(f"\n⚠️ {config['name']}验证失败")
+        print(f"MCP调用标志: {global_mcp_call_success}")
+        print(f"最终响应长度: {len(response.content)} 字符")
+        print(f"对话历史长度: {len(conversation_history)} 字符")
+        return False
 
     except Exception as e:
         print(f"❌ {config['name']}测试失败: {e}")
@@ -620,12 +620,12 @@ def test_all_mcp_tools():
         if tool_key not in MCP_TOOLS_CONFIG:
             continue
 
-        print(f"\n{'='*20} 开始测试 {tool_key} {'='*20}")
+        print(f"\n{'=' * 20} 开始测试 {tool_key} {'=' * 20}")
         try:
             success = test_single_mcp_tool(tool_key)
             test_results[tool_key] = success
             status = "成功" if success else "失败"
-            print(f"{'='*20} {tool_key} 测试{status} {'='*20}")
+            print(f"{'=' * 20} {tool_key} 测试{status} {'=' * 20}")
         except Exception as e:
             print(f"❌ {tool_key} 测试异常: {e}")
             test_results[tool_key] = False
@@ -634,7 +634,7 @@ def test_all_mcp_tools():
         time.sleep(2)
 
     # 输出总结
-    print(f"\n🎯 跨平台测试总结")
+    print("\n🎯 跨平台测试总结")
     print(f"🖥️ 测试平台: {platform_info['system']} ({platform_info['architecture']})")
     print("=" * 70)
     success_count = sum(1 for success in test_results.values() if success)
@@ -646,7 +646,7 @@ def test_all_mcp_tools():
         print(f"{config['name']}: {status}")
 
     print(f"\n📊 总体结果: {success_count}/{total_count} 个工具验证成功")
-    print(f"🏆 成功率: {success_count/total_count*100:.1f}%")
+    print(f"🏆 成功率: {success_count / total_count * 100:.1f}%")
 
     return test_results
 
@@ -656,7 +656,8 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="跨平台MCP工具测试框架 v2.0")
     parser.add_argument(
-        "--tool", help="测试指定工具 (context7, youtube, think, svelte, openalex, 12306)"
+        "--tool",
+        help="测试指定工具 (context7, youtube, think, svelte, openalex, 12306)",
     )
     parser.add_argument("--all", action="store_true", help="测试所有工具")
     parser.add_argument("--info", action="store_true", help="显示平台信息")

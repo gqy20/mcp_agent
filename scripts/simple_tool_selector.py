@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-简单的MCP工具选择脚本
+"""简单的MCP工具选择脚本
 直接处理CSV文件，选择不需要API key的工具
 """
 
@@ -124,7 +123,7 @@ def main():
                     }
                 )
 
-        except Exception as e:
+        except Exception:
             continue
 
     print(f"🔓 筛选出不需要API key的工具: {len(simple_tools)}")
@@ -153,7 +152,7 @@ def main():
     print("\n🔧 选定的前5个工具:")
     for i, tool in enumerate(test_tools[:5]):
         print(
-            f"{i+1}. {tool['name']} ({tool['package']}) - {tool['quality']} - 得分:{tool['reliability_score']}"
+            f"{i + 1}. {tool['name']} ({tool['package']}) - {tool['quality']} - 得分:{tool['reliability_score']}"
         )
 
     return len(test_tools)

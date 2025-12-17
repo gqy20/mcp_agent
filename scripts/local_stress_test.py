@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-本地并行压力测试脚本
+"""本地并行压力测试脚本
 验证工作流在本地是否正常工作
 """
 
@@ -33,7 +32,7 @@ def test_single_tool(tool_info):
         )
 
         if not has_ai_config:
-            print(f"  ❌ 未配置AI API密钥，跳过测试")
+            print("  ❌ 未配置AI API密钥，跳过测试")
             return {
                 "package": package,
                 "name": name,
@@ -48,7 +47,7 @@ def test_single_tool(tool_info):
             }
 
         if not has_db_config:
-            print(f"  ❌ 未配置数据库，跳过测试")
+            print("  ❌ 未配置数据库，跳过测试")
             return {
                 "package": package,
                 "name": name,
@@ -62,7 +61,7 @@ def test_single_tool(tool_info):
                 "error": "Missing database configuration",
             }
 
-        print(f"  ✅ AI和数据库配置完整，执行完整智能测试")
+        print("  ✅ AI和数据库配置完整，执行完整智能测试")
 
         # 构建完整智能测试命令（强制启用所有功能）
         cmd = [
@@ -75,13 +74,18 @@ def test_single_tool(tool_info):
             package,
             "--timeout",
             "120",
-            "--verbose"
+            "--verbose",
             # 不添加 --no-smart 和 --no-db-export，使用默认启用
         ]
 
         # 执行完整智能测试
         result = subprocess.run(
-            cmd, capture_output=True, text=True, timeout=150, cwd=os.getcwd()
+            cmd,
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=150,
+            cwd=os.getcwd(),
         )
 
         duration = time.time() - start_time
@@ -100,20 +104,19 @@ def test_single_tool(tool_info):
                 "output": result.stdout[-1000:] if result.stdout else "",
                 "error": "",
             }
-        else:
-            print(f"❌ 完整智能测试失败: {name} ({duration:.1f}s)")
-            return {
-                "package": package,
-                "name": name,
-                "quality": quality,
-                "stars": stars,
-                "status": "failed",
-                "duration": round(duration, 1),
-                "has_ai": True,
-                "has_db": True,
-                "output": result.stdout[-1000:] if result.stdout else "",
-                "error": result.stderr[-1000:] if result.stderr else "",
-            }
+        print(f"❌ 完整智能测试失败: {name} ({duration:.1f}s)")
+        return {
+            "package": package,
+            "name": name,
+            "quality": quality,
+            "stars": stars,
+            "status": "failed",
+            "duration": round(duration, 1),
+            "has_ai": True,
+            "has_db": True,
+            "output": result.stdout[-1000:] if result.stdout else "",
+            "error": result.stderr[-1000:] if result.stderr else "",
+        }
 
     except subprocess.TimeoutExpired:
         duration = time.time() - start_time
@@ -129,7 +132,7 @@ def test_single_tool(tool_info):
 
     except Exception as e:
         duration = time.time() - start_time
-        print(f"💥 测试异常: {name} - {str(e)}")
+        print(f"💥 测试异常: {name} - {e!s}")
         return {
             "package": package,
             "name": name,
@@ -154,6 +157,7 @@ def main():
 
         result = subprocess.run(
             ["uv", "run", "python", "scripts/simple_tool_selector.py"],
+            check=False,
             capture_output=True,
             text=True,
             env=env,
@@ -175,7 +179,7 @@ def main():
                 total_line = line
 
         if not targets_line or not total_line:
-            print(f"❌ 无法解析工具选择结果")
+            print("❌ 无法解析工具选择结果")
             return
 
         targets_json = targets_line.split("=", 1)[1]
@@ -270,20 +274,20 @@ def main():
     print(f"\n📄 详细报告已保存: {report_file}")
 
     if success_count > 0:
-        print(f"\n✅ 成功的工具:")
+        print("\n✅ 成功的工具:")
         for result in results:
             if result["status"] == "success":
                 print(f"  - {result['name']} ({result['package']})")
 
     if failed_count + timeout_count + error_count > 0:
-        print(f"\n❌ 失败的工具:")
+        print("\n❌ 失败的工具:")
         for result in results:
             if result["status"] != "success":
                 print(
                     f"  - {result['name']} ({result['package']}) - {result['status']}"
                 )
 
-    print(f"\n🎉 并行压力测试完成！")
+    print("\n🎉 并行压力测试完成！")
 
 
 if __name__ == "__main__":

@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-GitHub MCP分析器演示脚本
+"""GitHub MCP分析器演示脚本
 
 展示如何使用GitHub MCP项目自动分析功能
 """
@@ -43,7 +42,7 @@ def main():
 
     # 读取并展示结果
     if Path("demo_report.json").exists():
-        with open("demo_report.json", "r") as f:
+        with open("demo_report.json") as f:
             report = json.load(f)
 
         print("\n📊 分析结果:")

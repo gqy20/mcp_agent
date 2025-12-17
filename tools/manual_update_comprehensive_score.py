@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""
-手动更新数据库综合评分脚本
+"""手动更新数据库综合评分脚本
 测试新的综合评分功能并手动更新数据库记录
 """
+
 import os
 from datetime import datetime
 
@@ -30,7 +30,7 @@ def main():
         # 计算综合评分 (1:2权重)
         total_score = int((success_rate * 1 + github_score * 2) / 3)
 
-        print(f"📊 Context7综合评分计算:")
+        print("📊 Context7综合评分计算:")
         print(f"  • GitHub评分: {github_score}/100")
         print(f"  • 测试成功率: {success_rate}%")
         print(

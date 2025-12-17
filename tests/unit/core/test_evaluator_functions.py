@@ -1,7 +1,6 @@
 """Unit tests for evaluator functionality."""
-from unittest.mock import Mock, patch
 
-import pytest
+from unittest.mock import Mock, patch
 
 from src.batch_mcp.core.evaluator import (
     analyze_frequency,

@@ -1,8 +1,8 @@
 """Integration tests for main application."""
-import subprocess
+
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -66,8 +66,6 @@ class TestMainApplication:
     @patch("src.main.evaluat_mcp")
     def test_evaluate_command_exists(self, mock_evaluate_mcp):
         """Test that evaluate command exists."""
-        from src.main import evaluat_mcp
-
         assert callable(evaluate_mcp)
 
     def test_cli_help_functionality(self):
@@ -231,7 +229,7 @@ from unittest.mock import mock_open
 # Add mock functions to the src.main module for testing
 def mock_load_config(config_file):
     """Mock config loading function."""
-    with open(config_file, "r") as f:
+    with open(config_file) as f:
         return json.load(f)
 
 
@@ -242,7 +240,6 @@ def mock_validate_config(config):
 
 def mock_configure_logging(log_level):
     """Mock logging configuration function."""
-    pass
 
 
 def mock_get_env_var(var_name, default=None):
@@ -252,17 +249,14 @@ def mock_get_env_var(var_name, default=None):
 
 def mock_initialize_app():
     """Mock app initialization function."""
-    pass
 
 
 def mock_cleanup():
     """Mock cleanup function."""
-    pass
 
 
 def mock_setup_signal_handlers():
     """Mock signal handler setup function."""
-    pass
 
 
 # Add mock functions to src.main module

@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-测试数据生成器
+"""测试数据生成器
 
 为MCP工具测试生成各种格式的样本文件：
 - CSV: 包含员工信息、销售数据等
@@ -15,7 +14,6 @@
 
 import csv
 import json
-import os
 import random
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -32,7 +30,15 @@ def generate_csv_files():
     # 1. 员工信息表
     employees_data = [
         ["ID", "姓名", "部门", "职位", "薪资", "入职日期", "邮箱"],
-        [1, "张三", "技术部", "高级工程师", 15000, "2022-01-15", "zhangsan@company.com"],
+        [
+            1,
+            "张三",
+            "技术部",
+            "高级工程师",
+            15000,
+            "2022-01-15",
+            "zhangsan@company.com",
+        ],
         [2, "李四", "产品部", "产品经理", 18000, "2021-08-20", "lisi@company.com"],
         [3, "王五", "设计部", "UI设计师", 12000, "2022-03-10", "wangwu@company.com"],
         [4, "赵六", "技术部", "前端工程师", 13000, "2022-06-01", "zhaoliu@company.com"],
@@ -413,7 +419,7 @@ def main():
     generate_advanced_files()
     generate_binary_placeholders()
 
-    print(f"\n✅ 测试数据生成完成！")
+    print("\n✅ 测试数据生成完成！")
     print(f"📁 生成的文件保存在: {TEST_DATA_DIR}")
 
     # 列出生成的文件
@@ -424,7 +430,7 @@ def main():
             size = file.stat().st_size if file.is_file() else 0
             print(f"   📄 {file.name} ({size} bytes)")
 
-    print(f"\n🚀 现在您可以使用这些测试文件来测试各种MCP工具了！")
+    print("\n🚀 现在您可以使用这些测试文件来测试各种MCP工具了！")
 
 
 if __name__ == "__main__":

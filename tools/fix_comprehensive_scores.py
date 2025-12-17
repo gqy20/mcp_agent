@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-修复数据库中的综合评分数据
+"""修复数据库中的综合评分数据
 
 这个脚本用于:
 1. 为没有综合评分的记录计算综合评分
@@ -48,7 +47,9 @@ def main():
         )
 
         records_without_score = result.data
-        console.print(f"[green]✅ 找到 {len(records_without_score)} 条没有综合评分的记录[/green]")
+        console.print(
+            f"[green]✅ 找到 {len(records_without_score)} 条没有综合评分的记录[/green]"
+        )
 
         # 2. 为每条记录计算综合评分
         updated_count = 0
@@ -114,7 +115,9 @@ def main():
                         console.print(f"[red]❌ 更新失败: {tool_identifier}[/red]")
                         failed_count += 1
                 else:
-                    console.print(f"[yellow]⚠️ 无法计算综合评分: {tool_identifier}[/yellow]")
+                    console.print(
+                        f"[yellow]⚠️ 无法计算综合评分: {tool_identifier}[/yellow]"
+                    )
                     failed_count += 1
 
             except Exception as e:
@@ -122,13 +125,13 @@ def main():
                 failed_count += 1
 
         # 3. 显示结果统计
-        console.print(f"\n[bold]📊 更新结果统计:[/bold]")
+        console.print("\n[bold]📊 更新结果统计:[/bold]")
         console.print(f"  成功更新: {updated_count} 条记录")
         console.print(f"  更新失败: {failed_count} 条记录")
         console.print(f"  总计处理: {len(records_without_score)} 条记录")
 
         # 4. 验证更新结果
-        console.print(f"\n[blue]🔍 验证更新结果...[/blue]")
+        console.print("\n[blue]🔍 验证更新结果...[/blue]")
         verification_result = (
             client.table("mcp_test_results")
             .select("count")
@@ -136,9 +139,11 @@ def main():
             .execute()
         )
         new_with_score_count = len(verification_result.data)
-        console.print(f"[green]✅ 现在有综合评分的记录数: {new_with_score_count}[/green]")
+        console.print(
+            f"[green]✅ 现在有综合评分的记录数: {new_with_score_count}[/green]"
+        )
 
-        console.print(f"\n[green]✅ 数据库修复完成![/green]")
+        console.print("\n[green]✅ 数据库修复完成![/green]")
 
     except Exception as e:
         console.print(f"[red]❌ 修复失败: {e}[/red]")

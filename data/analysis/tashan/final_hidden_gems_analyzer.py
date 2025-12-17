@@ -1,17 +1,13 @@
 #!/usr/bin/env python3
-"""
-冷门推荐分析：基于他山评分≥60分的MCP项目在Lobehub中的推荐价值分析
+"""冷门推荐分析：基于他山评分≥60分的MCP项目在Lobehub中的推荐价值分析
 完善版本：详细算法说明，适当降低标准确保30个推荐，只输出2个CSV文件
 """
-import json
 
-import numpy as np
 import pandas as pd
 
 
 def analyze_hidden_gems():
     """分析值得作为冷门推荐的MCP项目"""
-
     print("=== 他山MCP冷门推荐分析 ===\n")
 
     # 读取数据
@@ -164,21 +160,20 @@ def analyze_hidden_gems():
     print("\n正在生成综合分析报告...")
     generate_comprehensive_report(all_df, recommended_df)
 
-    print(f"\n=== 分析完成 ===")
+    print("\n=== 分析完成 ===")
     print(f"总分析项目: {len(all_df)}个")
     print(f"最终推荐项目: {len(recommended_df)}个")
     print(f"平均冷门指数: {recommended_df['hidden_gem_score'].mean():.1f}分")
-    print(f"\n生成文件:")
-    print(f"- complete_analysis.csv: 完整分析数据")
-    print(f"- hidden_gems_recommendations.csv: 30个冷门推荐")
-    print(f"- README.md: 综合分析报告和算法说明")
+    print("\n生成文件:")
+    print("- complete_analysis.csv: 完整分析数据")
+    print("- hidden_gems_recommendations.csv: 30个冷门推荐")
+    print("- README.md: 综合分析报告和算法说明")
 
     return recommended_df
 
 
 def calculate_hidden_gem_score(tashan_score, stars, forks, lobehub_rating, tools_count):
-    """
-    计算冷门推荐指数 (Hidden Gem Score)
+    """计算冷门推荐指数 (Hidden Gem Score)
 
     算法详解：
     1. 基础分 (权重60%)：以他山评分为主要质量依据
@@ -195,8 +190,8 @@ def calculate_hidden_gem_score(tashan_score, stars, forks, lobehub_rating, tools
 
     Returns:
         float: 冷门推荐指数 (0-100+)
-    """
 
+    """
     # 1. 基础分：他山评分 × 0.6
     base_score = tashan_score * 0.6
 
@@ -240,8 +235,7 @@ def calculate_hidden_gem_score(tashan_score, stars, forks, lobehub_rating, tools
 
 
 def determine_recommendation_type(hidden_gem_score, tashan_score, stars):
-    """
-    根据冷门推荐指数确定推荐级别
+    """根据冷门推荐指数确定推荐级别
 
     分级标准：
     - S级 (≥70分): 顶级冷门宝藏，极高质量但极低关注
@@ -250,36 +244,29 @@ def determine_recommendation_type(hidden_gem_score, tashan_score, stars):
     - C级 (55-59分): 专业小众工具，特定领域高价值
     - D级 (50-54分): 一般冷门推荐，补充推荐
     """
-
     if hidden_gem_score >= 70:
         if stars < 50:
             return "S级-顶级冷门宝藏"
-        else:
-            return "A级-高质量冷门"
-    elif hidden_gem_score >= 65:
+        return "A级-高质量冷门"
+    if hidden_gem_score >= 65:
         if tashan_score >= 85:
             return "A级-被严重低估"
-        else:
-            return "A级-优质冷门推荐"
-    elif hidden_gem_score >= 60:
+        return "A级-优质冷门推荐"
+    if hidden_gem_score >= 60:
         if stars < 200:
             return "B级-高质量冷门"
-        else:
-            return "B级-潜力冷门项目"
-    elif hidden_gem_score >= 55:
+        return "B级-潜力冷门项目"
+    if hidden_gem_score >= 55:
         if tashan_score >= 75:
             return "C级-专业小众工具"
-        else:
-            return "C级-特定场景推荐"
-    elif hidden_gem_score >= 50:
+        return "C级-特定场景推荐"
+    if hidden_gem_score >= 50:
         return "D级-一般冷门推荐"
-    else:
-        return "不推荐"
+    return "不推荐"
 
 
 def generate_comprehensive_report(all_df, recommended_df):
     """生成统一的综合分析报告"""
-
     report = f"""# 他山MCP冷门推荐分析
 
 ## 🎯 项目目标
@@ -353,7 +340,7 @@ Stars ≤ 10:   +8分   (极低关注度，冷门宝藏)
     for level, count in level_counts.items():
         report += f"- **{level}**: {count}个\n"
 
-    report += f"""
+    report += """
 
 ## 🏆 顶级推荐项目 (S级和A级)
 

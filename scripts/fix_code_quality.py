@@ -1,15 +1,13 @@
 #!/usr/bin/env python3
-"""
-自动修复常见的代码质量问题
-"""
-import os
+"""自动修复常见的代码质量问题"""
+
 import re
 from pathlib import Path
 
 
 def fix_unused_imports(file_path):
     """修复未使用的导入"""
-    with open(file_path, "r", encoding="utf-8") as f:
+    with open(file_path, encoding="utf-8") as f:
         content = f.read()
 
     # 常见的不必要导入
@@ -51,7 +49,7 @@ def fix_unused_imports(file_path):
 
 def fix_long_lines(file_path):
     """修复过长的代码行"""
-    with open(file_path, "r", encoding="utf-8") as f:
+    with open(file_path, encoding="utf-8") as f:
         content = f.read()
 
     lines = content.split("\n")
@@ -88,7 +86,7 @@ def fix_long_lines(file_path):
 
 def fix_bare_excepts(file_path):
     """修复裸露的except子句"""
-    with open(file_path, "r", encoding="utf-8") as f:
+    with open(file_path, encoding="utf-8") as f:
         content = f.read()
 
     # 替换裸露的except
@@ -103,7 +101,7 @@ def fix_bare_excepts(file_path):
 
 def fix_missing_placeholders(file_path):
     """修复没有占位符的f-string"""
-    with open(file_path, "r", encoding="utf-8") as f:
+    with open(file_path, encoding="utf-8") as f:
         content = f.read()
 
     # 找到没有占位符的f-string

@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
-"""
-更新CSV数据库中缺少包名信息的记录
+"""更新CSV数据库中缺少包名信息的记录
 
 使用GitHub分析器更新缺少package_name、deployment_method、
 install_command和run_command的记录
 """
 
-import csv
 import sys
 from pathlib import Path
 
@@ -120,7 +118,7 @@ def update_missing_package_names():
     # 保存更新后的文件
     df.to_csv("data/mcp_database/mcp.csv", index=False, encoding="utf-8")
 
-    console.print(f"\n[bold green]🎉 更新完成！[/bold green]")
+    console.print("\n[bold green]🎉 更新完成！[/bold green]")
     console.print(f"[green]✅ 成功更新: {updated_count} 条记录[/green]")
     console.print(f"[red]❌ 更新失败: {failed_count} 条记录[/red]")
 
@@ -165,9 +163,8 @@ def test_article_mcp():
 
         console.print("[green]✅ 所有信息都已完整！[/green]")
         return True
-    else:
-        console.print("[red]❌ 未找到article-mcp[/red]")
-        return False
+    console.print("[red]❌ 未找到article-mcp[/red]")
+    return False
 
 
 def main():

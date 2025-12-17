@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-MCP Agent 统一测试脚本 - Linus风格
+"""MCP Agent 统一测试脚本 - Linus风格
 "Talk is cheap. Show me the code." - 一个脚本解决所有测试需求
 
 作者: AI Assistant (Linus重构版)
@@ -21,7 +20,6 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import Any, Dict, List
 
 # 项目配置
 PROJECT_ROOT = Path(__file__).parent
@@ -107,7 +105,7 @@ class MasterTester:
 
             print(f"🎯 测试命令: {' '.join(cmd)}")
             result = subprocess.run(
-                cmd, cwd=PROJECT_ROOT, capture_output=True, text=True
+                cmd, check=False, cwd=PROJECT_ROOT, capture_output=True, text=True
             )
 
             success = result.returncode == 0
@@ -156,7 +154,7 @@ class MasterTester:
 
             tester = get_mcp_tester()
             handler = get_cli_handler()
-            print(f"   Handler/Tester: ✅")
+            print("   Handler/Tester: ✅")
 
             # 4. 环境检查
             from dotenv import load_dotenv
@@ -195,7 +193,7 @@ class MasterTester:
 
         # 输出总结
         duration = time.time() - start_time
-        print(f"\n📊 测试总结")
+        print("\n📊 测试总结")
         print("=" * 50)
         print(f"通过测试: {passed}/{len(tests)}")
         print(f"测试用时: {duration:.1f}秒")

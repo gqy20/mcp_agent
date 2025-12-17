@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
-"""
-执行综合评分字段迁移脚本
-"""
+"""执行综合评分字段迁移脚本"""
+
 import os
 
 from dotenv import load_dotenv
@@ -20,7 +19,9 @@ def main():
         url = os.getenv("SUPABASE_URL")
         key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 
-        print(f"🔍 检查环境变量: URL={'已设置' if url else '未设置'}, KEY={'已设置' if key else '未设置'}")
+        print(
+            f"🔍 检查环境变量: URL={'已设置' if url else '未设置'}, KEY={'已设置' if key else '未设置'}"
+        )
 
         if not url or not key:
             print("❌ 缺少 SUPABASE_URL 或 SUPABASE_SERVICE_ROLE_KEY 环境变量")
@@ -32,7 +33,6 @@ def main():
         # 读取迁移脚本
         with open(
             "database/migrations/002_add_comprehensive_scoring.sql",
-            "r",
             encoding="utf-8",
         ) as f:
             migration_content = f.read()
@@ -106,12 +106,10 @@ def verify_migration(supabase: Client):
             if missing_fields:
                 print(f"⚠️ 缺少字段: {missing_fields}")
                 return False
-            else:
-                print("✅ 所有新字段已成功添加")
-                return True
-        else:
-            print("❌ 无法查询表结构")
-            return False
+            print("✅ 所有新字段已成功添加")
+            return True
+        print("❌ 无法查询表结构")
+        return False
 
     except Exception as e:
         print(f"❌ 验证失败: {e}")

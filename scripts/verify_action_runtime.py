@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-GitHub Action 运行时验证脚本
+"""GitHub Action 运行时验证脚本
 
 验证npm/npx和uvx环境是否正确配置，确保Action能够正常运行
 
@@ -18,14 +17,13 @@ def check_command(cmd, name):
     """检查命令是否可用"""
     try:
         result = subprocess.run(
-            [cmd, "--help"], capture_output=True, text=True, timeout=10
+            [cmd, "--help"], check=False, capture_output=True, text=True, timeout=10
         )
         if result.returncode == 0:
             print(f"✅ {name} 命令可用: {shutil.which(cmd)}")
             return True
-        else:
-            print(f"❌ {name} 命令异常: 返回码 {result.returncode}")
-            return False
+        print(f"❌ {name} 命令异常: 返回码 {result.returncode}")
+        return False
     except subprocess.TimeoutExpired:
         print(f"❌ {name} 命令超时")
         return False
@@ -41,15 +39,14 @@ def check_version(cmd, name):
     """检查命令版本"""
     try:
         result = subprocess.run(
-            [cmd, "--version"], capture_output=True, text=True, timeout=10
+            [cmd, "--version"], check=False, capture_output=True, text=True, timeout=10
         )
         if result.returncode == 0:
             version = result.stdout.strip()
             print(f"📦 {name} 版本: {version}")
             return version
-        else:
-            print(f"⚠️ 无法获取 {name} 版本信息")
-            return None
+        print(f"⚠️ 无法获取 {name} 版本信息")
+        return None
     except Exception as e:
         print(f"⚠️ 获取 {name} 版本失败: {e}")
         return None
@@ -65,6 +62,7 @@ def test_runtime_functionality():
         # 使用简单的npx命令测试
         result = subprocess.run(
             ["npx", "--yes", "cowsay", "npx works!"],
+            check=False,
             capture_output=True,
             text=True,
             timeout=30,
@@ -81,7 +79,7 @@ def test_runtime_functionality():
     try:
         # 使用简单的uvx命令测试
         result = subprocess.run(
-            ["uvx", "--help"], capture_output=True, text=True, timeout=10
+            ["uvx", "--help"], check=False, capture_output=True, text=True, timeout=10
         )
         if result.returncode == 0:
             print("✅ uvx 功能测试通过")
@@ -114,7 +112,7 @@ def main():
         ("python3", "Python3"),
     ]
 
-    print(f"\n🔧 检查命令可用性...")
+    print("\n🔧 检查命令可用性...")
     available_commands = []
     for cmd, name in commands_to_check:
         if check_command(cmd, name):
@@ -126,7 +124,7 @@ def main():
         test_runtime_functionality()
 
     # 综合评估
-    print(f"\n📊 评估结果:")
+    print("\n📊 评估结果:")
     print(f"   可用命令数: {len(available_commands)}/{len(commands_to_check)}")
 
     critical_commands = ["node", "npm", "npx", "uv", "uvx"]
@@ -138,12 +136,11 @@ def main():
     if len(available_critical) >= 4:  # node, npm, npx 和 (uv 或 uvx)
         print("🎉 运行时环境配置良好，Action应该能正常工作!")
         return 0
-    elif len(available_critical) >= 2:
+    if len(available_critical) >= 2:
         print("⚠️ 运行时环境部分可用，某些功能可能受限")
         return 0
-    else:
-        print("❌ 运行时环境严重不足，Action可能无法正常工作")
-        return 1
+    print("❌ 运行时环境严重不足，Action可能无法正常工作")
+    return 1
 
 
 if __name__ == "__main__":

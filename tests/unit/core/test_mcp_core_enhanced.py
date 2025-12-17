@@ -1,6 +1,6 @@
 """Enhanced unit tests for core MCP functionality with better coverage."""
-from typing import Any, Dict, Optional
-from unittest.mock import MagicMock, Mock, patch
+
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -13,7 +13,6 @@ from src.batch_mcp.core.error_handler import (
     validate_input,
 )
 from src.batch_mcp.core.simple_mcp_deployer import (
-    SimpleMCPCommunicator,
     SimpleMCPDeployer,
 )
 
@@ -256,14 +255,11 @@ class TestIntegration:
         """Test complete deployment workflow."""
         # This would be a more complex integration test
         # For now, we'll just test the basic workflow
-        pass
 
     def test_error_recovery_workflow(self):
         """Test error recovery in workflow."""
         # Test that errors are properly handled and don't crash the system
-        pass
 
     def test_concurrent_operations(self):
         """Test concurrent operations handling."""
         # Test thread safety and concurrent access
-        pass

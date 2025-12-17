@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-检查数据库完整性并导出完整数据
+"""检查数据库完整性并导出完整数据
 
 这个脚本用于:
 1. 检查数据库中的数据完整性
@@ -12,7 +11,6 @@ import csv
 import os
 from collections import defaultdict
 from datetime import datetime
-from pathlib import Path
 
 from dotenv import load_dotenv
 from rich.console import Console
@@ -75,7 +73,9 @@ def main():
             .execute()
         )
         with_identifier_count = len(with_identifier_result.data)
-        console.print(f"[green]✅ 有工具标识符的记录数: {with_identifier_count}[/green]")
+        console.print(
+            f"[green]✅ 有工具标识符的记录数: {with_identifier_count}[/green]"
+        )
 
         without_identifier_result = (
             client.table("mcp_test_results")
@@ -84,26 +84,28 @@ def main():
             .execute()
         )
         without_identifier_count = len(without_identifier_result.data)
-        console.print(f"[red]❌ 没有工具标识符的记录数: {without_identifier_count}[/red]")
+        console.print(
+            f"[red]❌ 没有工具标识符的记录数: {without_identifier_count}[/red]"
+        )
 
         # 5. 显示详细统计信息
-        console.print(f"\n[bold]📈 详细统计:[/bold]")
+        console.print("\n[bold]📈 详细统计:[/bold]")
         console.print(f"  总记录数: {total_count}")
         console.print(
-            f"  有综合评分: {with_score_count} ({with_score_count/total_count*100:.1f}%)"
+            f"  有综合评分: {with_score_count} ({with_score_count / total_count * 100:.1f}%)"
         )
         console.print(
-            f"  无综合评分: {without_score_count} ({without_score_count/total_count*100:.1f}%)"
+            f"  无综合评分: {without_score_count} ({without_score_count / total_count * 100:.1f}%)"
         )
         console.print(
-            f"  有标识符: {with_identifier_count} ({with_identifier_count/total_count*100:.1f}%)"
+            f"  有标识符: {with_identifier_count} ({with_identifier_count / total_count * 100:.1f}%)"
         )
         console.print(
-            f"  无标识符: {without_identifier_count} ({without_identifier_count/total_count*100:.1f}%)"
+            f"  无标识符: {without_identifier_count} ({without_identifier_count / total_count * 100:.1f}%)"
         )
 
         # 6. 导出完整数据到CSV
-        console.print(f"\n[blue]💾 正在导出完整数据...[/blue]")
+        console.print("\n[blue]💾 正在导出完整数据...[/blue]")
 
         # 查询所有数据
         all_data_result = client.table("mcp_test_results").select("*").execute()
@@ -146,7 +148,7 @@ def main():
         console.print(f"[green]📄 记录数: {len(all_data_result.data)}[/green]")
 
         # 7. 分析问题原因
-        console.print(f"\n[bold]🔍 问题分析:[/bold]")
+        console.print("\n[bold]🔍 问题分析:[/bold]")
 
         # 检查没有综合评分的记录是否都有GitHub评估分数
         try:
@@ -177,7 +179,9 @@ def main():
                     f"  既无GitHub评分又无综合评分: {len(no_comprehensive_no_github)} 条记录"
                 )
             else:
-                console.print("  [yellow]⚠️ 表中不存在github_evaluation_score字段[/yellow]")
+                console.print(
+                    "  [yellow]⚠️ 表中不存在github_evaluation_score字段[/yellow]"
+                )
         except Exception as e:
             console.print(f"  [yellow]⚠️ 检查GitHub评分时出错: {e}[/yellow]")
 
@@ -196,7 +200,7 @@ def main():
                 tool_stats[tool_id]["without_score"] += 1
 
         # 显示工具统计
-        console.print(f"\n[bold]🛠️ 工具统计 (前10个):[/bold]")
+        console.print("\n[bold]🛠️ 工具统计 (前10个):[/bold]")
         sorted_tools = sorted(
             tool_stats.items(), key=lambda x: x[1]["total"], reverse=True
         )[:10]
@@ -222,7 +226,7 @@ def main():
 
         console.print(table)
 
-        console.print(f"\n[green]✅ 数据库完整性检查完成![/green]")
+        console.print("\n[green]✅ 数据库完整性检查完成![/green]")
 
     except Exception as e:
         console.print(f"[red]❌ 检查失败: {e}[/red]")

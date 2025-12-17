@@ -1,9 +1,9 @@
 """Unit tests for core MCP functionality."""
+
 from unittest.mock import Mock, patch
 
 import pytest
 
-from src.batch_mcp.core.async_mcp_client import AsyncMCPClient
 from src.batch_mcp.core.simple_mcp_deployer import SimpleMCPDeployer
 
 

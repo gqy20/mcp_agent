@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-展示MCP工具综合评分报告
+"""展示MCP工具综合评分报告
 综合评分 = (测试成功率 * 1 + GitHub评估分数 * 2) / 3
 
 遵循Linus的"好品味"原则：简洁、实用、高效
@@ -40,7 +39,9 @@ def main():
         )
         return
 
-    console.print(Panel.fit("[bold blue]MCP工具综合评分报告[/bold blue]", border_style="blue"))
+    console.print(
+        Panel.fit("[bold blue]MCP工具综合评分报告[/bold blue]", border_style="blue")
+    )
 
     # 从数据库动态获取所有有评分的工具
     try:
@@ -163,7 +164,7 @@ def main():
     console.print(table)
 
     # 总结信息
-    console.print(f"\n[bold]📊 总结[/bold]")
+    console.print("\n[bold]📊 总结[/bold]")
     console.print(f"分析工具数: {len(test_urls)}")
     console.print(f"有测试数据: {total_tools}")
     console.print(f"高质量工具(≥80分): {successful_tools}")
@@ -173,8 +174,8 @@ def main():
         console.print(f"质量达标率: {success_ratio:.1f}%")
 
     # 显示计算公式
-    console.print(f"\n[dim]📐 综合评分公式: (测试成功率×1 + GitHub评估分数×2) ÷ 3[/dim]")
-    console.print(f"[dim]🎯 评分标准: ≥80分优秀, 60-79分良好, <60分需改进[/dim]")
+    console.print("\n[dim]📐 综合评分公式: (测试成功率×1 + GitHub评估分数×2) ÷ 3[/dim]")
+    console.print("[dim]🎯 评分标准: ≥80分优秀, 60-79分良好, <60分需改进[/dim]")
 
 
 if __name__ == "__main__":

@@ -1,15 +1,12 @@
 #!/usr/bin/env python3
-"""
-自动化路径更新脚本 - src layout迁移专用
+"""自动化路径更新脚本 - src layout迁移专用
 
 用于将 src/ 下的文件移动到 src/batch_mcp/ 后，批量更新所有导入路径。
 """
 
-import os
 import re
 import sys
 from pathlib import Path
-from typing import List, Tuple
 
 
 class ImportMigrator:
@@ -32,12 +29,12 @@ class ImportMigrator:
             (r"^from\s+\.\.?\s*(core|agents|utils|tools)\.", r"from batch_mcp.\1."),
         ]
 
-    def update_file(self, file_path: Path) -> Tuple[bool, int]:
-        """
-        更新单个文件中的导入路径
+    def update_file(self, file_path: Path) -> tuple[bool, int]:
+        """更新单个文件中的导入路径
 
         Returns:
             (是否更新, 更新的数量)
+
         """
         if not file_path.exists() or not file_path.is_file():
             return (False, 0)
@@ -46,7 +43,7 @@ class ImportMigrator:
             return (False, 0)
 
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 original_content = f.read()
 
             content = original_content
@@ -102,11 +99,11 @@ class ImportMigrator:
     def update_pyproject_toml(self, file_path: Path) -> bool:
         """更新pyproject.toml配置"""
         if not file_path.exists():
-            print(f"⚠️  pyproject.toml 不存在，跳过更新")
+            print("⚠️  pyproject.toml 不存在，跳过更新")
             return False
 
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 content = f.read()
 
             original = content
@@ -149,7 +146,7 @@ packages = ["src.batch_mcp"]
 
     def print_summary(self) -> None:
         """打印更新摘要"""
-        print(f"\n📊 迁移摘要:")
+        print("\n📊 迁移摘要:")
         print(f"✅ 更新文件数: {len(self.updated_files)}")
         print(f"🔄 总更新数: {self.total_updates}")
 
@@ -161,7 +158,7 @@ packages = ["src.batch_mcp"]
 
 def main():
     """主函数"""
-    root_dir = Path(".")
+    root_dir = Path()
 
     print("🚀 开始批量更新导入路径...")
     print("📁 目标包名: batch_mcp")
@@ -173,7 +170,7 @@ def main():
 
     # 更新pyproject.toml
     pyproject_path = root_dir / "pyproject.toml"
-    print(f"\n📝 更新配置文件...")
+    print("\n📝 更新配置文件...")
     migrator.update_pyproject_toml(pyproject_path)
 
     # 输出摘要
@@ -184,7 +181,7 @@ def main():
         print(f"\n⚠️  有 {len(migrator.failed_files)} 个文件处理失败")
         sys.exit(1)
     else:
-        print(f"\n🎉 所有文件更新成功！")
+        print("\n🎉 所有文件更新成功！")
         sys.exit(0)
 
 

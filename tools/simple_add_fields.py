@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
-"""
-简化的数据库字段添加脚本 - 使用Supabase客户端直接操作
-"""
+"""简化的数据库字段添加脚本 - 使用Supabase客户端直接操作"""
+
 import os
 
 from dotenv import load_dotenv
@@ -35,7 +34,9 @@ def main():
                 .limit(1)
                 .execute()
             )
-            print(f"✅ 找到 mcp_repository_evaluations 表，当前记录数: {len(result.data)}")
+            print(
+                f"✅ 找到 mcp_repository_evaluations 表，当前记录数: {len(result.data)}"
+            )
         except Exception as e:
             print(f"❌ 表不存在或无法访问: {e}")
             return False

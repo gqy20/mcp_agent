@@ -1,8 +1,6 @@
 """Unit tests for tools functionality."""
-import json
-import subprocess
-from pathlib import Path
-from unittest.mock import MagicMock, Mock, mock_open, patch
+
+from unittest.mock import Mock, mock_open, patch
 
 import pytest
 
@@ -309,9 +307,10 @@ class TestSetupValidator:
 
     def test_check_system_requirements(self, setup_validator):
         """Test system requirements checking."""
-        with patch("psutil.virtual_memory") as mock_memory, patch(
-            "psutil.disk_usage"
-        ) as mock_disk:
+        with (
+            patch("psutil.virtual_memory") as mock_memory,
+            patch("psutil.disk_usage") as mock_disk,
+        ):
             mock_memory.return_value = Mock(
                 total=8589934592, available=4294967296
             )  # 8GB total, 4GB available
