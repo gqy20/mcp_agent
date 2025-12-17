@@ -16,7 +16,7 @@ class IntelligentToolSelector:
     """智能MCP工具选择器"""
 
     def __init__(self) -> None:
-        self.csv_path = "data/mcp.csv"
+        self.csv_path = "data/mcp_database/mcp.csv"
         self.browser_keywords = [
             "playwright",
             "browser",

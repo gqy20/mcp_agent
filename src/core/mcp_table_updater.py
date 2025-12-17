@@ -31,8 +31,8 @@ class MCPTableUpdater:
             mcp_csv_path: mcp.csv文件路径
             tashan_csv_path: tashan_verified_mcp.csv文件路径
         """
-        self.mcp_csv_path = mcp_csv_path or "data/mcp.csv"
-        self.tashan_csv_path = tashan_csv_path or "data/tashan_verified_mcp.csv"
+        self.mcp_csv_path = mcp_csv_path or "data/mcp_database/mcp.csv"
+        self.tashan_csv_path = tashan_csv_path or "data/mcp_database/tashan_verified_mcp.csv"
 
         self.analyzer = GitHubMCPAnalyzer()
 

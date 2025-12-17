@@ -16,7 +16,7 @@ def main():
     test_count = int(os.getenv("TEST_COUNT", 20))
 
     # 读取CSV文件
-    csv_path = "data/mcp.csv"
+    csv_path = "data/mcp_database/mcp.csv"
     try:
         df = pd.read_csv(csv_path)
         print(f"📦 总工具数: {len(df)}")

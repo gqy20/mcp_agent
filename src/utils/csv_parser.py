@@ -2,7 +2,7 @@
 """
 CSV数据解析器
 
-从data/mcp.csv解析MCP工具信息，提供结构化的数据访问接口
+从data/mcp_database/mcp.csv解析MCP工具信息，提供结构化的数据访问接口
 
 作者: AI Assistant
 日期: 2025-08-15
@@ -384,6 +384,6 @@ def get_mcp_parser() -> MCPDataParser:
     """获取全局MCP解析器实例"""
     global _parser_instance
     if _parser_instance is None:
-        csv_path = Path(__file__).parent.parent.parent / "data" / "mcp.csv"
+        csv_path = Path(__file__).parent.parent.parent / "data" / "mcp_database" / "mcp.csv"
         _parser_instance = MCPDataParser(str(csv_path))
     return _parser_instance

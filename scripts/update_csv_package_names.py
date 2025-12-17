@@ -24,7 +24,7 @@ def update_missing_package_names():
     console.print("[bold blue]🔧 开始更新CSV数据库中的包名信息...[/bold blue]")
 
     # 初始化解析器和分析器
-    parser = MCPDataParser("data/mcp.csv")
+    parser = MCPDataParser("data/mcp_database/mcp.csv")
     analyzer = GitHubMCPAnalyzer()
 
     # 加载数据
@@ -67,11 +67,11 @@ def update_missing_package_names():
         return True
 
     # 备份原文件
-    backup_path = Path("data/mcp.csv.backup")
+    backup_path = Path("data/mcp_database/mcp.csv.backup")
     if backup_path.exists():
         backup_path.unlink()
 
-    Path("data/mcp.csv").rename(backup_path)
+    Path("data/mcp_database/mcp.csv").rename(backup_path)
     console.print(f"[blue]💾 原文件已备份到: {backup_path}[/blue]")
 
     # 更新记录
@@ -118,7 +118,7 @@ def update_missing_package_names():
             failed_count += 1
 
     # 保存更新后的文件
-    df.to_csv("data/mcp.csv", index=False, encoding="utf-8")
+    df.to_csv("data/mcp_database/mcp.csv", index=False, encoding="utf-8")
 
     console.print(f"\n[bold green]🎉 更新完成！[/bold green]")
     console.print(f"[green]✅ 成功更新: {updated_count} 条记录[/green]")
@@ -142,7 +142,7 @@ def test_article_mcp():
     """测试article-mcp的信息是否正确"""
     console.print("\n[bold blue]🧪 测试article-mcp信息...[/bold blue]")
 
-    parser = MCPDataParser("data/mcp.csv")
+    parser = MCPDataParser("data/mcp_database/mcp.csv")
     tool = parser.find_tool_by_url("https://github.com/gqy20/article-mcp")
 
     if tool:
