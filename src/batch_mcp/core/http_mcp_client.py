@@ -37,6 +37,7 @@ class HttpMCPClient:
 
         # 存储最后获取的工具列表
         self.last_tools_response = None
+        self.available_tools = []
 
     async def list_tools(self) -> dict[str, Any]:
         """获取工具列表."""
@@ -81,6 +82,8 @@ class HttpMCPClient:
                 }
                 # 存储结果到实例属性
                 self.last_tools_response = result.get("result", {})
+                # 更新available_tools属性
+                self.available_tools = result.get("result", {}).get("tools", [])
                 return response
             except json.JSONDecodeError:
                 # 如果JSON解析失败，尝试SSE格式
@@ -93,6 +96,8 @@ class HttpMCPClient:
                     }
                     # 存储结果到实例属性
                     self.last_tools_response = sse_result.get("result", {})
+                    # 更新available_tools属性
+                    self.available_tools = sse_result.get("result", {}).get("tools", [])
                     return response
                 return {
                     "success": False,
