@@ -65,7 +65,7 @@ class TestGeneratorAgent:
                     "model_type": "openai_chat",
                     "model_name": config.ai.openai_model,
                     "api_key": config.ai.openai_api_key,
-                    "client_args": {
+                    "client_kwargs": {
                         "base_url": config.ai.openai_base_url,
                         "timeout": 60,
                     },
@@ -77,7 +77,7 @@ class TestGeneratorAgent:
                     "model_type": "openai_chat",
                     "model_name": config.ai.dashscope_model,
                     "api_key": config.ai.dashscope_api_key,
-                    "client_args": {
+                    "client_kwargs": {
                         "base_url": config.ai.dashscope_base_url,
                         "timeout": 60,
                     },
@@ -93,7 +93,7 @@ class TestGeneratorAgent:
             "model_type": "openai_chat",
             "model_name": os.getenv("OPENAI_MODEL", "qwen-plus"),
             "api_key": os.getenv("OPENAI_API_KEY"),
-            "client_args": {
+            "client_kwargs": {
                 "base_url": os.getenv("OPENAI_BASE_URL"),
                 "timeout": 60,
             },

@@ -8,7 +8,7 @@ requires-python = ">=3.12"
 license = {text = "MIT"}
 
 dependencies = [
-    "agentscope>=0.1.0",
+    "agentscope>=1.0.9",
     "python-dotenv>=1.0.0",
     "pandas>=2.2.0",
     "requests>=2.31.0",
