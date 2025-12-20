@@ -23,7 +23,7 @@ from rich import print as rprint
 
 
 class InputType(Enum):
-    """MCP输入类型枚举"""
+    """MCP输入类型枚举."""
 
     HTTP_ENDPOINT = "http_endpoint"
     GITHUB_URL = "github_url"
@@ -57,13 +57,13 @@ class CLIHandler:
         self.tester = get_mcp_tester()
 
     def _detect_input_type(self, user_input: str) -> InputType:
-        """智能检测用户输入类型
+        """智能检测用户输入类型.
 
         Args:
             user_input: 用户输入的字符串
 
         Returns:
-            InputType: 检测到的输入类型
+            InputType: 检测到的输入类型.
 
         """
         # 移除首尾空白字符
@@ -87,7 +87,7 @@ class CLIHandler:
     def _adapt_config_for_input_type(
         self, input_type: InputType, config: "TestConfig"
     ) -> "TestConfig":
-        """根据输入类型自适应调整配置"""
+        """根据输入类型自适应调整配置."""
         import copy
 
         # 创建配置副本避免修改原配置
@@ -519,7 +519,9 @@ class CLIHandler:
                 for smart_result in smart_results:
                     # 确保smart_result是字典类型，防止意外类型混入
                     if not isinstance(smart_result, dict):
-                        rprint(f"[yellow]⚠️ 跳过无效的智能测试结果: {type(smart_result)}[/yellow]")
+                        rprint(
+                            f"[yellow]⚠️ 跳过无效的智能测试结果: {type(smart_result)}[/yellow]"
+                        )
                         continue
 
                     smart_test_result = TestResult(
@@ -758,7 +760,9 @@ class CLIHandler:
 
         # 检查是否为 HTTP MCP 客户端
         if self._is_http_client(server_info):
-            http_success, http_test_results = asyncio.run(self._run_http_tests(tool_info, server_info, config))
+            http_success, http_test_results = asyncio.run(
+                self._run_http_tests(tool_info, server_info, config)
+            )
             # 提取basic_tests列表以保持与其他测试路径的一致性
             basic_tests_list = http_test_results.get("basic_tests", [])
             return http_success, basic_tests_list

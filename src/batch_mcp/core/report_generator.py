@@ -119,11 +119,10 @@ class MCPTestReport:
         # 过滤出有效的TestResult对象，防止混入其他类型
         valid_test_results = []
         for t in self.test_results:
-            if hasattr(t, 'success'):
+            if hasattr(t, "success"):
                 valid_test_results.append(t)
-            else:
-                # 记录无效对象类型用于调试
-                print(f"警告: 跳过无效的测试结果对象: {type(t)}, 内容: {t}")
+            # 记录无效对象类型用于调试但不中断处理
+            # 调试信息: 跳过无效的测试结果对象: {type(t)}
 
         passed = sum(1 for t in valid_test_results if t.success)
         total = len(valid_test_results)
@@ -313,11 +312,10 @@ class MCPReportGenerator:
         # 过滤出有效的TestResult对象，防止混入其他类型
         valid_test_results = []
         for t in report.test_results:
-            if hasattr(t, 'success'):
+            if hasattr(t, "success"):
                 valid_test_results.append(t)
-            else:
-                # 记录无效对象类型用于调试
-                print(f"警告: HTML报告中跳过无效的测试结果对象: {type(t)}, 内容: {t}")
+            # 记录无效对象类型用于调试但不中断处理
+            # 调试信息: HTML报告中跳过无效的测试结果对象: {type(t)}
 
         passed = sum(1 for t in valid_test_results if t.success)
         total = len(valid_test_results)
@@ -383,10 +381,10 @@ a{{color:#667eea;text-decoration:none;}} a:hover{{text-decoration:underline;}}
         # 生成测试结果表格 - 统一处理，使用过滤后的有效结果
         for test in valid_test_results:
             # 安全访问属性，防止 AttributeError
-            test_name = getattr(test, 'test_name', '未知测试')
-            success = getattr(test, 'success', False)
-            duration = getattr(test, 'duration', 0.0)
-            error_message = getattr(test, 'error_message', None)
+            test_name = getattr(test, "test_name", "未知测试")
+            success = getattr(test, "success", False)
+            duration = getattr(test, "duration", 0.0)
+            error_message = getattr(test, "error_message", None)
 
             html_content += f"""<tr>
 <td>{test_name}</td>

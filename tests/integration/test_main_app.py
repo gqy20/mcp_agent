@@ -110,9 +110,9 @@ def test_module_structure():
     expected_attrs = ["app", "main", "TestConfig"]
 
     for attr in expected_attrs:
-        assert hasattr(
-            main_module, attr
-        ), f"Attribute '{attr}' not found in main module"
+        assert hasattr(main_module, attr), (
+            f"Attribute '{attr}' not found in main module"
+        )
 
 
 def test_app_configuration():
