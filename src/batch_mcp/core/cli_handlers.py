@@ -294,32 +294,67 @@ class CLIHandler:
             evaluation_result = None
             if config.evaluate:
                 rprint("[blue]🔍 正在评估工具...[/blue]")
-                # 创建Supabase客户端供评估使用
-                supabase_client = None
-                if (
-                    config.db_export
-                    and CONFIG_AVAILABLE
-                    and hasattr(config, "database")
-                    and config.database
-                    and hasattr(config.database, "has_supabase_config")
-                    and config.database.has_supabase_config
-                ):
-                    try:
-                        from supabase import create_client
 
-                        supabase_client = create_client(
-                            config.database.supabase_url,
-                            config.database.supabase_service_role_key,
+                # 根据工具类型选择评估方法
+                if tool_info.github_url:
+                    # GitHub 仓库评估
+                    supabase_client = None
+                    if (
+                        config.db_export
+                        and CONFIG_AVAILABLE
+                        and hasattr(config, "database")
+                        and config.database
+                        and hasattr(config.database, "has_supabase_config")
+                        and config.database.has_supabase_config
+                    ):
+                        try:
+                            from supabase import create_client
+
+                            supabase_client = create_client(
+                                config.database.supabase_url,
+                                config.database.supabase_service_role_key,
+                            )
+                        except Exception:
+                            pass
+
+                    evaluation_result = (
+                        evaluate_full_repository_with_comprehensive_score(
+                            tool_info.github_url,
+                            supabase_client,
                         )
-                    except Exception:
-                        pass
+                    )
+                    if (
+                        evaluation_result
+                        and evaluation_result.get("status") == "success"
+                    ):
+                        self._display_evaluation_result(evaluation_result)
 
-                evaluation_result = evaluate_full_repository_with_comprehensive_score(
-                    tool_info.github_url,
-                    supabase_client,
-                )
-                if evaluation_result and evaluation_result.get("status") == "success":
-                    self._display_evaluation_result(evaluation_result)
+                elif tool_info.deployment_method == "http":
+                    # HTTP MCP 端点评估
+                    from .evaluator import evaluate_http_mcp_endpoint
+
+                    # 计算测试结果统计
+                    basic_tests = test_results or []
+                    tools_count = server_info.available_tools if server_info else 0
+                    avg_response_time = (
+                        sum(t.duration for t in basic_tests) / len(basic_tests)
+                        if basic_tests
+                        else 0.0
+                    )
+
+                    evaluation_result = evaluate_http_mcp_endpoint(
+                        test_results={
+                            "test_results": _convert_test_results_to_dict(basic_tests)
+                        },
+                        tools_count=tools_count,
+                        response_time=avg_response_time,
+                        tool_info={"name": tool_info.name, "url": tool_info.url},
+                    )
+                    if (
+                        evaluation_result
+                        and evaluation_result.get("status") == "success"
+                    ):
+                        self._display_http_evaluation_result(evaluation_result)
 
             # 4. 生成报告
             report_files = {}
@@ -376,34 +411,69 @@ class CLIHandler:
 
             # 评估工具
             evaluation_result = None
-            if config.evaluate and tool_info and tool_info.github_url:
+            if config.evaluate and tool_info:
                 rprint("[blue]🔍 正在评估工具...[/blue]")
-                # 创建Supabase客户端供评估使用
-                supabase_client = None
-                if (
-                    config.db_export
-                    and CONFIG_AVAILABLE
-                    and hasattr(config, "database")
-                    and config.database
-                    and hasattr(config.database, "has_supabase_config")
-                    and config.database.has_supabase_config
-                ):
-                    try:
-                        from supabase import create_client
 
-                        supabase_client = create_client(
-                            config.database.supabase_url,
-                            config.database.supabase_service_role_key,
+                # 根据工具类型选择评估方法
+                if tool_info.github_url:
+                    # GitHub 仓库评估
+                    supabase_client = None
+                    if (
+                        config.db_export
+                        and CONFIG_AVAILABLE
+                        and hasattr(config, "database")
+                        and config.database
+                        and hasattr(config.database, "has_supabase_config")
+                        and config.database.has_supabase_config
+                    ):
+                        try:
+                            from supabase import create_client
+
+                            supabase_client = create_client(
+                                config.database.supabase_url,
+                                config.database.supabase_service_role_key,
+                            )
+                        except Exception:
+                            pass
+
+                    evaluation_result = (
+                        evaluate_full_repository_with_comprehensive_score(
+                            tool_info.github_url,
+                            supabase_client,
                         )
-                    except Exception:
-                        pass
+                    )
+                    if (
+                        evaluation_result
+                        and evaluation_result.get("status") == "success"
+                    ):
+                        self._display_evaluation_result(evaluation_result)
 
-                evaluation_result = evaluate_full_repository_with_comprehensive_score(
-                    tool_info.github_url,
-                    supabase_client,
-                )
-                if evaluation_result and evaluation_result.get("status") == "success":
-                    self._display_evaluation_result(evaluation_result)
+                elif tool_info.deployment_method == "http":
+                    # HTTP MCP 端点评估
+                    from .evaluator import evaluate_http_mcp_endpoint
+
+                    # 计算测试结果统计
+                    basic_tests = test_results or []
+                    tools_count = server_info.available_tools if server_info else 0
+                    avg_response_time = (
+                        sum(t.duration for t in basic_tests) / len(basic_tests)
+                        if basic_tests
+                        else 0.0
+                    )
+
+                    evaluation_result = evaluate_http_mcp_endpoint(
+                        test_results={
+                            "test_results": _convert_test_results_to_dict(basic_tests)
+                        },
+                        tools_count=tools_count,
+                        response_time=avg_response_time,
+                        tool_info={"name": tool_info.name, "url": tool_info.url},
+                    )
+                    if (
+                        evaluation_result
+                        and evaluation_result.get("status") == "success"
+                    ):
+                        self._display_http_evaluation_result(evaluation_result)
 
             # 生成报告（如果需要）
             report_files = {}
@@ -1427,7 +1497,7 @@ class CLIHandler:
             name=tool_name,
             url=url,  # 使用 HTTP URL 作为 URL
             author="HTTP MCP Provider",
-            github_url=url,  # 使用 HTTP URL 作为 github_url
+            github_url=None,  # HTTP MCP端点没有GitHub URL
             description=f"HTTP MCP endpoint at {parsed.netloc}",
             deployment_method="http",  # HTTP 部署方法
             category="HTTP MCP",
@@ -1854,6 +1924,29 @@ class CLIHandler:
 
 # 全局处理器实例
 _handler = CLIHandler()
+
+
+def _convert_test_results_to_dict(test_results: list) -> list[dict]:
+    """将TestResult对象列表转换为字典格式，供HTTP评估使用."""
+    test_results_dict = []
+    for t in test_results:
+        if hasattr(t, "success"):
+            # 使用to_concise_dict方法获取基本信息
+            test_dict = (
+                t.to_concise_dict() if hasattr(t, "to_concise_dict") else t.__dict__
+            )
+            # 确保包含必要的字段
+            test_dict.update(
+                {
+                    "test_name": getattr(t, "test_name", "Unknown Test"),
+                    "success": getattr(t, "success", False),
+                    "duration": getattr(t, "duration", 0.0),
+                    "error_message": getattr(t, "error_message", None),
+                    "test_category": getattr(t, "test_category", "未知"),
+                }
+            )
+            test_results_dict.append(test_dict)
+    return test_results_dict
 
 
 def get_cli_handler() -> CLIHandler:
