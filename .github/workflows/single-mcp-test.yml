@@ -1,12 +1,23 @@
-name: 🧪 Single MCP Tool Testing
+name: 🧪 Universal MCP Tool Testing
 
 on:
   workflow_dispatch:
     inputs:
-      github_url:
-        description: '🎯 GitHub URL of the MCP tool to test'
+      mcp_input:
+        description: '🎯 MCP tool input (GitHub URL, HTTP endpoint, package name, or search query)'
         required: true
         default: 'https://github.com/upstash/context7'
+      input_type_hint:
+        description: '🔍 Input type hint (optional: github_url, http_endpoint, package_name, search_query)'
+        required: false
+        type: choice
+        options:
+        - 'auto-detect'
+        - 'github_url'
+        - 'http_endpoint'
+        - 'package_name'
+        - 'search_query'
+        default: 'auto-detect'
 
 jobs:
   test-mcp-tool:
@@ -64,11 +75,45 @@ jobs:
     - name: 🧪 Complete MCP Tool Testing
       id: test_mcp
       run: |
-        GITHUB_URL="${{ github.event.inputs.github_url }}"
+        MCP_INPUT="${{ github.event.inputs.mcp_input }}"
+        INPUT_TYPE_HINT="${{ github.event.inputs.input_type_hint }}"
 
-        echo "🎯 开始完整 MCP 工具测试"
-        echo "📍 测试URL: $GITHUB_URL"
+        echo "🎯 开始统一 MCP 工具测试"
+        echo "📍 输入内容: $MCP_INPUT"
+        echo "🔍 类型提示: $INPUT_TYPE_HINT"
         echo "⏱️ 超时时间: 600秒"
+
+        # 智能输入类型检测（如果未指定提示）
+        if [ "$INPUT_TYPE_HINT" = "auto-detect" ] || [ -z "$INPUT_TYPE_HINT" ]; then
+          echo "🤖 启用智能输入类型检测..."
+
+          # 运行输入类型检测
+          DETECTED_TYPE=$(uv run python scripts/detect_input_type.py "$MCP_INPUT")
+          echo "🎯 检测到的输入类型: $DETECTED_TYPE"
+        else
+          DETECTED_TYPE="$INPUT_TYPE_HINT"
+          echo "🔍 使用指定的输入类型: $DETECTED_TYPE"
+        fi
+
+        # 根据输入类型调整配置
+        case "$DETECTED_TYPE" in
+          "http_endpoint")
+            echo "🌐 HTTP MCP端点模式 - 优化超时时间和配置"
+            TIMEOUT="300"
+            ;;
+          "github_url")
+            echo "📦 GitHub仓库模式 - 标准配置"
+            TIMEOUT="600"
+            ;;
+          "package_name")
+            echo "📋 包名模式 - 标准配置"
+            TIMEOUT="600"
+            ;;
+          "search_query"|"unknown"|*)
+            echo "🔍 搜索查询模式 - 默认配置"
+            TIMEOUT="600"
+            ;;
+        esac
 
         # 检查AI配置
         if [ -n "$OPENAI_API_KEY" ] || [ -n "$DASHSCOPE_API_KEY" ]; then
@@ -90,8 +135,9 @@ jobs:
           USE_DB="--no-db-export"
         fi
 
-        # 执行完整测试
-        if uv run python -m src.batch_mcp.main test-url "$GITHUB_URL" --timeout 600 --verbose $USE_SMART $USE_DB; then
+        # 执行统一测试
+        echo "🚀 执行MCP测试: $MCP_INPUT (类型: $DETECTED_TYPE, 超时: ${TIMEOUT}s)"
+        if uv run python -m src.batch_mcp.main test-url "$MCP_INPUT" --timeout $TIMEOUT --verbose $USE_SMART $USE_DB; then
           echo "✅ 测试成功完成"
           TEST_STATUS="success"
         else
@@ -119,6 +165,8 @@ jobs:
         # 输出状态
         echo "test_status=$TEST_STATUS" >> $GITHUB_OUTPUT
         echo "database_enabled=$DATABASE_ENABLED" >> $GITHUB_OUTPUT
+        echo "detected_input_type=$DETECTED_TYPE" >> $GITHUB_OUTPUT
+        echo "used_timeout=$TIMEOUT" >> $GITHUB_OUTPUT
 
     - name: 📊 Database Storage Verification
       if: always() && steps.test_mcp.outputs.database_enabled == 'true'
@@ -215,9 +263,11 @@ jobs:
     - name: Create Summary
       if: always()
       run: |
-        echo "# 🧪 MCP工具测试结果" >> $GITHUB_STEP_SUMMARY
+        echo "# 🧪 统一MCP工具测试结果" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        echo "**测试URL:** \`${{ github.event.inputs.github_url }}\`" >> $GITHUB_STEP_SUMMARY
+        echo "**输入内容:** \`${{ github.event.inputs.mcp_input }}\`" >> $GITHUB_STEP_SUMMARY
+        echo "**检测到的类型:** \`${{ steps.test_mcp.outputs.detected_input_type || '未知' }}\`" >> $GITHUB_STEP_SUMMARY
+        echo "**使用超时:** ${{ steps.test_mcp.outputs.used_timeout || '600' }}秒" >> $GITHUB_STEP_SUMMARY
         echo "**测试状态:** ${{ steps.test_mcp.outputs.test_status || '未知' }}" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
 
