@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """GitHub Actions输入类型检测脚本"""
 
-import sys
 import os
+import sys
 
 # 添加项目根目录到Python路径
 project_root = os.path.dirname(os.path.dirname(__file__))
 sys.path.insert(0, project_root)
 
-from src.batch_mcp.core.cli_handlers import CLIHandler, InputType
+from src.batch_mcp.core.cli_handlers import CLIHandler
 
 
 def detect_input_type(user_input: str) -> str:
