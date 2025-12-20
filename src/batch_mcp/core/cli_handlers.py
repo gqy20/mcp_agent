@@ -517,6 +517,11 @@ class CLIHandler:
                 from .report_generator import TestResult
 
                 for smart_result in smart_results:
+                    # 确保smart_result是字典类型，防止意外类型混入
+                    if not isinstance(smart_result, dict):
+                        rprint(f"[yellow]⚠️ 跳过无效的智能测试结果: {type(smart_result)}[/yellow]")
+                        continue
+
                     smart_test_result = TestResult(
                         test_name=f"AI智能测试: {smart_result.get('tool_name', 'unknown')}",
                         success=smart_result.get("success", False),
@@ -753,7 +758,10 @@ class CLIHandler:
 
         # 检查是否为 HTTP MCP 客户端
         if self._is_http_client(server_info):
-            return asyncio.run(self._run_http_tests(tool_info, server_info, config))
+            http_success, http_test_results = asyncio.run(self._run_http_tests(tool_info, server_info, config))
+            # 提取basic_tests列表以保持与其他测试路径的一致性
+            basic_tests_list = http_test_results.get("basic_tests", [])
+            return http_success, basic_tests_list
 
         if config.smart_test and tool_info:
             try:

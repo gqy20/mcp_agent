@@ -116,8 +116,17 @@ class MCPTestReport:
 
     def to_concise_dict(self) -> dict:
         """转换为精简格式 - 适合控制台输出."""
-        passed = sum(1 for t in self.test_results if t.success)
-        total = len(self.test_results)
+        # 过滤出有效的TestResult对象，防止混入其他类型
+        valid_test_results = []
+        for t in self.test_results:
+            if hasattr(t, 'success'):
+                valid_test_results.append(t)
+            else:
+                # 记录无效对象类型用于调试
+                print(f"警告: 跳过无效的测试结果对象: {type(t)}, 内容: {t}")
+
+        passed = sum(1 for t in valid_test_results if t.success)
+        total = len(valid_test_results)
         success_rate = (passed / total * 100) if total > 0 else 0
 
         # 精简工具信息
@@ -301,8 +310,17 @@ class MCPReportGenerator:
         html_path = self.output_dir / f"mcp_test_{timestamp}.html"
 
         # 计算统计数据
-        passed = sum(1 for t in report.test_results if t.success)
-        total = len(report.test_results)
+        # 过滤出有效的TestResult对象，防止混入其他类型
+        valid_test_results = []
+        for t in report.test_results:
+            if hasattr(t, 'success'):
+                valid_test_results.append(t)
+            else:
+                # 记录无效对象类型用于调试
+                print(f"警告: HTML报告中跳过无效的测试结果对象: {type(t)}, 内容: {t}")
+
+        passed = sum(1 for t in valid_test_results if t.success)
+        total = len(valid_test_results)
         success_rate = (passed / total * 100) if total > 0 else 0
 
         # 生成HTML - 单一模板，无条件分支
@@ -362,13 +380,19 @@ a{{color:#667eea;text-decoration:none;}} a:hover{{text-decoration:underline;}}
 <table style="width:100%;border-collapse:collapse;">
 <tr style="background:#f5f5f5;"><th>测试名</th><th>状态</th><th>耗时</th><th>错误</th></tr>"""
 
-        # 生成测试结果表格 - 统一处理
-        for test in report.test_results:
+        # 生成测试结果表格 - 统一处理，使用过滤后的有效结果
+        for test in valid_test_results:
+            # 安全访问属性，防止 AttributeError
+            test_name = getattr(test, 'test_name', '未知测试')
+            success = getattr(test, 'success', False)
+            duration = getattr(test, 'duration', 0.0)
+            error_message = getattr(test, 'error_message', None)
+
             html_content += f"""<tr>
-<td>{test.test_name}</td>
-<td class="{"success" if test.success else "failure"}">{"✅" if test.success else "❌"}</td>
-<td>{test.duration:.2f}s</td>
-<td>{test.error_message or "-"}</td>
+<td>{test_name}</td>
+<td class="{"success" if success else "failure"}">{"✅" if success else "❌"}</td>
+<td>{duration:.2f}s</td>
+<td>{error_message or "-"}</td>
 </tr>"""
 
         html_content += "</table></body></html>"
