@@ -821,6 +821,13 @@ def evaluate_http_mcp_endpoint(
         "evaluation_timestamp": datetime.now(UTC).isoformat(),
     }
 
+    # 添加数据库导出所需的虚拟字段
+    # HTTP端点没有GitHub仓库的sustainability和popularity数据，所以基于测试结果生成合理值
+    result["sustainability"] = _generate_http_sustainability_data(
+        scoring_result, test_results
+    )
+    result["popularity"] = _generate_http_popularity_data(scoring_result, tools_count)
+
     # 添加工具信息(如果提供)
     if tool_info:
         result["tool_info"] = {
@@ -831,3 +838,76 @@ def evaluate_http_mcp_endpoint(
         }
 
     return result
+
+
+def _generate_http_sustainability_data(
+    scoring_result: dict[str, Any], test_results: dict[str, Any]
+) -> dict[str, Any]:
+    """为HTTP MCP生成sustainability数据.
+
+    HTTP端点没有GitHub仓库的sustainability数据，基于测试结果生成合理值
+
+    Args:
+        scoring_result: HTTP MCP评分结果
+        test_results: 测试结果
+
+    Returns:
+        包含sustainability数据的字典
+
+    """
+    # 基于连通性和功能测试成功率计算sustainability分数
+    connectivity_score = scoring_result.get("connectivity_score", 0)
+    functionality_score = scoring_result.get("functionality_score", 0)
+    performance_score = scoring_result.get("performance_score", 0)
+
+    # 计算综合sustainability分数
+    sustainability_total = (
+        connectivity_score * 0.5 + functionality_score * 0.3 + performance_score * 0.2
+    )
+
+    return {
+        "total_score": round(sustainability_total, 1),
+        "details": {
+            "connectivity_score": round(connectivity_score, 1),
+            "functionality_score": round(functionality_score, 1),
+            "performance_score": round(performance_score, 1),
+            "deployment_success": test_results.get("deployment_success", False),
+            "communication_success": test_results.get("communication_success", False),
+            "note": "HTTP端点sustainability基于测试结果生成",
+        },
+    }
+
+
+def _generate_http_popularity_data(
+    scoring_result: dict[str, Any], tools_count: int
+) -> dict[str, Any]:
+    """为HTTP MCP生成popularity数据.
+
+    HTTP端点没有GitHub仓库的popularity数据，基于工具数量和功能评分生成合理值
+
+    Args:
+        scoring_result: HTTP MCP评分结果
+        tools_count: 工具数量
+
+    Returns:
+        包含popularity数据的字典
+
+    """
+    # 基于工具数量和功能评分计算popularity分数
+    quantity_score = scoring_result.get("quantity_score", 0)
+    functionality_score = scoring_result.get("functionality_score", 0)
+
+    # HTTP端点的popularity基于工具数量和功能质量
+    popularity_total = quantity_score * 0.6 + functionality_score * 0.4
+
+    return {
+        "total_score": round(popularity_total, 1),
+        "details": {
+            "tools_count": tools_count,
+            "quantity_score": round(quantity_score, 1),
+            "functionality_score": round(functionality_score, 1),
+            "stars": 0,  # HTTP端点没有GitHub stars
+            "forks": 0,  # HTTP端点没有GitHub forks
+            "note": "HTTP端点popularity基于工具数量和功能质量生成",
+        },
+    }
