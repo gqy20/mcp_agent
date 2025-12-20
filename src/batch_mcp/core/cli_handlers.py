@@ -344,7 +344,9 @@ class CLIHandler:
 
                     evaluation_result = evaluate_http_mcp_endpoint(
                         test_results={
-                            "test_results": _convert_test_results_to_dict(basic_tests)
+                            "deployment_success": True,  # HTTP部署总是成功
+                            "communication_success": success,  # 通信成功率
+                            "test_results": _convert_test_results_to_dict(basic_tests),
                         },
                         tools_count=tools_count,
                         response_time=avg_response_time,
@@ -463,7 +465,9 @@ class CLIHandler:
 
                     evaluation_result = evaluate_http_mcp_endpoint(
                         test_results={
-                            "test_results": _convert_test_results_to_dict(basic_tests)
+                            "deployment_success": True,  # HTTP部署总是成功
+                            "communication_success": success,  # 通信成功率
+                            "test_results": _convert_test_results_to_dict(basic_tests),
                         },
                         tools_count=tools_count,
                         response_time=avg_response_time,
