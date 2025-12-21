@@ -336,6 +336,13 @@ class CLIHandler:
                     # 计算测试结果统计
                     basic_tests = test_results or []
                     tools_count = server_info.available_tools if server_info else 0
+
+                    # 确保tools_count是数值类型
+                    if isinstance(tools_count, list):
+                        tools_count = len(tools_count)
+                    elif not isinstance(tools_count, (int, float)):
+                        tools_count = 0
+
                     avg_response_time = (
                         sum(t.duration for t in basic_tests) / len(basic_tests)
                         if basic_tests
@@ -457,6 +464,13 @@ class CLIHandler:
                     # 计算测试结果统计
                     basic_tests = test_results or []
                     tools_count = server_info.available_tools if server_info else 0
+
+                    # 确保tools_count是数值类型
+                    if isinstance(tools_count, list):
+                        tools_count = len(tools_count)
+                    elif not isinstance(tools_count, (int, float)):
+                        tools_count = 0
+
                     avg_response_time = (
                         sum(t.duration for t in basic_tests) / len(basic_tests)
                         if basic_tests

@@ -734,6 +734,7 @@ def calculate_http_mcp_score(
     # 工具功能评分 (40%)
     all_tests = test_results.get("test_results", [])
     tool_tests = [t for t in all_tests if t.get("test_category") == "功能测试"]
+
     functionality_score = calculate_functionality_score(tool_tests)
 
     # 性能评分 (20%)
