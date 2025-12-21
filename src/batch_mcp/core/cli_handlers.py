@@ -1135,13 +1135,13 @@ class CLIHandler:
                 )
 
             if evaluation_result and evaluation_result.get("status") == "success":
-                record["final_score"] = evaluation_result["final_score"]
-                record["sustainability_score"] = evaluation_result["sustainability"][
-                    "total_score"
-                ]
-                record["popularity_score"] = evaluation_result["popularity"][
-                    "total_score"
-                ]
+                record["final_score"] = int(evaluation_result["final_score"])
+                record["sustainability_score"] = int(
+                    evaluation_result["sustainability"]["total_score"]
+                )
+                record["popularity_score"] = int(
+                    evaluation_result["popularity"]["total_score"]
+                )
                 record["sustainability_details"] = evaluation_result["sustainability"][
                     "details"
                 ]
