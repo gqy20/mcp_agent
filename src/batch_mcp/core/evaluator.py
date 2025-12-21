@@ -669,10 +669,21 @@ def calculate_functionality_score(tool_tests: list[dict[str, Any]]) -> float:
     success_rate = successful_tests / total_tests if total_tests > 0 else 0
     base_score = success_rate * 70
 
-    # AI置信度加成 (30%)
-    avg_confidence = (
-        sum(test.get("ai_confidence", 0) for test in tool_tests) / total_tests
-    )
+    # AI置信度加成 (30%) - 添加类型安全检查
+    confidence_values = []
+    for test in tool_tests:
+        confidence = test.get("ai_confidence", 0)
+        # 确保confidence是数值类型
+        if isinstance(confidence, (int, float)):
+            confidence_values.append(float(confidence))
+        elif isinstance(confidence, list):
+            # 如果是列表，取平均值
+            numeric_values = [c for c in confidence if isinstance(c, (int, float))]
+            if numeric_values:
+                confidence_values.append(sum(numeric_values) / len(numeric_values))
+        # 其他类型忽略，使用默认值0
+
+    avg_confidence = sum(confidence_values) / total_tests if confidence_values else 0
     confidence_bonus = avg_confidence * 30
 
     return base_score + confidence_bonus
