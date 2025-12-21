@@ -22,8 +22,11 @@ on:
 jobs:
   test-mcp-tool:
     runs-on: ubuntu-latest
-
     env:
+      # 禁用Python缓存以强制重新加载
+      PYTHONPYCACHEPREFIX: "${{ github.workspace }}/.pytest_cache"
+      UV_CACHE_DIR: "${{ github.workspace }}/.uv_cache"
+
       # AI模型配置
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       OPENAI_BASE_URL: ${{ secrets.OPENAI_BASE_URL }}
@@ -70,7 +73,19 @@ jobs:
         fi
 
     - name: Install dependencies
-      run: uv sync
+      run: |
+        # 清理所有可能的缓存
+        uv cache clean
+        rm -rf .venv
+        rm -rf src/__pycache__
+        find . -name "*.pyc" -delete
+        find . -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
+
+        # 重新安装依赖
+        uv sync --reinstall
+
+        # 验证关键模块的加载
+        uv run python -c "from src.batch_mcp.core.cli_handlers import _convert_test_results_to_dict; from src.batch_mcp.core.evaluator import calculate_functionality_score; print('✅ 关键修复模块已正确加载')"
 
     - name: 🧪 Complete MCP Tool Testing
       id: test_mcp
@@ -133,6 +148,36 @@ jobs:
           echo "⚠️ 未检测到Supabase配置，将禁用数据库导出"
           DATABASE_ENABLED="false"
           USE_DB="--no-db-export"
+        fi
+
+        # 验证关键修复的可用性
+        echo "🔧 验证修复模块..."
+        cat > validate_fixes.py << 'EOF'
+        import sys
+        try:
+            from src.batch_mcp.core.cli_handlers import _convert_test_results_to_dict
+            from src.batch_mcp.core.evaluator import calculate_functionality_score
+
+            # 测试ai_confidence类型安全修复
+            test_data = [{'ai_confidence': [0.8, 0.9], 'success': True}]
+            result = _convert_test_results_to_dict(test_data)
+            assert isinstance(result[0]['ai_confidence'], (int, float)), 'ai_confidence类型修复失败'
+
+            score = calculate_functionality_score(result)
+            assert isinstance(score, (int, float)), '评分计算类型修复失败'
+
+            print('✅ 所有类型安全修复已生效')
+            sys.exit(0)
+        except Exception as e:
+            print(f'❌ 模块验证失败: {e}')
+            sys.exit(1)
+        EOF
+
+        if uv run python validate_fixes.py; then
+          echo "✅ 模块验证通过"
+        else
+          echo "❌ 模块验证失败，中止测试"
+          exit 1
         fi
 
         # 执行统一测试
