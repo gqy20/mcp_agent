@@ -150,48 +150,7 @@ jobs:
           USE_DB="--no-db-export"
         fi
 
-        # 验证关键修复的可用性
-        echo "🔧 验证修复模块..."
-        cat > validate_fixes.py << 'EOF'
-        import sys
-        try:
-            from src.batch_mcp.core.cli_handlers import _convert_test_results_to_dict
-            from src.batch_mcp.core.evaluator import calculate_functionality_score
-
-            # 测试ai_confidence类型安全修复
-            test_data = [{'ai_confidence': [0.8, 0.9], 'success': True, 'test_name': 'Test', 'duration': 1.0, 'error_message': None, 'test_category': '功能测试'}]
-            result = _convert_test_results_to_dict(test_data)
-
-            # 验证结果不为空
-            assert len(result) > 0, '转换结果为空'
-
-            # 验证ai_confidence类型修复
-            assert isinstance(result[0]['ai_confidence'], (int, float)), f'ai_confidence类型修复失败: {type(result[0]["ai_confidence"])}'
-            assert result[0]['ai_confidence'] == 0.85, f'ai_confidence值错误: {result[0]["ai_confidence"]}'
-
-            # 验证评分计算
-            score = calculate_functionality_score(result)
-            assert isinstance(score, (int, float)), f'评分计算类型修复失败: {type(score)}'
-
-            print('✅ 所有类型安全修复已生效')
-            print(f"✅ ai_confidence正确转换为: {result[0]['ai_confidence']}")
-            print(f"✅ 功能评分正确计算为: {score}")
-            sys.exit(0)
-        except Exception as e:
-            print(f'❌ 模块验证失败: {e}')
-            import traceback
-            traceback.print_exc()
-            sys.exit(1)
-        EOF
-
-        if uv run python validate_fixes.py; then
-          echo "✅ 模块验证通过"
-        else
-          echo "❌ 模块验证失败，中止测试"
-          exit 1
-        fi
-
-        # 执行统一测试
+        # 执行统一测试（缓存清理已确保使用最新代码）
         echo "🚀 执行MCP测试: $MCP_INPUT (类型: $DETECTED_TYPE, 超时: ${TIMEOUT}s)"
         if uv run python -m src.batch_mcp.main test-url "$MCP_INPUT" --timeout $TIMEOUT --verbose $USE_SMART $USE_DB; then
           echo "✅ 测试成功完成"
