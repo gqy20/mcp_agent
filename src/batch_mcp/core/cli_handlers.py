@@ -646,7 +646,9 @@ class CLIHandler:
                             "success": getattr(test, "success", False),
                             "duration": getattr(test, "duration", 0),
                             "test_category": getattr(test, "test_category", ""),
-                            "ai_confidence": getattr(test, "ai_confidence", 0.0),
+                            "ai_confidence": self._safe_ai_confidence(
+                                getattr(test, "ai_confidence", 0.0)
+                            ),
                         }
                         for test in basic_tests
                     ],
@@ -1222,6 +1224,21 @@ class CLIHandler:
                 rprint(
                     f"[yellow]⭐ LobeHub 分支: {tool_info.lobehub_fork_count}[/yellow]",
                 )
+
+    def _safe_ai_confidence(self, confidence: Any) -> float:
+        """安全处理ai_confidence值，确保返回数值类型."""
+        if isinstance(confidence, (int, float)):
+            return float(confidence)
+        if isinstance(confidence, list):
+            # 如果是列表，计算平均值
+            numeric_values = [c for c in confidence if isinstance(c, (int, float))]
+            if numeric_values:
+                return sum(numeric_values) / len(numeric_values)
+            return 0.0
+        if confidence is None:
+            return 0.0
+        # 其他类型转换为0.0
+        return 0.0
 
     def _display_evaluation_result(self, evaluation_result: dict) -> None:
         """显示评估结果 - 包含综合评分."""
