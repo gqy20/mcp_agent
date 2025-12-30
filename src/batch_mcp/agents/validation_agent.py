@@ -9,21 +9,19 @@
 """
 
 import json
-import os
 import time
 from dataclasses import dataclass
 from enum import Enum
-from pathlib import Path
 from typing import Any
 
 try:
     import agentscope
     from agentscope.message import Msg
-    from dotenv import load_dotenv
 except ImportError:
     pass
 
 from src.batch_mcp.agents.test_agent import TestCase
+from src.batch_mcp.utils.ai_config_factory import get_ai_config_factory
 
 # 导入配置系统
 try:
@@ -66,58 +64,45 @@ class ValidationAgent:
         self._initialize_agent()
 
     def _load_default_config(self) -> dict:
-        """加载默认模型配置."""
-        if CONFIG_AVAILABLE and config.ai.has_any_ai_config:
-            # 使用配置系统
-            if config.ai.has_openai_config:
-                return {
-                    "config_name": "validation_agent_config",
-                    "model_type": "openai_chat",
-                    "model_name": config.ai.openai_model,
-                    "api_key": config.ai.openai_api_key,
-                    "client_kwargs": {
-                        "base_url": config.ai.openai_base_url,
-                        "timeout": 60,
-                    },
-                    "generate_args": {
-                        "temperature": 0.3,
-                        "max_tokens": 800,
-                    },
-                }
-            if config.ai.has_dashscope_config:
-                return {
-                    "config_name": "validation_agent_config",
-                    "model_type": "openai_chat",
-                    "model_name": config.ai.dashscope_model,
-                    "api_key": config.ai.dashscope_api_key,
-                    "client_kwargs": {
-                        "base_url": config.ai.dashscope_base_url,
-                        "timeout": 60,
-                    },
-                    "generate_args": {
-                        "temperature": 0.3,
-                        "max_tokens": 800,
-                    },
-                }
+        """加载默认模型配置 - 使用 AIConfigFactory."""
+        factory = get_ai_config_factory()
 
-        # 回退到环境变量
-        env_path = Path(__file__).parent.parent.parent / ".env"
-        load_dotenv(env_path)
-
-        return {
-            "config_name": "validation_agent_config",
-            "model_type": "openai_chat",
-            "model_name": os.getenv("OPENAI_MODEL", "qwen-plus"),
-            "api_key": os.getenv("OPENAI_API_KEY"),
-            "client_kwargs": {
-                "base_url": os.getenv("OPENAI_BASE_URL"),
-                "timeout": 60,
-            },
-            "generate_args": {
-                "temperature": 0.3,
-                "max_tokens": 800,
-            },
+        # 构建配置选项
+        config_options: dict[str, Any] = {
+            "has_any_ai_config": (
+                CONFIG_AVAILABLE and config.ai.has_any_ai_config
+                if CONFIG_AVAILABLE
+                else False
+            ),
+            "has_openai_config": (
+                config.ai.has_openai_config if CONFIG_AVAILABLE else False
+            ),
+            "has_dashscope_config": (
+                config.ai.has_dashscope_config if CONFIG_AVAILABLE else False
+            ),
         }
+
+        # 添加 OpenAI 配置（如果可用）
+        if CONFIG_AVAILABLE and config.ai.has_openai_config:
+            config_options.update(
+                {
+                    "openai_model": config.ai.openai_model,
+                    "openai_api_key": config.ai.openai_api_key,
+                    "openai_base_url": config.ai.openai_base_url,
+                }
+            )
+
+        # 添加 DashScope 配置（如果可用）
+        if CONFIG_AVAILABLE and config.ai.has_dashscope_config:
+            config_options.update(
+                {
+                    "dashscope_model": config.ai.dashscope_model,
+                    "dashscope_api_key": config.ai.dashscope_api_key,
+                    "dashscope_base_url": config.ai.dashscope_base_url,
+                }
+            )
+
+        return factory.create_config("validation_agent", config_options)
 
     def _initialize_agent(self) -> None:
         """初始化AgentScope代理."""
