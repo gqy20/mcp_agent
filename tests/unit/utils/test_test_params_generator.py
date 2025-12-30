@@ -85,7 +85,7 @@ class TestTestParamsGenerator:
         result = self.generator.generate(tool_info)
 
         # Assert
-        assert result == {"path": "/tmp/test.txt"}
+        assert result == {"path": "./test_file.txt"}
 
     def test_schema_string_property_with_name_keyword(self):
         """测试从 schema 生成字符串参数 - name 关键词."""
@@ -161,7 +161,7 @@ class TestTestParamsGenerator:
         result = self.generator.generate(tool_info)
 
         # Assert
-        assert result == {"filePath": "/tmp/test"}
+        assert result == {"filePath": "./test"}
 
     def test_schema_string_property_default(self):
         """测试从 schema 生成字符串参数 - 默认值."""
