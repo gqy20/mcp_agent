@@ -38,7 +38,6 @@ from src.batch_mcp.core.evaluator import (
 from src.batch_mcp.core.report_generator import generate_test_report
 from src.batch_mcp.core.tester import TestConfig, get_mcp_tester
 from src.batch_mcp.utils.csv_parser import MCPToolInfo, get_mcp_parser
-from src.batch_mcp.utils.test_params_generator import get_test_params_generator
 
 try:
     from .config import get_config
@@ -1707,62 +1706,9 @@ class CLIHandler:
             return False, {"error": str(e)}
 
     def _generate_test_arguments(self, tool_info: dict) -> dict:
-        """为工具生成基本测试参数 - 复用STDIO的参数生成逻辑."""
-        tool_name = tool_info.get("name", "")
-        input_schema = tool_info.get("inputSchema", {})
-        properties = input_schema.get("properties", {})
-        required = input_schema.get("required", [])
-
-        arguments = {}
-
-        # 特殊工具的精确参数
-        if tool_name == "resolve-library-id":
-            arguments = {"libraryName": "react"}
-        elif tool_name == "get-library-docs":
-            arguments = {"context7CompatibleLibraryID": "/facebook/react"}
-        elif "topic" in tool_name.lower() and "research" in tool_name.lower():
-            # 针对研究主题助手工具的特殊处理 - 放在前面避免被query匹配
-            arguments = {
-                "Query": "请帮我分析人工智能在医疗领域的应用前景，包括当前的技术发展状况、潜在的挑战和未来的机遇。"
-            }
-        elif "library" in tool_name.lower():
-            arguments = {"library": "react"}
-        elif "query" in tool_name.lower():
-            arguments = {"query": "test"}
-        elif "search" in tool_name.lower():
-            arguments = {"query": "example"}
-        elif "file" in tool_name.lower():
-            arguments = {"path": "/tmp/test.txt"}
-        else:
-            # 根据schema和required字段生成参数
-            for prop_name in required:
-                prop_info = properties.get(prop_name, {})
-                prop_type = prop_info.get("type", "string")
-
-                if prop_type == "string":
-                    # 基于属性名称的启发式
-                    if "name" in prop_name.lower():
-                        arguments[prop_name] = "test"
-                    elif "id" in prop_name.lower():
-                        arguments[prop_name] = "/test/example"
-                    elif "query" in prop_name.lower():
-                        arguments[prop_name] = "example query"
-                    elif "path" in prop_name.lower():
-                        arguments[prop_name] = "/tmp/test"
-                    elif "topic" in prop_name.lower():
-                        arguments[prop_name] = "test topic"
-                    elif "prompt" in prop_name.lower():
-                        arguments[prop_name] = "test prompt"
-                    else:
-                        arguments[prop_name] = "test_value"
-                elif prop_type == "number":
-                    arguments[prop_name] = 1
-                elif prop_type == "boolean":
-                    arguments[prop_name] = True
-                elif prop_type == "array":
-                    arguments[prop_name] = []
-
-        return arguments
+        """为工具生成基本测试参数 - 使用统一的参数生成器."""
+        params_generator = get_test_params_generator()
+        return params_generator.generate(tool_info)
 
     async def _run_http_smart_tests(
         self, client: Any, tools: list[dict[str, Any]], _config: TestConfig
