@@ -24,6 +24,13 @@ class TestParamsGenerator:
         "get-library-docs-context7": {"context7CompatibleLibraryID": "/facebook/react"},
     }
 
+    # 复合关键词工具的特殊映射（需要同时包含多个关键词）
+    COMPOSITE_KEYWORD_PARAMS: ClassVar[dict[tuple[str, ...], dict[str, Any]]] = {
+        ("topic", "research"): {
+            "Query": "请帮我分析人工智能在医疗领域的应用前景，包括当前的技术发展状况、潜在的挑战和未来的机遇。"
+        },
+    }
+
     # 工具名称关键词到参数的映射
     KEYWORD_PARAMS: ClassVar[dict[str, dict[str, Any]]] = {
         "library": {"library": "react"},
@@ -72,12 +79,18 @@ class TestParamsGenerator:
         if tool_name in cls.SPECIAL_TOOL_PARAMS:
             return cls.SPECIAL_TOOL_PARAMS[tool_name].copy()
 
-        # 2. 检查关键词匹配
-        for keyword, params in cls.KEYWORD_PARAMS.items():
-            if keyword in tool_name.lower():
+        # 2. 检查复合关键词匹配（优先级高于单个关键词）
+        tool_name_lower = tool_name.lower()
+        for keywords, params in cls.COMPOSITE_KEYWORD_PARAMS.items():
+            if all(kw in tool_name_lower for kw in keywords):
                 return params.copy()
 
-        # 3. 根据 schema 生成参数
+        # 3. 检查单个关键词匹配
+        for keyword, params in cls.KEYWORD_PARAMS.items():
+            if keyword in tool_name_lower:
+                return params.copy()
+
+        # 4. 根据 schema 生成参数
         return cls._generate_from_schema(properties, required)
 
     @classmethod

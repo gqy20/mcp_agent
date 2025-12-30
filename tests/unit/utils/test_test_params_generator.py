@@ -358,6 +358,18 @@ class TestTestParamsGenerator:
         assert result == {"libraryName": "react"}
         assert "library" not in result
 
+    def test_composite_keyword_topic_research(self):
+        """测试复合关键词匹配 - topic + research."""
+        # Arrange
+        tool_info = {"name": "research-topic-helper", "inputSchema": {}}
+
+        # Act
+        result = self.generator.generate(tool_info)
+
+        # Assert
+        assert "Query" in result
+        assert len(result["Query"]) > 20  # 应该是一个长字符串
+
 
 class TestTestParamsGeneratorGlobalInstance:
     """全局实例测试."""

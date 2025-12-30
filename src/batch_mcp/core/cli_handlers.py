@@ -38,6 +38,7 @@ from src.batch_mcp.core.evaluator import (
 from src.batch_mcp.core.report_generator import generate_test_report
 from src.batch_mcp.core.tester import TestConfig, get_mcp_tester
 from src.batch_mcp.utils.csv_parser import MCPToolInfo, get_mcp_parser
+from src.batch_mcp.utils.test_params_generator import get_test_params_generator
 
 try:
     from .config import get_config
