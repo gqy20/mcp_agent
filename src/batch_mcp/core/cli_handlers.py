@@ -13,6 +13,7 @@
 
 import asyncio
 import time
+import traceback
 from typing import Any
 
 from rich import print as rprint
@@ -20,17 +21,27 @@ from rich import print as rprint
 from src.batch_mcp.core.database_exporter import get_database_exporter
 from src.batch_mcp.core.evaluator import (
     evaluate_full_repository_with_comprehensive_score,
+    evaluate_http_mcp_endpoint,
 )
+from src.batch_mcp.core.http_mcp_client import HttpMCPClient
 from src.batch_mcp.core.http_mcp_handler import get_http_mcp_handler
 from src.batch_mcp.core.input_type_detector import (
     get_input_type_detector,
 )
-from src.batch_mcp.core.report_generator import generate_test_report
+from src.batch_mcp.core.report_generator import TestResult, generate_test_report
 from src.batch_mcp.core.result_presenter import get_result_presenter
 from src.batch_mcp.core.test_runner import get_test_runner
 from src.batch_mcp.core.tester import TestConfig, get_mcp_tester
 from src.batch_mcp.core.tool_finder import get_tool_finder
 from src.batch_mcp.utils.csv_parser import MCPToolInfo, get_mcp_parser
+
+try:
+    from supabase import create_client
+
+    SUPABASE_AVAILABLE = True
+except ImportError:
+    SUPABASE_AVAILABLE = False
+    create_client = None  # type: ignore[assignment]
 
 try:
     from .config import get_config
@@ -68,15 +79,12 @@ class CLIHandler:
             supabase_client = None
             if db_export and CONFIG_AVAILABLE and config.database.has_supabase_config:
                 try:
-                    from supabase import create_client
-
-                    supabase_client = create_client(
-                        config.database.supabase_url,
-                        config.database.supabase_service_role_key,
-                    )
-                except ImportError:
-                    rprint("[yellow]⚠️ Supabase库未安装，跳过数据库导出[/yellow]")
-                except Exception as e:
+                    if SUPABASE_AVAILABLE and create_client is not None:
+                        supabase_client = create_client(
+                            config.database.supabase_url,
+                            config.database.supabase_service_role_key,
+                        )
+                except Exception as e:  # noqa: BLE001
                     rprint(f"[yellow]⚠️ Supabase客户端创建失败: {e}[/yellow]")
 
             for tool in tools:
@@ -111,11 +119,11 @@ class CLIHandler:
                         f"{evaluation_result['message']}[/red]",
                     )
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             rprint(f"[red]❌ 评估过程发生错误: {e}[/red]")
 
     def test_url(self, input_str: str, config: TestConfig) -> bool:
-        """统一的智能测试入口 - 支持自动识别输入类型
+        """统一的智能测试入口 - 支持自动识别输入类型.
 
         支持自动识别输入类型：
         - HTTP MCP端点 (https://api.example.com/mcp)
@@ -172,13 +180,12 @@ class CLIHandler:
                         and config.database.has_supabase_config
                     ):
                         try:
-                            from supabase import create_client
-
-                            supabase_client = create_client(
-                                config.database.supabase_url,
-                                config.database.supabase_service_role_key,
-                            )
-                        except Exception:
+                            if SUPABASE_AVAILABLE and create_client is not None:
+                                supabase_client = create_client(
+                                    config.database.supabase_url,
+                                    config.database.supabase_service_role_key,
+                                )
+                        except Exception:  # noqa: BLE001
                             pass
 
                     evaluation_result = (
@@ -195,8 +202,6 @@ class CLIHandler:
 
                 elif tool_info.deployment_method == "http":
                     # HTTP MCP 端点评估
-                    from .evaluator import evaluate_http_mcp_endpoint
-
                     # 计算测试结果统计
                     basic_tests = test_results or []
                     tools_count = server_info.available_tools if server_info else 0
@@ -248,7 +253,7 @@ class CLIHandler:
             if hasattr(self, "_display_concise_summary"):
                 self._display_concise_summary(report_files.get("json"))
 
-            # 4.5. 数据库导出 (可选) - 使用精简版本
+            # 4.5. 数据库导出 - 使用精简版本
             if config.db_export:
                 concise_report = report_files.get("concise") or report_files.get("json")
                 self._exporter.export_to_database(
@@ -262,7 +267,7 @@ class CLIHandler:
 
             return success
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             rprint(f"[red]❌ 测试过程发生错误: {e}[/red]")
             return False
 
@@ -302,13 +307,12 @@ class CLIHandler:
                         and config.database.has_supabase_config
                     ):
                         try:
-                            from supabase import create_client
-
-                            supabase_client = create_client(
-                                config.database.supabase_url,
-                                config.database.supabase_service_role_key,
-                            )
-                        except Exception:
+                            if SUPABASE_AVAILABLE and create_client is not None:
+                                supabase_client = create_client(
+                                    config.database.supabase_url,
+                                    config.database.supabase_service_role_key,
+                                )
+                        except Exception:  # noqa: BLE001
                             pass
 
                     evaluation_result = (
@@ -325,8 +329,6 @@ class CLIHandler:
 
                 elif tool_info.deployment_method == "http":
                     # HTTP MCP 端点评估
-                    from .evaluator import evaluate_http_mcp_endpoint
-
                     # 计算测试结果统计
                     basic_tests = test_results or []
                     tools_count = server_info.available_tools if server_info else 0
@@ -374,7 +376,7 @@ class CLIHandler:
                     evaluation_result,
                 )
 
-            # 数据库导出 (如果需要)
+            # 数据库导出
             if config.db_export:
                 self._exporter.export_to_database(
                     report_files.get("json"),
@@ -387,7 +389,7 @@ class CLIHandler:
 
             return success
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             rprint(f"[red]❌ 测试过程发生错误: {e}[/red]")
             return False
 
@@ -423,11 +425,9 @@ class CLIHandler:
                 self._run_http_tests_direct(tool_info, http_config, config)
             )
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             rprint(f"[red]❌ HTTP MCP 测试失败: {e}[/red]")
             if config.verbose:
-                import traceback
-
                 rprint(f"[red]{traceback.format_exc()}[/red]")
             return False
 
@@ -439,8 +439,6 @@ class CLIHandler:
     ) -> bool:
         """运行 HTTP MCP 测试的专用方法 - 委托给 HTTPMCPHandler."""
         try:
-            from .http_mcp_client import HttpMCPClient
-
             # 创建 HTTP MCP 客户端
             client = HttpMCPClient(
                 url=http_config["url"],
@@ -456,7 +454,7 @@ class CLIHandler:
                 tool_info, server_info, config
             )
 
-            # 获取工具列表 (用于智能测试和评估)
+            # 获取工具列表 - 用于智能测试和评估
             tools_result = await client.list_tools()
             tools_list = tools_result.get("tools", [])
             tools_count = len(tools_list)
@@ -470,8 +468,6 @@ class CLIHandler:
                 )
 
                 # 将智能测试结果转换为 TestResult 对象并添加到 basic_tests 中
-                from .report_generator import TestResult
-
                 for smart_result in smart_results:
                     # 确保 smart_result 是字典类型，防止意外类型混入
                     if not isinstance(smart_result, dict):
@@ -537,8 +533,6 @@ class CLIHandler:
                 }
 
                 # 调用 HTTP MCP 评估
-                from .evaluator import evaluate_http_mcp_endpoint
-
                 evaluation_result = evaluate_http_mcp_endpoint(
                     test_results=evaluation_test_results,
                     tools_count=tools_count,
@@ -552,8 +546,6 @@ class CLIHandler:
             # 生成报告
             report_files = {}
             if config.save_report:
-                from .report_generator import generate_test_report
-
                 # 直接传递 TestResult 对象列表，保持数据格式统一
                 basic_tests_list = test_results.get("basic_tests", [])
 
@@ -578,11 +570,9 @@ class CLIHandler:
 
             return success
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             rprint(f"[red]❌ HTTP 测试执行失败: {e}[/red]")
             if config.verbose:
-                import traceback
-
                 rprint(f"[red]{traceback.format_exc()}[/red]")
             return False
 
@@ -705,7 +695,7 @@ class CLIHandler:
 
             return report_files
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             rprint(f"[red]❌ 报告生成失败: {e}[/red]")
             return {}
 
@@ -715,7 +705,7 @@ class CLIHandler:
             rprint("[yellow]🧹 清理测试环境...[/yellow]")
             self.tester.cleanup_server(server_id)
             rprint("[green]✅ 清理完成[/green]")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             rprint(f"[yellow]⚠️ 清理异常: {e}[/yellow]")
 
     def _safe_ai_confidence(self, confidence: Any) -> float:
@@ -742,15 +732,11 @@ class CLIHandler:
         try:
             # 检查是否为HTTP部署的server_info对象
             if hasattr(server_info, "client"):
-                from .http_mcp_client import HttpMCPClient
-
                 return isinstance(server_info.client, HttpMCPClient)
 
             # 直接检查是否为HTTP客户端（兼容性）
-            from .http_mcp_client import HttpMCPClient
-
             return isinstance(server_info, HttpMCPClient)
-        except ImportError:
+        except Exception:  # noqa: BLE001
             return False
 
 

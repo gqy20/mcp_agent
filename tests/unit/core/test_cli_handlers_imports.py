@@ -51,8 +51,8 @@ class TestCLIHandlersImports:
         file_path = Path("src/batch_mcp/core/cli_handlers.py")
         content = file_path.read_text()
 
-        # 查找所有导入语句
-        import_pattern = r"^(from [^\s]+ import |import )"
+        # 查找所有导入语句（完整的导入行，而不仅仅是前缀）
+        import_pattern = r"^(from [^\s]+ import [^\n]+|import [^\n]+)"
         imports = re.findall(import_pattern, content, re.MULTILINE)
 
         # 统计每个导入的出现次数
@@ -74,17 +74,15 @@ class TestCLIHandlersImports:
         # 检查是否有 "from supabase import" 在文件的前 100 行
         first_100_lines = "\n".join(content.split("\n")[:100])
 
-        # 当前可能没有在顶部导入，这是我们要修复的
-        # 这个测试暂时标记为预期失败
-        # has_top_level_supabase = "from supabase import" in first_100_lines
-        # 暂时跳过这个检查（修复后会通过）
-        # assert has_top_level_supabase, "supabase 应该在文件顶部导入"
+        # 验证 supabase 在顶部导入
+        has_top_level_supabase = "from supabase import" in first_100_lines
+        assert has_top_level_supabase, "supabase 应该在文件顶部导入"
 
     def test_module_can_be_imported(self):
         """验证模块可以被正常导入."""
         # 这确保即使有动态导入，模块也能正常工作
         try:
-            from src.batch_mcp.core import cli_handlers
+            from src.batch_mcp.core import cli_handlers  # noqa: PLC0415
 
             assert hasattr(cli_handlers, "CLIHandler")
         except ImportError as e:
