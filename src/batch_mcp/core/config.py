@@ -116,62 +116,6 @@ class TimeoutsConfig:
         default_factory=lambda: int(os.getenv("COMMUNICATION_TIMEOUT", "30")),
     )
 
-    # AI相关超时
-    ai_test_generation_timeout: int = field(
-        default_factory=lambda: int(os.getenv("AI_TEST_GENERATION_TIMEOUT", "180")),
-    )
-    ai_validation_timeout: int = field(
-        default_factory=lambda: int(os.getenv("AI_VALIDATION_TIMEOUT", "120")),
-    )
-
-
-@dataclass
-class AIConfig:
-    """AI模型配置."""
-
-    # OpenAI配置
-    openai_api_key: str | None = field(
-        default_factory=lambda: os.getenv("OPENAI_API_KEY"),
-    )
-    openai_base_url: str = field(
-        default_factory=lambda: os.getenv(
-            "OPENAI_BASE_URL",
-            "https://api.openai.com/v1",
-        ),
-    )
-    openai_model: str = field(
-        default_factory=lambda: os.getenv("OPENAI_MODEL", "gpt-4o"),
-    )
-
-    # DashScope配置
-    dashscope_api_key: str | None = field(
-        default_factory=lambda: os.getenv("DASHSCOPE_API_KEY"),
-    )
-    dashscope_base_url: str = field(
-        default_factory=lambda: os.getenv(
-            "DASHSCOPE_BASE_URL",
-            "https://dashscope.aliyuncs.com/api/v1",
-        ),
-    )
-    dashscope_model: str = field(
-        default_factory=lambda: os.getenv("DASHSCOPE_MODEL", "qwen-plus"),
-    )
-
-    @property
-    def has_openai_config(self) -> bool:
-        """检查是否有有效的OpenAI配置."""
-        return bool(self.openai_api_key)
-
-    @property
-    def has_dashscope_config(self) -> bool:
-        """检查是否有有效的DashScope配置."""
-        return bool(self.dashscope_api_key)
-
-    @property
-    def has_any_ai_config(self) -> bool:
-        """检查是否有任何AI配置."""
-        return self.has_openai_config or self.has_dashscope_config
-
 
 @dataclass
 class DatabaseConfig:
@@ -246,7 +190,6 @@ class AppConfig:
     def __init__(self) -> None:
         self.paths = PathsConfig()
         self.timeouts = TimeoutsConfig()
-        self.ai = AIConfig()
         self.database = DatabaseConfig()
         self.testing = TestingConfig()
         self.system = SystemConfig()
@@ -292,8 +235,6 @@ class AppConfig:
         return {
             "project_root": str(self.paths.project_root),
             "mcp_csv_path": str(self.paths.mcp_csv_path),
-            "has_openai": self.ai.has_openai_config,
-            "has_dashscope": self.ai.has_dashscope_config,
             "has_supabase": self.database.has_supabase_config,
             "enable_smart_testing": self.testing.enable_smart_testing,
             "enable_database_export": self.testing.enable_database_export,
@@ -336,11 +277,6 @@ def get_test_results_dir() -> Path:
 def get_reports_dir() -> Path:
     """获取报告目录."""
     return get_config().paths.reports_dir
-
-
-def has_ai_config() -> bool:
-    """检查是否有AI配置."""
-    return get_config().ai.has_any_ai_config
 
 
 def has_database_config() -> bool:
