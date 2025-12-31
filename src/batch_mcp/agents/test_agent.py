@@ -105,39 +105,15 @@ class TestGeneratorAgent:
         return factory.create_config("test_generator", config_options)
 
     def _initialize_agent(self) -> None:
-        """初始化AgentScope代理."""
-        try:
-            # 初始化AgentScope
-            agentscope.init(
-                model_configs=[self.model_config],
-                project="MCP_Test_Generator",
-                save_dir="./logs",
-                save_log=True,
-                save_api_invoke=True,
-            )
+        """初始化AgentScope代理.
 
-            # 创建测试生成代理 - 使用UserAgent替代ReActAgent
-            sys_prompt = self._get_test_generator_prompt()
-
-            try:
-                from agentscope.agents import DialogAgent
-
-                self.agent = DialogAgent(
-                    name="mcp_test_generator",
-                    model_config_name=self.model_config["config_name"],
-                    sys_prompt=sys_prompt,
-                )
-            except TypeError:
-                # 处理AgentScope版本兼容性问题，移除不支持的参数
-                from agentscope.agents import DialogAgent
-
-                self.agent = DialogAgent(
-                    name="mcp_test_generator",
-                    sys_prompt=sys_prompt,
-                )
-
-        except Exception:
-            self.agent = None  # 标记为不可用
+        注意：在 agentscope 1.0.9 中，DialogAgent 已被弃用。
+        对于纯文本生成场景（不需要工具调用），当前使用 fallback 模式。
+        将来可以考虑使用 UserAgent 或直接调用 model API。
+        """
+        # 当前版本使用 fallback 模式进行测试用例生成
+        # DialogAgent 在 agentscope 1.0.9 中已不存在
+        self.agent = None
 
     def _get_test_generator_prompt(self) -> str:
         """获取测试生成代理的系统提示词."""
