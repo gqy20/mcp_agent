@@ -56,15 +56,22 @@ uv run pytest --cov=src --cov-report=html --cov-report=term
 
 # Run specific test file
 uv run pytest tests/unit/test_simple_mcp_deployer.py -v
+
+# Run by marker (skip slow tests)
+uv run pytest -m "not slow" -v
+
+# Run only unit tests (by marker)
+uv run pytest -m unit -v
+
+# Run only integration tests (by marker)
+uv run pytest -m integration -v
 ```
 
 ### Additional Development Commands
 ```bash
-# Code formatting
-uv run black src/ tests/
-
-# Import sorting
-uv run isort src/ tests/
+# Code formatting (Ruff - includes formatting, linting, and import sorting)
+uv run ruff check src/ tests/
+uv run ruff format src/ tests/
 
 # Run pre-commit hooks
 uv run pre-commit run --all-files --show-diff-on-failure
@@ -139,6 +146,15 @@ The framework follows Linus Torvalds' programming philosophy: "Good taste" in co
    - `github_mcp_analyzer.py`: Repository analysis with LobeHub integration
    - `cli_handlers.py`: Command handlers with comprehensive argument validation
    - `http_mcp_client.py`: HTTP MCP client for web-based MCP tools
+   - `http_mcp_handler.py`: HTTP MCP request/response handler
+   - `test_runner.py`: Unified test execution runner (supports both STDIO and HTTP)
+   - `config.py`: Centralized configuration management with path handling
+   - `error_handler.py`: Centralized error handling and classification
+   - `database_exporter.py`: Supabase database export functionality
+   - `input_type_detector.py`: Detects input type (URL, package, or HTTP endpoint)
+   - `tool_finder.py`: Finds MCP tools in database by name or URL
+   - `result_presenter.py`: Formats and presents test results
+   - `mcp_table_updater.py`: Updates MCP tools database table
 
 3. **src/batch_mcp/agents/**: AI-powered intelligent testing
    - `test_agent.py`: Generates targeted test cases based on tool description
@@ -160,8 +176,8 @@ The framework follows Linus Torvalds' programming philosophy: "Good taste" in co
 GitHub URL → Package Detection → Deployment → MCP Protocol → Testing → Analysis → Reports
      ↓              ↓                ↓            ↓          ↓         ↓        ↓
 URL Processor  → Mapping Logic  → Npx/Pip/  → JSON-RPC  → Basic  → Quality → JSON/
-   Fallbacks    Multiple Sources → Cargo/Docker → STDIO  → Protocol +  → Scoring → HTML/
-                                                       AI Tests          → PDF/Word/PPT
+   Fallbacks    Multiple Sources → Cargo/Docker  STDIO  → Protocol +  → Scoring → HTML/
+                                            (or HTTP)   AI Tests          → PDF/Word/PPT
 ```
 
 1. **Input Processing**:
@@ -175,7 +191,8 @@ URL Processor  → Mapping Logic  → Npx/Pip/  → JSON-RPC  → Basic  → Qua
    - Graceful fallback for unsupported tools
 
 3. **Communication Layer**:
-   - Async JSON-RPC over STDIO implementation
+   - Async JSON-RPC over STDIO implementation (`async_mcp_client.py`)
+   - HTTP MCP support (`http_mcp_client.py`, `http_mcp_handler.py`)
    - Robust error handling and timeout management
    - Automatic protocol version negotiation
 
@@ -183,6 +200,7 @@ URL Processor  → Mapping Logic  → Npx/Pip/  → JSON-RPC  → Basic  → Qua
    - **Basic Tests**: Protocol compliance (initialize, tools list, call)
    - **Smart Tests**: AI-generated 3-5 targeted test cases
    - **Error Scenarios**: Invalid parameters, missing fields, edge cases
+   - **Unified Runner**: `test_runner.py` handles both STDIO and HTTP MCP testing
 
 5. **Analysis & Evaluation**:
    - GitHub repository metrics (stars, forks, issues, commits)
@@ -238,7 +256,9 @@ Use `--no-smart`, `--no-db-export`, `--no-evaluate` to disable them.
 ### Workflows
 - **single-mcp-test.yml**: Manual testing of individual MCP tools
 - **parallel-stress-test.yml**: Batch testing with parallel execution
+- **http-mcp-test.yml**: HTTP MCP endpoint testing
 - **code-quality.yml**: Automated code quality checks
+- **auto-release.yml**: Automatic release workflow
 
 ### Runtime Requirements
 The workflows require specific runtime validation. Use the verification script:
@@ -416,3 +436,22 @@ df -h
 # 监控进程资源
 htop
 ```
+
+## 开发规则
+
+### GitHub 指令
+项目遵循以下开发规则（定义在 `.github/instructions/main.instructions.md`）：
+
+- **脚本长度限制**: 脚本不允许超过 500 行
+- **测试入口**: 每次测试从 `main.py` 进入，不允许产生冗余的测试文件
+- **环境管理**: 使用 UV 管理环境
+- **配置管理**: 配置信息在 `.env` 文件中
+- **数据保护**: 不要动 `data/` 文件夹的 CSV 文件
+
+### 代码风格
+
+项目使用 **Ruff** 作为统一的代码格式化和检查工具：
+- **行长度**: 88 字符
+- **引号风格**: 保留原样（preserve）
+- **类型注解**: 允许 `Any` 类型，不要求 `self`/`cls` 类型注解
+- **中文支持**: 忽略中文标点符号相关规则
