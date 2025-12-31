@@ -7,17 +7,7 @@
 4. 边界情况和特殊情况
 """
 
-from enum import Enum
-
-
-class InputType(Enum):
-    """MCP输入类型枚举 - 测试用."""
-
-    HTTP_ENDPOINT = "http_endpoint"
-    GITHUB_URL = "github_url"
-    PACKAGE_NAME = "package_name"
-    SEARCH_QUERY = "search_query"
-    UNKNOWN = "unknown"
+from src.batch_mcp.core.input_type_detector import InputType
 
 
 class TestInputTypeDetector:
@@ -217,7 +207,7 @@ class TestInputTypeDetector:
         """测试输入类型检测优先级正确."""
         # HTTP端点优先级最高
         assert (
-            self.detector.detect("https://api.github.com/mcp")
+            self.detector.detect("https://api.example.com/mcp")
             == InputType.HTTP_ENDPOINT
         )
         # GitHub URL次之

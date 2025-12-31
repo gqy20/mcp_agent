@@ -29,6 +29,7 @@ from src.batch_mcp.core.input_type_detector import (
 )
 from src.batch_mcp.core.report_generator import generate_test_report
 from src.batch_mcp.core.tester import TestConfig, get_mcp_tester
+from src.batch_mcp.core.tool_finder import get_tool_finder
 from src.batch_mcp.utils.csv_parser import MCPToolInfo, get_mcp_parser
 from src.batch_mcp.utils.test_params_generator import get_test_params_generator
 
@@ -49,6 +50,7 @@ class CLIHandler:
         """初始化CLI处理器."""
         self.tester = get_mcp_tester()
         self._input_detector = get_input_type_detector()
+        self._tool_finder = get_tool_finder()
 
     def _display_input_type_detection(
         self, input_str: str, input_type: InputType
@@ -468,8 +470,8 @@ class CLIHandler:
                 rprint("[red]❌ URL 格式不支持，必须是 HTTP MCP 端点[/red]")
                 return False
 
-            # 创建临时的 MCPToolInfo
-            tool_info = self._create_http_tool_info(url)
+            # 创建临时的 MCPToolInfo - 使用 ToolFinder
+            tool_info = self._tool_finder._create_http_tool_info(url)
 
             # 构建HTTP配置
             http_config = {
@@ -658,80 +660,12 @@ class CLIHandler:
         limit: int,
         show_package: bool,
     ) -> None:
-        """列出工具 - 简化实现."""
-        try:
-            parser, _ = self.tester._get_services()
-
-            # 获取工具列表 - 无特殊情况处理
-            if search:
-                tools = parser.search_tools(search)
-                rprint(f"[blue]🔍 搜索结果 '{search}': 找到 {len(tools)} 个工具[/blue]")
-            elif category:
-                tools = parser.get_tools_by_category(category)
-                rprint(f"[blue]📂 类别 '{category}': 找到 {len(tools)} 个工具[/blue]")
-            else:
-                tools = parser.get_all_tools()
-                rprint(f"[blue]📦 共找到 {len(tools)} 个可部署的 MCP 工具[/blue]")
-
-            if not tools:
-                rprint("[yellow]⚠️ 未找到匹配的工具[/yellow]")
-                return
-
-            # 限制并显示
-            tools = tools[:limit] if len(tools) > limit else tools
-            self._display_tools_table(tools, show_package)
-
-        except Exception as e:
-            rprint(f"[red]❌ 加载工具列表失败: {e}[/red]")
-            raise
+        """列出工具 - 委托给 ToolFinder."""
+        self._tool_finder.list_tools(category, search, limit, show_package)
 
     def _find_tool_info(self, url: str) -> MCPToolInfo | None:
-        """查找工具信息 - 单一职责."""
-        # 检查是否为 HTTP MCP 端点
-        if self._input_detector.is_http_mcp_endpoint(url):
-            return self._create_http_tool_info(url)
-
-        rprint("[blue]🔍 在数据库中查找对应的MCP工具...[/blue]")
-        tool_info = self.tester.find_tool_by_url(url)
-
-        if not tool_info:
-            rprint(f"[yellow]⚠️ 在数据库中未找到URL对应的MCP工具: {url}[/yellow]")
-            rprint("[blue]🔍 尝试从GitHub分析项目信息...[/blue]")
-
-            # 使用GitHub项目分析器获取工具信息
-            try:
-                from src.batch_mcp.core.mcp_table_updater import MCPTableUpdater
-
-                updater = MCPTableUpdater()
-
-                # 分析单个GitHub项目
-                result = updater.analyze_github_project(url)
-                if result and result.get("success"):
-                    rprint(
-                        f"[green]✅ 成功分析GitHub项目: {result.get('name', 'Unknown')}[/green]",
-                    )
-
-                    # 现在CSV解析器会自动尝试从GitHub获取信息，重新查找
-                    tool_info = self.tester.find_tool_by_url(url)
-                    if tool_info:
-                        self._display_tool_info(tool_info)
-                        return tool_info
-                    rprint("[red]❌ 分析完成后仍未在数据库中找到工具信息[/red]")
-                    return None
-                rprint(
-                    f"[red]❌ GitHub项目分析失败: {result.get('error', 'Unknown error')}[/red]",
-                )
-                return None
-
-            except Exception as e:
-                rprint(f"[red]❌ GitHub项目分析异常: {e}[/red]")
-                rprint(
-                    "[yellow]💡 提示: 可以使用 'batch-mcp list-tools --search <关键词>' 搜索可用工具[/yellow]",
-                )
-                return None
-
-        self._display_tool_info(tool_info)
-        return tool_info
+        """查找工具信息 - 委托给 ToolFinder."""
+        return self._tool_finder.find_tool_info(url)
 
     def _deploy_tool(self, tool_info: MCPToolInfo, config: TestConfig):
         """部署工具 - 单一职责."""
@@ -885,90 +819,18 @@ class CLIHandler:
                 return tool_identifier
 
         # 如果tool_info中没有github_url，尝试从CSV中查找完整工具信息
-        tool_identifier = self._lookup_github_url_from_csv(json_data)
+        tool_identifier = self._tool_finder.lookup_github_url_from_csv(json_data)
         if tool_identifier:
             return tool_identifier
 
         # 如果无法从CSV中找到，尝试从test_url推断
         test_url = json_data.get("test_url", "")
-        tool_identifier = self._infer_github_url_from_test_url(test_url)
+        tool_identifier = self._tool_finder.infer_github_url_from_test_url(test_url)
         if tool_identifier:
             return tool_identifier
 
         # 如果无法推断，回退到test_url
         return test_url
-
-    def _lookup_github_url_from_csv(self, json_data: dict) -> str:
-        """从CSV中查找GitHub URL."""
-        try:
-            # 获取工具名称
-            tool_name = json_data.get("tool_name", "")
-            test_url = json_data.get("test_url", "")
-
-            if not tool_name and not test_url:
-                return ""
-
-            # 使用CSV解析器查找工具
-            from src.batch_mcp.utils.csv_parser import get_mcp_parser
-
-            parser = get_mcp_parser()
-            if not parser.load_data():
-                return ""
-
-            # 尝试多种方式查找工具
-            tool = None
-
-            # 1. 通过工具名称查找
-            if tool_name and tool_name != "Unknown":
-                tools = parser.search_tools(tool_name)
-                if tools:
-                    tool = tools[0]
-
-            # 2. 通过包名查找
-            if not tool and test_url and test_url.startswith("@"):
-                tool = parser.find_tool_by_package(test_url)
-
-            # 3. 通过GitHub URL查找
-            if not tool and test_url and test_url.startswith("https://github.com/"):
-                tool = parser.find_tool_by_url(test_url)
-
-            if tool and tool.github_url:
-                return tool.github_url
-
-        except Exception as e:
-            rprint(f"[yellow]⚠️ 从CSV查找GitHub URL时出错: {e}[/yellow]")
-
-        return ""
-
-    def _infer_github_url_from_test_url(self, test_url: str) -> str:
-        """从test_url推断GitHub URL."""
-        if not test_url:
-            return ""
-
-        # 如果test_url已经是GitHub URL，直接返回
-        if test_url.startswith("https://github.com/"):
-            return test_url
-
-        # 如果test_url是包名，尝试推断GitHub URL
-        # 例如: @upstash/context7-mcp -> https://github.com/upstash/context7
-        if test_url.startswith("@"):
-            # 移除@符号并分割
-            parts = test_url[1:].split("/")
-            if len(parts) >= 2:
-                owner = parts[0]
-                repo = parts[1].split("@")[0]  # 移除版本号
-                # 特殊处理一些常见的包名映射
-                if owner == "upstash" and "context7" in repo:
-                    return "https://github.com/upstash/context7"
-                if owner == "modelcontextprotocol":
-                    if "filesystem" in repo or "sequential-thinking" in repo:
-                        return "https://github.com/modelcontextprotocol/servers"
-                    return f"https://github.com/modelcontextprotocol/{repo}"
-                # 默认映射
-                return f"https://github.com/{owner}/{repo}"
-
-        # 对于其他情况，无法推断，返回空字符串
-        return ""
 
     def _export_to_database(
         self,
@@ -1150,28 +1012,6 @@ class CLIHandler:
         except Exception as e:
             rprint(f"[yellow]⚠️ 清理异常: {e}[/yellow]")
 
-    def _display_tool_info(self, tool_info: MCPToolInfo) -> None:
-        """显示工具信息 - 统一格式."""
-        rprint(f"[green]✅ 找到工具: {tool_info.name}[/green]")
-        rprint(f"[blue]👤 作者: {tool_info.author}[/blue]")
-        rprint(f"[blue]📦 包名: {tool_info.package_name}[/blue]")
-        rprint(f"[blue]📂 类别: {tool_info.category}[/blue]")
-        rprint(f"[blue]📝 描述: {tool_info.description[:100]}...[/blue]")
-
-        # 显示 LobeHub 评分信息
-        if tool_info.lobehub_evaluate:
-            rprint(f"[yellow]⭐ LobeHub 评分: {tool_info.lobehub_evaluate}[/yellow]")
-            if tool_info.lobehub_score:
-                rprint(f"[yellow]⭐ LobeHub 分数: {tool_info.lobehub_score}[/yellow]")
-            if tool_info.lobehub_star_count:
-                rprint(
-                    f"[yellow]⭐ LobeHub 星标: {tool_info.lobehub_star_count}[/yellow]",
-                )
-            if tool_info.lobehub_fork_count:
-                rprint(
-                    f"[yellow]⭐ LobeHub 分支: {tool_info.lobehub_fork_count}[/yellow]",
-                )
-
     def _safe_ai_confidence(self, confidence: Any) -> float:
         """安全处理ai_confidence值，确保返回数值类型."""
         if isinstance(confidence, (int, float)):
@@ -1275,81 +1115,6 @@ class CLIHandler:
                 tool_name = tool.get("name", "unknown")
                 tool_desc = tool.get("description", "无描述")
                 rprint(f"  {i}. [cyan]{tool_name}[/cyan] - {tool_desc[:60]}...")
-
-    def _display_tools_table(
-        self,
-        tools: list[MCPToolInfo],
-        show_package: bool,
-    ) -> None:
-        """显示工具表格 - 简化实现."""
-        from rich.console import Console
-        from rich.table import Table
-
-        console = Console()
-        table = Table(title="MCP 工具列表")
-
-        table.add_column("名称", style="cyan", width=25)
-        table.add_column("作者", style="magenta", width=15)
-        table.add_column("类别", style="green", width=12)
-
-        if show_package:
-            table.add_column("包名", style="yellow", width=30)
-
-        table.add_column("描述", style="white", width=40)
-        table.add_column("API", style="red", width=5)
-
-        for tool in tools:
-            api_status = "🔑" if tool.requires_api_key else "🆓"
-            name = tool.name[:23] + "..." if len(tool.name) > 25 else tool.name
-            desc = (
-                tool.description[:38] + "..."
-                if len(tool.description) > 40
-                else tool.description
-            )
-
-            row_data = [name, tool.author, tool.category.split("\n")[0]]
-
-            if show_package:
-                package = tool.package_name or "N/A"
-                row_data.append(package[:28] + "..." if len(package) > 30 else package)
-
-            row_data.extend([desc, api_status])
-            table.add_row(*row_data)
-
-        console.print(table)
-
-    def _create_http_tool_info(self, url: str) -> MCPToolInfo:
-        """为 HTTP MCP 端点创建工具信息."""
-        from urllib.parse import parse_qs, urlparse
-
-        parsed = urlparse(url)
-
-        # 生成工具名称
-        tool_name = f"http-mcp-{parsed.netloc.replace('.', '-')}"
-
-        # 从查询参数提取配置
-        headers = {}
-        query_params = parse_qs(parsed.query)
-
-        if "api_key" in query_params:
-            headers["Authorization"] = f"Bearer {query_params['api_key'][0]}"
-        elif "token" in query_params:
-            headers["Authorization"] = f"Bearer {query_params['token'][0]}"
-
-        return MCPToolInfo(
-            name=tool_name,
-            url=url,  # 使用 HTTP URL 作为 URL
-            author="HTTP MCP Provider",
-            github_url=None,  # HTTP MCP端点没有GitHub URL
-            description=f"HTTP MCP endpoint at {parsed.netloc}",
-            deployment_method="http",  # HTTP 部署方法
-            category="HTTP MCP",
-            package_name=tool_name,
-            requires_api_key=bool(headers),  # 如果有headers则认为需要API key
-            run_command=None,  # 不适用于 HTTP 端点
-            install_command=None,
-            api_requirements=["httpx"],  # HTTP客户端依赖
-        )
 
     def _deploy_http_mcp(self, tool_info: MCPToolInfo, config: TestConfig) -> Any:
         """部署 HTTP MCP 端点."""
