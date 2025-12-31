@@ -9,6 +9,7 @@
 """
 
 import json
+import re
 import time
 from dataclasses import dataclass
 from enum import Enum
@@ -32,6 +33,9 @@ try:
 except ImportError:
     CONFIG_AVAILABLE = False
     config = None
+
+# 常量定义
+_SLOW_RESPONSE_THRESHOLD = 30.0  # 秒
 
 
 class TestResultStatus(Enum):
@@ -59,6 +63,12 @@ class ValidationAgent:
     """智能验证执行代理."""
 
     def __init__(self, model_config: dict | None = None) -> None:
+        """初始化验证代理.
+
+        Args:
+            model_config: 可选的模型配置，如果未提供则使用默认配置
+
+        """
         self.model_config = model_config or self._load_default_config()
         self.agent = None
         self._initialize_agent()
@@ -300,8 +310,6 @@ class ValidationAgent:
     def _parse_analysis_response(self, response: str) -> dict[str, Any]:
         """解析AI代理的分析响应 - 增强版容错处理."""
         try:
-            import re
-
             # 清理响应文本
             response = response.strip()
 
@@ -315,11 +323,7 @@ class ValidationAgent:
             else:
                 # 方式2：查找第一个 { } 对象
                 json_match = re.search(r"\{.*\}", response, re.DOTALL)
-                if json_match:
-                    json_str = json_match.group(0).strip()
-                else:
-                    # 方式3：尝试直接解析整个响应
-                    json_str = response
+                json_str = json_match.group(0).strip() if json_match else response
 
             if json_str:
                 # 清理可能的markdown标记
@@ -368,7 +372,7 @@ class ValidationAgent:
 
     def _basic_result_analysis(
         self,
-        test_case: TestCase,
+        _test_case: TestCase,
         response: dict[str, Any],
         execution_time: float,
     ) -> dict[str, Any]:
@@ -387,7 +391,7 @@ class ValidationAgent:
                 confidence = 0.5
 
             # 性能检查 - 更宽松的标准
-            if execution_time > 30.0:  # 放宽到30秒
+            if execution_time > _SLOW_RESPONSE_THRESHOLD:  # 放宽到30秒
                 issues.append(f"响应时间较长 ({execution_time:.2f}s)")
             else:
                 # 性能良好，提高置信度

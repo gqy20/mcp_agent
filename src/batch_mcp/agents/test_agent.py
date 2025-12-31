@@ -9,6 +9,7 @@
 """
 
 import json
+import re
 from dataclasses import dataclass
 from typing import Any
 
@@ -31,6 +32,9 @@ except ImportError:
     CONFIG_AVAILABLE = False
     config = None
 
+# 常量定义
+_MAX_FALLBACK_TEST_CASES = 15
+
 
 @dataclass
 class TestCase:
@@ -49,6 +53,12 @@ class TestGeneratorAgent:
     """智能测试用例生成代理."""
 
     def __init__(self, model_config: dict | None = None) -> None:
+        """初始化测试生成代理.
+
+        Args:
+            model_config: 可选的模型配置，如果未提供则使用默认配置
+
+        """
         self.model_config = model_config or self._load_default_config()
         self.agent = None
         self._initialize_agent()
@@ -245,14 +255,8 @@ API密钥列表: {tool_info.api_requirements if tool_info.requires_api_key else 
 
         try:
             # 尝试从响应中提取JSON
-            import re
-
             json_match = re.search(r"```json\s*(.*?)\s*```", response, re.DOTALL)
-            if json_match:
-                json_str = json_match.group(1)
-            else:
-                # 尝试直接解析整个响应
-                json_str = response
+            json_str = json_match.group(1) if json_match else response
 
             # 解析JSON
             data = json.loads(json_str)
@@ -363,13 +367,13 @@ API密钥列表: {tool_info.api_requirements if tool_info.requires_api_key else 
             )
 
         # 确保测试用例数量合理（限制最多15个）
-        if len(test_cases) > 15:
+        if len(test_cases) > _MAX_FALLBACK_TEST_CASES:
             # 保留高优先级的测试用例
             test_cases = sorted(
                 test_cases,
                 key=lambda x: (x.priority != "high", x.priority != "normal"),
             )
-            test_cases = test_cases[:15]
+            test_cases = test_cases[:_MAX_FALLBACK_TEST_CASES]
 
         return test_cases
 
