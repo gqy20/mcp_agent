@@ -162,104 +162,25 @@ class CLIHandler:
             # 3. 执行测试
             success, test_results = self._run_tests(tool_info, server_info, config)
 
-            # 3.5. 评估工具
-            evaluation_result = None
-            if config.evaluate:
-                rprint("[blue]🔍 正在评估工具...[/blue]")
+            # 3.5. 评估工具 (使用提取的方法)
+            evaluation_result = self._evaluate_tool_safe(
+                tool_info,
+                server_info,
+                test_results,
+                success,
+                config,
+            )
 
-                # 根据工具类型选择评估方法
-                if tool_info.github_url:
-                    # GitHub 仓库评估
-                    supabase_client = None
-                    if (
-                        config.db_export
-                        and CONFIG_AVAILABLE
-                        and hasattr(config, "database")
-                        and config.database
-                        and hasattr(config.database, "has_supabase_config")
-                        and config.database.has_supabase_config
-                    ):
-                        try:
-                            if SUPABASE_AVAILABLE and create_client is not None:
-                                supabase_client = create_client(
-                                    config.database.supabase_url,
-                                    config.database.supabase_service_role_key,
-                                )
-                        except Exception:  # noqa: BLE001
-                            pass
-
-                    evaluation_result = (
-                        evaluate_full_repository_with_comprehensive_score(
-                            tool_info.github_url,
-                            supabase_client,
-                        )
-                    )
-                    if (
-                        evaluation_result
-                        and evaluation_result.get("status") == "success"
-                    ):
-                        self._presenter.display_evaluation_result(evaluation_result)
-
-                elif tool_info.deployment_method == "http":
-                    # HTTP MCP 端点评估
-                    # 计算测试结果统计
-                    basic_tests = test_results or []
-                    tools_count = server_info.available_tools if server_info else 0
-
-                    # 确保tools_count是数值类型
-                    if isinstance(tools_count, list):
-                        tools_count = len(tools_count)
-                    elif not isinstance(tools_count, (int, float)):
-                        tools_count = 0
-
-                    avg_response_time = (
-                        sum(t.duration for t in basic_tests) / len(basic_tests)
-                        if basic_tests
-                        else 0.0
-                    )
-
-                    evaluation_result = evaluate_http_mcp_endpoint(
-                        test_results={
-                            "deployment_success": True,  # HTTP部署总是成功
-                            "communication_success": success,  # 通信成功率
-                            "test_results": _convert_test_results_to_dict(basic_tests),
-                        },
-                        tools_count=tools_count,
-                        response_time=avg_response_time,
-                        tool_info={"name": tool_info.name, "url": tool_info.url},
-                    )
-                    if (
-                        evaluation_result
-                        and evaluation_result.get("status") == "success"
-                    ):
-                        self._presenter.display_http_evaluation_result(
-                            evaluation_result
-                        )
-
-            # 4. 生成报告
-            report_files = {}
-            if config.save_report:
-                report_files = self._save_report(
-                    input_str,
-                    tool_info,
-                    server_info,
-                    success,
-                    test_results,
-                    getattr(server_info, "start_time", time.time()),
-                    evaluation_result,
-                )
-
-            # 4.25. 显示精简摘要
-            if hasattr(self, "_display_concise_summary"):
-                self._display_concise_summary(report_files.get("json"))
-
-            # 4.5. 数据库导出 - 使用精简版本
-            if config.db_export:
-                concise_report = report_files.get("concise") or report_files.get("json")
-                self._exporter.export_to_database(
-                    concise_report,
-                    evaluation_result=evaluation_result,
-                )
+            # 4. 处理测试输出 (使用提取的方法)
+            self._handle_test_outputs(
+                tool_info,
+                server_info,
+                success,
+                test_results,
+                config,
+                evaluation_result,
+                input_str,
+            )
 
             # 5. 清理资源
             if config.cleanup:
@@ -289,99 +210,25 @@ class CLIHandler:
             # 执行测试 - 统一逻辑，支持smart模式
             success, test_results = self._run_tests(tool_info, server_info, config)
 
-            # 评估工具
-            evaluation_result = None
-            if config.evaluate and tool_info:
-                rprint("[blue]🔍 正在评估工具...[/blue]")
+            # 评估工具 (使用提取的方法)
+            evaluation_result = self._evaluate_tool_safe(
+                tool_info,
+                server_info,
+                test_results,
+                success,
+                config,
+            )
 
-                # 根据工具类型选择评估方法
-                if tool_info.github_url:
-                    # GitHub 仓库评估
-                    supabase_client = None
-                    if (
-                        config.db_export
-                        and CONFIG_AVAILABLE
-                        and hasattr(config, "database")
-                        and config.database
-                        and hasattr(config.database, "has_supabase_config")
-                        and config.database.has_supabase_config
-                    ):
-                        try:
-                            if SUPABASE_AVAILABLE and create_client is not None:
-                                supabase_client = create_client(
-                                    config.database.supabase_url,
-                                    config.database.supabase_service_role_key,
-                                )
-                        except Exception:  # noqa: BLE001
-                            pass
-
-                    evaluation_result = (
-                        evaluate_full_repository_with_comprehensive_score(
-                            tool_info.github_url,
-                            supabase_client,
-                        )
-                    )
-                    if (
-                        evaluation_result
-                        and evaluation_result.get("status") == "success"
-                    ):
-                        self._presenter.display_evaluation_result(evaluation_result)
-
-                elif tool_info.deployment_method == "http":
-                    # HTTP MCP 端点评估
-                    # 计算测试结果统计
-                    basic_tests = test_results or []
-                    tools_count = server_info.available_tools if server_info else 0
-
-                    # 确保tools_count是数值类型
-                    if isinstance(tools_count, list):
-                        tools_count = len(tools_count)
-                    elif not isinstance(tools_count, (int, float)):
-                        tools_count = 0
-
-                    avg_response_time = (
-                        sum(t.duration for t in basic_tests) / len(basic_tests)
-                        if basic_tests
-                        else 0.0
-                    )
-
-                    evaluation_result = evaluate_http_mcp_endpoint(
-                        test_results={
-                            "deployment_success": True,  # HTTP部署总是成功
-                            "communication_success": success,  # 通信成功率
-                            "test_results": _convert_test_results_to_dict(basic_tests),
-                        },
-                        tools_count=tools_count,
-                        response_time=avg_response_time,
-                        tool_info={"name": tool_info.name, "url": tool_info.url},
-                    )
-                    if (
-                        evaluation_result
-                        and evaluation_result.get("status") == "success"
-                    ):
-                        self._presenter.display_http_evaluation_result(
-                            evaluation_result
-                        )
-
-            # 生成报告（如果需要）
-            report_files = {}
-            if config.save_report:
-                report_files = self._save_report(
-                    package,
-                    tool_info,
-                    server_info,
-                    success,
-                    test_results,
-                    getattr(server_info, "start_time", time.time()),
-                    evaluation_result,
-                )
-
-            # 数据库导出
-            if config.db_export:
-                self._exporter.export_to_database(
-                    report_files.get("json"),
-                    evaluation_result=evaluation_result,
-                )
+            # 处理测试输出 (使用提取的方法)
+            self._handle_test_outputs(
+                tool_info,
+                server_info,
+                success,
+                test_results,
+                config,
+                evaluation_result,
+                package,
+            )
 
             # 清理
             if config.cleanup:
@@ -707,6 +554,137 @@ class CLIHandler:
             rprint("[green]✅ 清理完成[/green]")
         except Exception as e:  # noqa: BLE001
             rprint(f"[yellow]⚠️ 清理异常: {e}[/yellow]")
+
+    def _create_supabase_client(self, config: TestConfig) -> Any:
+        """创建 Supabase 客户端 - 单一职责."""
+        if not (
+            config.db_export
+            and CONFIG_AVAILABLE
+            and hasattr(config, "database")
+            and config.database
+            and hasattr(config.database, "has_supabase_config")
+            and config.database.has_supabase_config
+        ):
+            return None
+
+        try:
+            if SUPABASE_AVAILABLE and create_client is not None:
+                return create_client(
+                    config.database.supabase_url,
+                    config.database.supabase_service_role_key,
+                )
+        except Exception:  # noqa: BLE001
+            pass
+
+        return None
+
+    def _evaluate_github_repo(
+        self, tool_info: MCPToolInfo, config: TestConfig
+    ) -> dict[str, Any] | None:
+        """评估 GitHub 仓库 - 单一职责."""
+        supabase_client = self._create_supabase_client(config)
+
+        evaluation_result = evaluate_full_repository_with_comprehensive_score(
+            tool_info.github_url,
+            supabase_client,
+        )
+
+        if evaluation_result and evaluation_result.get("status") == "success":
+            self._presenter.display_evaluation_result(evaluation_result)
+
+        return evaluation_result
+
+    def _evaluate_http_endpoint(
+        self,
+        tool_info: MCPToolInfo,
+        test_results: list,
+        server_info: Any,
+        success: bool,
+        config: TestConfig,
+    ) -> dict[str, Any] | None:
+        """评估 HTTP MCP 端点 - 单一职责."""
+        # 计算测试结果统计
+        basic_tests = test_results or []
+        tools_count = server_info.available_tools if server_info else 0
+
+        # 确保tools_count是数值类型
+        if isinstance(tools_count, list):
+            tools_count = len(tools_count)
+        elif not isinstance(tools_count, (int, float)):
+            tools_count = 0
+
+        avg_response_time = (
+            sum(t.duration for t in basic_tests) / len(basic_tests)
+            if basic_tests
+            else 0.0
+        )
+
+        evaluation_result = evaluate_http_mcp_endpoint(
+            test_results={
+                "deployment_success": True,  # HTTP部署总是成功
+                "communication_success": success,  # 通信成功率
+                "test_results": _convert_test_results_to_dict(basic_tests),
+            },
+            tools_count=tools_count,
+            response_time=avg_response_time,
+            tool_info={"name": tool_info.name, "url": tool_info.url},
+        )
+
+        if evaluation_result and evaluation_result.get("status") == "success":
+            self._presenter.display_http_evaluation_result(evaluation_result)
+
+        return evaluation_result
+
+    def _evaluate_tool_safe(
+        self,
+        tool_info: MCPToolInfo,
+        server_info: Any,
+        test_results: list,
+        success: bool,
+        config: TestConfig,
+    ) -> dict[str, Any] | None:
+        """安全评估工具 - 统一评估入口."""
+        if not config.evaluate:
+            return None
+        rprint("[blue]🔍 正在评估工具...[/blue]")
+        if tool_info.github_url:
+            return self._evaluate_github_repo(tool_info, config)
+        if tool_info.deployment_method == "http":
+            return self._evaluate_http_endpoint(
+                tool_info, test_results, server_info, success, config
+            )
+        return None
+
+    def _handle_test_outputs(
+        self,
+        tool_info: MCPToolInfo,
+        server_info: Any,
+        success: bool,
+        test_results: list,
+        config: TestConfig,
+        evaluation_result: dict[str, Any] | None,
+        input_str: str,
+    ) -> dict[str, str]:
+        """处理测试输出."""
+        report_files = {}
+        if config.save_report:
+            report_files = self._save_report(
+                input_str,
+                tool_info,
+                server_info,
+                success,
+                test_results,
+                getattr(server_info, "start_time", time.time()),
+                evaluation_result,
+            )
+        if hasattr(self, "_display_concise_summary"):
+            self._display_concise_summary(report_files.get("json"))
+        if config.db_export:
+            self._exporter.export_to_database(
+                report_files.get("concise") or report_files.get("json"),
+                evaluation_result=evaluation_result,
+            )
+        return report_files
 
     def _safe_ai_confidence(self, confidence: Any) -> float:
         """安全处理ai_confidence值，确保返回数值类型."""
