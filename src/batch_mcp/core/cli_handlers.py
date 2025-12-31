@@ -21,15 +21,16 @@ from src.batch_mcp.core.database_exporter import get_database_exporter
 from src.batch_mcp.core.evaluator import (
     evaluate_full_repository_with_comprehensive_score,
 )
+from src.batch_mcp.core.http_mcp_handler import get_http_mcp_handler
 from src.batch_mcp.core.input_type_detector import (
     get_input_type_detector,
 )
 from src.batch_mcp.core.report_generator import generate_test_report
 from src.batch_mcp.core.result_presenter import get_result_presenter
+from src.batch_mcp.core.test_runner import get_test_runner
 from src.batch_mcp.core.tester import TestConfig, get_mcp_tester
 from src.batch_mcp.core.tool_finder import get_tool_finder
 from src.batch_mcp.utils.csv_parser import MCPToolInfo, get_mcp_parser
-from src.batch_mcp.utils.test_params_generator import get_test_params_generator
 
 try:
     from .config import get_config
@@ -47,6 +48,8 @@ class CLIHandler:
     def __init__(self) -> None:
         """初始化CLI处理器."""
         self.tester = get_mcp_tester()
+        self._test_runner = get_test_runner()
+        self._http_handler = get_http_mcp_handler()
         self._input_detector = get_input_type_detector()
         self._tool_finder = get_tool_finder()
         self._presenter = get_result_presenter()
@@ -434,7 +437,7 @@ class CLIHandler:
         http_config: dict[str, Any],
         config: TestConfig,
     ) -> bool:
-        """运行 HTTP MCP 测试的专用方法."""
+        """运行 HTTP MCP 测试的专用方法 - 委托给 HTTPMCPHandler."""
         try:
             from .http_mcp_client import HttpMCPClient
 
@@ -445,11 +448,11 @@ class CLIHandler:
                 timeout=http_config["timeout"],
             )
 
-            # 创建server_info对象来包装client
+            # 创建 server_info 对象来包装 client
             server_info = type("ServerInfo", (), {"client": client})()
 
             # 运行基础测试
-            success, test_results = await self._run_http_tests(
+            success, test_results = await self._http_handler._run_http_tests(
                 tool_info, server_info, config
             )
 
@@ -458,19 +461,19 @@ class CLIHandler:
             tools_list = tools_result.get("tools", [])
             tools_count = len(tools_list)
 
-            # 如果启用智能测试，运行AI测试
+            # 如果启用智能测试，运行 AI 测试
             if config.smart_test and success:
                 rprint("[blue]🤖 开始 AI 智能测试...[/blue]")
 
-                smart_results = await self._run_http_smart_tests(
+                smart_results = await self._http_handler.run_http_smart_tests(
                     client, tools_list, config
                 )
 
-                # 将智能测试结果转换为TestResult对象并添加到basic_tests中
+                # 将智能测试结果转换为 TestResult 对象并添加到 basic_tests 中
                 from .report_generator import TestResult
 
                 for smart_result in smart_results:
-                    # 确保smart_result是字典类型，防止意外类型混入
+                    # 确保 smart_result 是字典类型，防止意外类型混入
                     if not isinstance(smart_result, dict):
                         rprint(
                             f"[yellow]⚠️ 跳过无效的智能测试结果: {type(smart_result)}[/yellow]"
@@ -489,7 +492,7 @@ class CLIHandler:
                         ai_analysis=f"AI智能测试 {smart_result.get('tool_name', 'unknown')} {'成功' if smart_result.get('success') else '失败'}",
                         ai_confidence=0.8 if smart_result.get("success") else 0.2,
                     )
-                    # 将智能测试结果添加到basic_tests中
+                    # 将智能测试结果添加到 basic_tests 中
                     test_results["basic_tests"].append(smart_test_result)
 
                 # 计算智能测试成功率
@@ -501,7 +504,7 @@ class CLIHandler:
                 else:
                     smart_success = False
 
-            # 3.5. 评估HTTP MCP端点
+            # 评估和报告生成逻辑保持不变
             evaluation_result = None
             if config.evaluate:
                 rprint("[blue]🔍 正在评估HTTP MCP端点...[/blue]")
@@ -515,7 +518,7 @@ class CLIHandler:
                     total_duration / len(basic_tests) if basic_tests else 0
                 )
 
-                # 将TestResult对象转换为字典用于评估
+                # 将 TestResult 对象转换为字典用于评估
                 evaluation_test_results = {
                     "deployment_success": True,
                     "communication_success": success,
@@ -533,7 +536,7 @@ class CLIHandler:
                     ],
                 }
 
-                # 调用HTTP MCP评估
+                # 调用 HTTP MCP 评估
                 from .evaluator import evaluate_http_mcp_endpoint
 
                 evaluation_result = evaluate_http_mcp_endpoint(
@@ -551,7 +554,7 @@ class CLIHandler:
             if config.save_report:
                 from .report_generator import generate_test_report
 
-                # 直接传递TestResult对象列表，保持数据格式统一
+                # 直接传递 TestResult 对象列表，保持数据格式统一
                 basic_tests_list = test_results.get("basic_tests", [])
 
                 report_files = generate_test_report(
@@ -642,30 +645,8 @@ class CLIHandler:
         server_info,
         config: TestConfig,
     ):
-        """执行测试 - 支持无tool_info场景."""
-        rprint("[yellow]🧪 执行基础连通性测试...[/yellow]")
-
-        # 检查是否为 HTTP MCP 客户端
-        if self._is_http_client(server_info):
-            http_success, http_test_results = asyncio.run(
-                self._run_http_tests(tool_info, server_info, config)
-            )
-            # 提取basic_tests列表以保持与其他测试路径的一致性
-            basic_tests_list = http_test_results.get("basic_tests", [])
-            return http_success, basic_tests_list
-
-        if config.smart_test and tool_info:
-            try:
-                rprint("[blue]🤖 启用AI智能测试模式...[/blue]")
-                return asyncio.run(
-                    self.tester.run_smart_test(tool_info, server_info, config.verbose),
-                )
-            except ImportError:
-                rprint("[yellow]⚠️ AgentScope不可用，使用基础测试模式[/yellow]")
-        elif config.smart_test and not tool_info:
-            rprint("[yellow]⚠️ 包测试暂不支持AI智能模式，使用基础测试[/yellow]")
-
-        return self.tester.run_basic_test(server_info, config.timeout)
+        """执行测试 - 委托给 TestRunner."""
+        return self._test_runner.run_tests(tool_info, server_info, config)
 
     def _save_report(
         self,
@@ -753,38 +734,8 @@ class CLIHandler:
         return 0.0
 
     def _deploy_http_mcp(self, tool_info: MCPToolInfo, config: TestConfig) -> Any:
-        """部署 HTTP MCP 端点."""
-        rprint("[blue]🚀 正在部署 HTTP MCP 端点...[/blue]")
-
-        try:
-            from .simple_mcp_deployer import SimpleMCPDeployer
-
-            deployer = SimpleMCPDeployer()
-
-            # 从 URL 重新解析配置
-            _method, http_config = deployer.detect_deployment_method(tool_info.url)
-
-            # 合并配置参数
-            http_config["timeout"] = config.timeout
-
-            # 部署 HTTP 客户端
-            client = deployer.deploy_http_mcp(http_config)
-
-            rprint("[green]✅ HTTP MCP 端点部署成功！[/green]")
-
-            # 创建一个兼容的server_info对象
-            from types import SimpleNamespace
-
-            server_info = SimpleNamespace()
-            server_info.server_id = f"http-mcp-{tool_info.name}"
-            server_info.client = client
-            server_info.available_tools = []  # 将在测试时填充
-
-            return server_info
-
-        except Exception as e:
-            rprint(f"[red]❌ HTTP MCP 端点部署失败: {e}[/red]")
-            return None
+        """部署 HTTP MCP 端点 - 委托给 HTTPMCPHandler."""
+        return self._http_handler.deploy_http_mcp(tool_info, config)
 
     def _is_http_client(self, server_info: Any) -> bool:
         """检测是否为 HTTP MCP 客户端."""
@@ -801,200 +752,6 @@ class CLIHandler:
             return isinstance(server_info, HttpMCPClient)
         except ImportError:
             return False
-
-    async def _run_http_tests(
-        self, _tool_info: MCPToolInfo | None, server_info: Any, config: TestConfig
-    ) -> tuple[bool, dict[str, Any]]:
-        """运行 HTTP MCP 测试 - 与STDIO测试保持一致."""
-        try:
-            rprint("[blue]🔗 测试 HTTP MCP 连接...[/blue]")
-
-            # 获取HTTP客户端
-            client = (
-                server_info.client if hasattr(server_info, "client") else server_info
-            )
-
-            # 1. 获取工具列表 - 类似STDIO的_test_mcp_communication
-            tools_result = await client.list_tools()
-            if not tools_result["success"]:
-                rprint(
-                    f"[red]❌ 获取工具列表失败: {tools_result.get('error', 'Unknown error')}[/red]"
-                )
-                return False, {}
-
-            tools = tools_result.get("tools", [])
-            rprint(f"[green]✅ 找到 {len(tools)} 个工具[/green]")
-
-            # 更新server_info的available_tools
-            if hasattr(server_info, "available_tools"):
-                server_info.available_tools = tools
-
-            # 显示工具列表
-            if tools:
-                rprint("[blue]🛠️ 可用工具:[/blue]")
-                for i, tool in enumerate(tools, 1):
-                    tool_name = tool.get("name", "Unknown")
-                    tool_desc = tool.get("description", "No description")[:50]
-                    rprint(f"  {i}. {tool_name} - {tool_desc}...")
-
-            # 2. 创建真正的测试结果，复用TestResult结构
-            import time
-
-            from .report_generator import TestResult
-
-            test_results = []
-
-            # 添加MCP协议通信测试结果
-            test_results.append(
-                TestResult(
-                    test_name="MCP协议通信测试",
-                    success=True,
-                    duration=0.0,
-                    test_category="通信测试",
-                    parameters={"method": "tools/list"},
-                    tool_name=None,
-                    ai_analysis=f"HTTP MCP通信成功，发现{len(tools)}个工具",
-                    ai_confidence=1.0,
-                )
-            )
-
-            # 3. 工具调用测试 - 类似STDIO的_test_first_tool
-            if tools:
-                first_tool = tools[0]
-                tool_name = first_tool.get("name", "unknown")
-
-                rprint(f"[blue]🧪 测试工具调用: {tool_name}[/blue]")
-
-                start_time = time.time()
-
-                # 复用STDIO的参数生成逻辑
-                arguments = self._generate_test_arguments(first_tool)
-
-                # 使用HTTP客户端的call_tool方法
-                call_result = await client.call_tool(tool_name, arguments)
-                duration = time.time() - start_time
-
-                tool_test_success = call_result.get("success", False)
-
-                test_results.append(
-                    TestResult(
-                        test_name=f"工具调用测试: {tool_name}",
-                        success=tool_test_success,
-                        duration=duration,
-                        test_category="功能测试",
-                        parameters=arguments,
-                        tool_name=tool_name,
-                        actual_response=call_result,
-                        error_message=call_result.get("error")
-                        if not tool_test_success
-                        else None,
-                        ai_analysis=f"工具 {tool_name} {'调用成功' if tool_test_success else '调用失败'}",
-                        ai_confidence=0.9 if tool_test_success else 0.1,
-                    )
-                )
-
-                if tool_test_success:
-                    rprint(f"[green]✅ 工具 {tool_name} 调用成功[/green]")
-                else:
-                    rprint(
-                        f"[yellow]⚠️ 工具 {tool_name} 调用失败: {call_result.get('error', 'Unknown error')}[/yellow]"
-                    )
-
-            rprint("[green]✅ HTTP MCP 基础测试完成！[/green]")
-
-            # 返回与STDIO格式一致的结果
-            return True, {
-                "basic_tests": test_results,
-                "connection": True,
-                "tools_found": len(tools),
-                "tools": tools,
-            }
-
-        except Exception as e:
-            rprint(f"[red]❌ HTTP MCP 测试失败: {e}[/red]")
-            return False, {"error": str(e)}
-
-    def _generate_test_arguments(self, tool_info: dict) -> dict:
-        """为工具生成基本测试参数 - 使用统一的参数生成器."""
-        params_generator = get_test_params_generator()
-        return params_generator.generate(tool_info)
-
-    async def _run_http_smart_tests(
-        self, client: Any, tools: list[dict[str, Any]], _config: TestConfig
-    ) -> list[dict[str, Any]]:
-        """运行 HTTP 智能测试."""
-        smart_results = []
-
-        for tool in tools[:3]:  # 限制测试前3个工具
-            tool_name = tool.get("name")
-            if not tool_name:
-                continue
-
-            try:
-                rprint(f"[blue]🧪 测试工具: {tool_name}[/blue]")
-
-                # 构造测试参数
-                test_args = self._construct_test_args(tool)
-
-                # 调用工具
-                call_result = await client.call_tool(tool_name, test_args)
-
-                test_success = call_result.get("success", False)
-                smart_results.append(
-                    {
-                        "tool_name": tool_name,
-                        "success": test_success,
-                        "result": call_result.get("result"),
-                        "error": call_result.get("error"),
-                    }
-                )
-
-                if test_success:
-                    rprint(f"[green]  ✅ {tool_name} 测试成功[/green]")
-                else:
-                    rprint(
-                        f"[red]  ❌ {tool_name} 测试失败: {call_result.get('error')}[/red]"
-                    )
-
-            except Exception as e:
-                smart_results.append(
-                    {"tool_name": tool_name, "success": False, "error": str(e)}
-                )
-                rprint(f"[red]  ❌ {tool_name} 测试异常: {e}[/red]")
-
-        return smart_results
-
-    def _construct_test_args(self, tool: dict[str, Any]) -> dict[str, Any]:
-        """为工具构造测试参数."""
-        input_schema = tool.get("inputSchema", {})
-        properties = input_schema.get("properties", {})
-        required = input_schema.get("required", [])
-
-        args: dict[str, Any] = {}
-        for prop_name, prop_info in properties.items():
-            prop_type = prop_info.get("type", "string")
-
-            if prop_type == "string":
-                if (
-                    "query" in prop_name.lower()
-                    or "prompt" in prop_name.lower()
-                    or "input" in prop_name.lower()
-                ):
-                    args[prop_name] = "Hello, this is a test message"
-                elif prop_name in required:
-                    args[prop_name] = "test_value"
-            elif prop_type == "number":
-                args[prop_name] = 42
-            elif prop_type == "boolean":
-                args[prop_name] = True
-            elif prop_type == "array":
-                args[prop_name] = []
-
-        # 如果没有构造出参数，使用默认参数
-        if not args:
-            return {"input": "test input from HTTP MCP test"}
-
-        return args
 
 
 # 全局处理器实例
