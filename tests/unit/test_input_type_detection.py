@@ -5,7 +5,8 @@
 测试覆盖各种输入类型的准确检测和边界情况
 """
 
-from src.batch_mcp.core.cli_handlers import CLIHandler, InputType
+from src.batch_mcp.core.cli_handlers import CLIHandler
+from src.batch_mcp.core.input_type_detector import InputType
 
 
 class TestInputTypeDetection:

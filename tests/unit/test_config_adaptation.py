@@ -4,7 +4,8 @@
 测试根据不同输入类型自动调整测试配置的功能
 """
 
-from src.batch_mcp.core.cli_handlers import CLIHandler, InputType
+from src.batch_mcp.core.cli_handlers import CLIHandler
+from src.batch_mcp.core.input_type_detector import InputType
 from src.batch_mcp.core.tester import TestConfig
 
 
