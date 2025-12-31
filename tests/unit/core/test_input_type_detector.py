@@ -7,6 +7,8 @@
 4. 边界情况和特殊情况
 """
 
+import pytest
+
 from src.batch_mcp.core.input_type_detector import InputType, InputTypeDetector
 from src.batch_mcp.core.tester import TestConfig
 
@@ -238,3 +240,107 @@ class TestInputTypeDetector:
             assert result == expected_type, (
                 f"真实世界URL检测错误: {url} -> {result} (期望: {expected_type})"
             )
+
+    # ===== HTTP MCP 端点检测扩展测试 =====
+    # 以下测试来自 test_http_mcp_endpoint_detection.py
+
+    def test_is_http_mcp_endpoint_case_insensitive(self):
+        """测试HTTP端点检测的大小写不敏感性."""
+        case_variations = [
+            "https://API.EXAMPLE.COM/MCP",
+            "https://api.example.com/API/MCP",
+            "https://api.example.com/MCP-SERVER",
+            "https://api.example.com/Model-Context-Protocol",
+            "https://api.example.com/PROXY/mcp",
+        ]
+
+        for url in case_variations:
+            result = self.detector.is_http_mcp_endpoint(url)
+            assert result, f"路径检测应该大小写不敏感: {url}"
+
+    def test_is_http_mcp_endpoint_combination_features(self):
+        """测试多种特征的组合检测."""
+        combination_cases = [
+            # 路径 + 查询参数
+            "https://api.example.com/mcp?api_key=test123",
+            "https://service.example.com/api/mcp?token=xyz789",
+            # 端口 + 路径
+            "https://localhost:3000/api/mcp",
+            "https://dev.example.com:8080/mcp-server",
+            # 域名 + 查询参数
+            "https://mcp.example.com/api?key=abc123",
+            "https://api.example.com/mcp?auth=bearer456",
+            # 多种特征组合
+            "https://mcp.example.com:8080/api/mcp?api_key=test123",
+            "https://gateway-mcp.example.com:3000/proxy/mcp?token=xyz789",
+        ]
+
+        for url in combination_cases:
+            result = self.detector.is_http_mcp_endpoint(url)
+            assert result, f"组合特征检测失败: {url}"
+
+    def test_is_http_mcp_endpoint_negative_cases(self):
+        """测试负例和误报情况."""
+        negative_cases = [
+            # 普通API端点
+            "https://api.example.com/users",
+            "https://api.example.com/posts/123",
+            "https://api.example.com/v1/data",
+            # 普通网站
+            "https://example.com",
+            "https://www.google.com",
+            "https://stackoverflow.com",
+            # 不相关的查询参数
+            "https://example.com/api?param=value",
+            "https://example.com/search?q=test",
+            # 不相关的端口
+            "https://example.com:3000",
+            "https://localhost:8080",
+            "https://dev.example.com:9000",
+        ]
+
+        for url in negative_cases:
+            result = self.detector.is_http_mcp_endpoint(url)
+            assert not result, f"不应该检测为HTTP MCP端点: {url}"
+
+    def test_is_http_mcp_endpoint_url_parsing_robustness(self):
+        """测试URL解析的健壮性."""
+        robustness_cases = [
+            # 复杂的查询参数
+            "https://api.example.com/mcp?key=value&param=extra&mcp=true",
+            "https://example.com/api?complex[filter][field]=value&mcp=1",
+            # 带认证信息的URL
+            "https://user:pass@example.com/mcp",
+            # 特殊字符编码
+            "https://example.com/mcp%20server",
+            "https://example.com/api/mcp?key=test%20value",
+            # 长路径
+            "https://example.com/very/deep/nested/path/structure/that/contains/mcp/endpoint",
+        ]
+
+        for url in robustness_cases:
+            try:
+                result = self.detector.is_http_mcp_endpoint(url)
+                # 如果URL解析失败，不应该抛出异常
+                assert isinstance(result, bool), f"应该返回布尔值: {url}"
+            except Exception as e:  # noqa: BLE001
+                pytest.fail(f"URL解析不应该抛出异常: {url} -> {e}")
+
+    def test_is_http_mcp_endpoint_performance_large_urls(self):
+        """测试性能考虑的边界情况 - 长URL处理."""
+        large_urls = [
+            # 非常长的URL
+            "https://example.com/" + "a" * 1000 + "/mcp",
+            "https://example.com/mcp?" + "param=value&" * 100,
+            # 包含大量字符的URL
+            "https://example.com/api/" + "path" * 200 + "/mcp",
+        ]
+
+        for url in large_urls:
+            # 即使对于很长的URL，检测也应该快速完成
+            # 这里我们只验证不会因为长度而崩溃
+            try:
+                result = self.detector.is_http_mcp_endpoint(url)
+                assert isinstance(result, bool)
+            except Exception as e:  # noqa: BLE001
+                pytest.fail(f"长URL处理不应该失败: {len(url)}字符 -> {e}")
