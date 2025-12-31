@@ -102,12 +102,13 @@ class TestMandatoryAIGeneration:
         assert isinstance(test_cases, list)
         assert len(test_cases) > 0
 
-        # AI 生成的测试用例应该有针对性
-        test_descriptions = " ".join([tc.description for tc in test_cases])
+        # AI 生成的测试用例应该有针对性 - 检查 tool_name 字段
+        tool_names_used = [tc.tool_name for tc in test_cases]
+        available_tool_names = [tool["name"] for tool in available_tools]
         assert any(
-            tool_name in test_descriptions
-            for tool in available_tools
-            for tool_name in [tool["name"], tool["description"]]
+            tool_name in tool_names_used for tool_name in available_tool_names
+        ), (
+            f"AI 生成的测试用例应该使用可用工具。使用了: {tool_names_used}, 可用: {available_tool_names}"
         )
 
     @pytest.mark.asyncio

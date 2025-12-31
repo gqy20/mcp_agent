@@ -2,7 +2,7 @@
 """智能测试生成代理.
 
 基于 AgentScope ReActAgent 的 AI 测试用例生成器
-根据 MCP 工具的功能和参数自动生成测试用例
+强制使用 AI 生成测试用例，不再支持 fallback 规则引擎
 
 作者: AI Assistant
 日期: 2025-08-15
@@ -30,9 +30,6 @@ except ImportError:
 
 from src.batch_mcp.utils.csv_parser import MCPToolInfo
 
-# 常量定义
-_MAX_FALLBACK_TEST_CASES = 15
-
 
 @dataclass
 class TestCase:
@@ -48,12 +45,12 @@ class TestCase:
 
 
 class TestGeneratorAgent:
-    """智能测试用例生成代理."""
+    """智能测试用例生成代理 - 强制 AI 模式."""
 
     def __init__(self) -> None:
         """初始化测试生成代理.
 
-        尝试初始化 AI Agent，如果失败则使用 fallback 模式。
+        如果没有 API key，agent 会保持为 None，在调用 generate_test_cases 时抛出异常。
         """
         self.agent = None
         self._initialize_agent()
@@ -99,8 +96,8 @@ class TestGeneratorAgent:
                 model=model,
                 formatter=formatter,
             )
-        except Exception:  # noqa: BLE001 - fallback to rule-based mode
-            # 初始化失败，使用 fallback 模式
+        except Exception:  # noqa: BLE001 - will check agent is None later
+            # 初始化失败，agent 保持为 None
             self.agent = None
 
     def _get_test_generator_prompt(self) -> str:
@@ -161,6 +158,48 @@ class TestGeneratorAgent:
 
 现在请为给定的MCP工具生成实用、容易通过的测试用例。"""
 
+    def _extract_text_from_response(self, response: Any) -> str:
+        """从 ReActAgent 的响应中提取文本内容.
+
+        ReActAgent 可能返回多种格式：
+        - 单个 Msg 对象
+        - list[Msg]
+        - list[dict] (包含 thinking 和 type 字段)
+        """
+        # 如果是字符串，直接返回
+        if isinstance(response, str):
+            return response
+
+        # 如果是 Msg 对象，提取 content
+        if hasattr(response, "content"):
+            content = response.content
+            if isinstance(content, str):
+                return content
+            # 如果 content 是 list（如 ReActAgent 的多步输出）
+            if isinstance(content, list):
+                # 找到最后一个 type='text' 的项目
+                for item in reversed(content):
+                    if isinstance(item, dict) and item.get("type") == "text":
+                        return str(item.get("thinking", item.get("text", "")))
+                # 如果没找到，返回最后一个项目的字符串形式
+                if content:
+                    return str(content[-1])
+
+        # 如果是 list，处理最后一个元素
+        if isinstance(response, list) and response:
+            last_item = response[-1]
+            if hasattr(last_item, "content"):
+                return self._extract_text_from_response(last_item.content)
+            # 如果是 dict（ReActAgent 的输出格式）
+            if isinstance(last_item, dict):
+                if "thinking" in last_item:
+                    return str(last_item["thinking"])
+                if "text" in last_item:
+                    return str(last_item["text"])
+
+        # 默认返回字符串形式
+        return str(response)
+
     async def generate_test_cases(
         self,
         tool_info: MCPToolInfo,
@@ -168,15 +207,22 @@ class TestGeneratorAgent:
     ) -> list[TestCase]:
         """为指定MCP工具生成测试用例.
 
-        如果 AI Agent 可用，使用 AI 生成；否则使用规则引擎。
-        """
-        # 如果没有 AI Agent，使用 fallback
-        if self.agent is None:
-            return self._generate_fallback_test_cases(tool_info, available_tools)
+        强制使用 AI 生成，没有 fallback 模式。
 
-        try:
-            # 构建工具信息提示
-            tool_info_text = f"""请为以下MCP工具生成测试用例:
+        Raises:
+            RuntimeError: 如果 AI Agent 未初始化（没有 API key）
+
+        """
+        # 验证 AI Agent 已初始化
+        if self.agent is None:
+            msg = (
+                "AI API key not configured. "
+                "Please set OPENAI_API_KEY or DASHSCOPE_API_KEY environment variable."
+            )
+            raise RuntimeError(msg)
+
+        # 构建工具信息提示
+        tool_info_text = f"""请为以下MCP工具生成测试用例:
 
 工具名称: {tool_info.name}
 作者: {tool_info.author}
@@ -192,20 +238,36 @@ API密钥列表: {tool_info.api_requirements if tool_info.requires_api_key else 
 请生成3-4个最重要的测试用例来验证这个MCP工具的核心功能（严格不要超过4个）。优先选择最具代表性的测试场景。
 """
 
+        try:
             # 调用 AI 生成测试用例
             user_msg = Msg("user", tool_info_text, role="user")
             response = await self.agent(user_msg)
 
+            # ReActAgent 返回的格式比较复杂，需要提取最终的文本内容
+            response_text = self._extract_text_from_response(response)
+
             # 解析响应
-            test_cases = self._parse_test_cases_response(response.content)
+            test_cases = self._parse_test_cases_response(response_text)
 
             if test_cases:
                 return test_cases
-            return self._generate_fallback_test_cases(tool_info, available_tools)
 
-        except Exception:  # noqa: BLE001 - fallback to rule-based mode
-            # 出错时使用 fallback
-            return self._generate_fallback_test_cases(tool_info, available_tools)
+            # AI 解析失败，抛出异常
+            msg = (
+                "AI failed to generate valid test cases. "
+                "Please check your API key and model configuration."
+            )
+            raise RuntimeError(msg)  # noqa: TRY301 - simple error case
+
+        except Exception as e:
+            # 任何错误都抛出异常，不使用 fallback
+            if "AI API key not configured" in str(e):
+                raise
+            msg = (
+                f"AI test generation failed: {e}. "
+                "Please check your API key and model configuration."
+            )
+            raise RuntimeError(msg) from e
 
     def _parse_test_cases_response(self, response: str) -> list[TestCase]:
         """解析 AI 响应并转换为测试用例."""
@@ -233,204 +295,10 @@ API密钥列表: {tool_info.api_requirements if tool_info.requires_api_key else 
                     test_cases.append(test_case)
 
         except (json.JSONDecodeError, KeyError):
-            # 解析失败，返回空列表（将触发 fallback）
+            # 解析失败，返回空列表
             return []
 
         return test_cases
-
-    def _generate_fallback_test_cases(
-        self,
-        tool_info: MCPToolInfo,
-        available_tools: list[dict[str, Any]],
-    ) -> list[TestCase]:
-        """生成备选的基础测试用例 - 通用版，适用于所有MCP工具."""
-        test_cases = []
-
-        # 基础连通性测试
-        test_cases.append(
-            TestCase(
-                name="基础连通性测试",
-                description="验证MCP工具是否正常响应",
-                tool_name="tools/list",
-                parameters={},
-                expected_type="success",
-                priority="high",
-            ),
-        )
-
-        # 为每个可用工具生成针对性的测试用例
-        for tool in available_tools:
-            tool_name = tool.get("name", "unknown")
-            tool.get("description", "")
-
-            # 生成基础功能测试用例
-            test_cases.append(
-                TestCase(
-                    name=f"{tool_name}基础功能测试",
-                    description=f"测试{tool_name}工具的基础功能是否正常工作",
-                    tool_name=tool_name,
-                    parameters=self._generate_smart_parameters(tool),
-                    expected_type="success",
-                    priority="high",
-                ),
-            )
-
-            # 生成实际使用场景测试用例
-            test_cases.append(
-                TestCase(
-                    name=f"{tool_name}实际使用场景测试",
-                    description=f"模拟真实使用场景测试{tool_name}工具的实用性",
-                    tool_name=tool_name,
-                    parameters=self._generate_realistic_parameters(tool),
-                    expected_type="success",
-                    priority="normal",
-                ),
-            )
-
-            # 生成容错能力测试用例
-            test_cases.append(
-                TestCase(
-                    name=f"{tool_name}容错能力测试",
-                    description=f"测试{tool_name}工具对异常输入的处理能力",
-                    tool_name=tool_name,
-                    parameters=self._generate_edge_case_parameters(tool),
-                    expected_type="any_response",  # 容错测试，只要响应即可
-                    priority="normal",
-                ),
-            )
-
-            # 生成边界情况测试用例
-            test_cases.append(
-                TestCase(
-                    name=f"{tool_name}边界情况测试",
-                    description=f"测试{tool_name}工具在边界条件下的表现",
-                    tool_name=tool_name,
-                    parameters=self._generate_boundary_parameters(tool),
-                    expected_type="success",
-                    priority="low",
-                ),
-            )
-
-        # API密钥配置检查
-        if tool_info.requires_api_key and tool_info.api_requirements:
-            test_cases.append(
-                TestCase(
-                    name="API密钥配置检查",
-                    description="验证所需的API密钥是否正确配置",
-                    tool_name="config_check",
-                    parameters={"api_keys": tool_info.api_requirements},
-                    expected_type="success",
-                    priority="high",
-                ),
-            )
-
-        # 确保测试用例数量合理（限制最多15个）
-        if len(test_cases) > _MAX_FALLBACK_TEST_CASES:
-            # 保留高优先级的测试用例
-            test_cases = sorted(
-                test_cases,
-                key=lambda x: (x.priority != "high", x.priority != "normal"),
-            )
-            test_cases = test_cases[:_MAX_FALLBACK_TEST_CASES]
-
-        return test_cases
-
-    def _generate_smart_parameters(self, tool: dict[str, Any]) -> dict[str, Any]:
-        """为工具生成智能的基础参数 - 适用于所有MCP工具."""
-        tool_name = tool.get("name", "").lower()
-        tool.get("description", "").lower()
-
-        # 根据工具类型生成基础参数
-        if any(keyword in tool_name for keyword in ["search", "find", "query"]):
-            return {"query": "test"}
-        if any(
-            keyword in tool_name for keyword in ["get", "fetch", "retrieve", "read"]
-        ):
-            return {"id": "test"}
-        if any(keyword in tool_name for keyword in ["create", "add", "new", "make"]):
-            return {"name": "test"}
-        if any(keyword in tool_name for keyword in ["update", "edit", "modify"]):
-            return {"id": "test", "data": {"field": "value"}}
-        if any(keyword in tool_name for keyword in ["delete", "remove"]):
-            return {"id": "test"}
-        if any(keyword in tool_name for keyword in ["list", "enum", "show"]):
-            return {"limit": 5}
-        if any(keyword in tool_name for keyword in ["resolve", "identify", "lookup"]):
-            return {"target": "test"}
-        return {"value": "test"}
-
-    def _generate_realistic_parameters(self, tool: dict[str, Any]) -> dict[str, Any]:
-        """生成实际使用场景的参数 - 使用真实的常用值."""
-        tool_name = tool.get("name", "").lower()
-        tool_description = tool.get("description", "").lower()
-
-        # 根据工具类型生成实际场景参数
-        if any(keyword in tool_name for keyword in ["search", "find", "query"]):
-            # 常见搜索词
-            return {"query": "react", "limit": 10}
-        if any(
-            keyword in tool_name for keyword in ["get", "fetch", "retrieve", "read"]
-        ):
-            # 常见ID格式
-            if "library" in tool_description:
-                return {"context7CompatibleLibraryID": "/facebook/react"}
-            if "package" in tool_description:
-                return {"packageName": "react"}
-            return {"id": "react"}
-        if any(keyword in tool_name for keyword in ["create", "add", "new", "make"]):
-            # 实际创建参数
-            return {
-                "name": "example-project",
-                "description": "示例项目",
-                "tags": ["test"],
-            }
-        if any(keyword in tool_name for keyword in ["list", "enum", "show"]):
-            # 实际分页参数
-            return {"limit": 20, "offset": 0, "sort": "name"}
-        if any(keyword in tool_name for keyword in ["resolve", "identify", "lookup"]):
-            # 实际解析参数
-            if "library" in tool_description:
-                return {"libraryName": "react"}
-            return {"target": "react"}
-        return {"input": "realistic-data", "options": {"optimized": True}}
-
-    def _generate_edge_case_parameters(self, tool: dict[str, Any]) -> dict[str, Any]:
-        """生成容错测试的边界参数."""
-        tool_name = tool.get("name", "").lower()
-
-        # 根据工具类型生成边界参数
-        if any(keyword in tool_name for keyword in ["search", "find", "query"]):
-            return {"query": "", "limit": 0}  # 空查询
-        if any(
-            keyword in tool_name for keyword in ["get", "fetch", "retrieve", "read"]
-        ):
-            return {"id": "nonexistent-id-12345"}  # 不存在的ID
-        if any(keyword in tool_name for keyword in ["create", "add", "new", "make"]):
-            return {"name": "", "data": None}  # 空数据
-        if any(keyword in tool_name for keyword in ["list", "enum", "show"]):
-            return {"limit": 999999}  # 极大值
-        if any(keyword in tool_name for keyword in ["resolve", "identify", "lookup"]):
-            return {"target": "unknown-target-12345"}  # 未知目标
-        return {"invalid": "data"}  # 无效数据
-
-    def _generate_boundary_parameters(self, tool: dict[str, Any]) -> dict[str, Any]:
-        """生成边界测试参数."""
-        tool_name = tool.get("name", "").lower()
-
-        # 根据工具类型生成边界参数
-        if any(keyword in tool_name for keyword in ["search", "find", "query"]):
-            return {"query": "a", "limit": 1}  # 最小值
-        if any(
-            keyword in tool_name for keyword in ["get", "fetch", "retrieve", "read"]
-        ):
-            return {"id": "a"}  # 最短ID
-        if any(keyword in tool_name for keyword in ["create", "add", "new", "make"]):
-            return {"name": "a"}  # 最短名称
-        if any(keyword in tool_name for keyword in ["list", "enum", "show"]):
-            return {"limit": 1, "offset": 0}  # 最小分页
-        if any(keyword in tool_name for keyword in ["resolve", "identify", "lookup"]):
-            return {"target": "a"}  # 最短目标
-        return {"input": "minimal"}  # 最小输入
 
 
 # 全局测试生成器实例
@@ -438,7 +306,15 @@ _test_generator_instance = None
 
 
 def get_test_generator() -> TestGeneratorAgent:
-    """获取全局测试生成器实例."""
+    """获取全局测试生成器实例.
+
+    Returns:
+        TestGeneratorAgent 实例
+
+    Raises:
+        RuntimeError: 如果没有配置 AI API key
+
+    """
     global _test_generator_instance
     if _test_generator_instance is None:
         _test_generator_instance = TestGeneratorAgent()
