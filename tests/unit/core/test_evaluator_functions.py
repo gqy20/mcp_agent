@@ -2,6 +2,8 @@
 
 from unittest.mock import Mock, patch
 
+import pytest
+
 from src.batch_mcp.core.evaluator import (
     analyze_frequency,
     analyze_recency,
@@ -68,9 +70,9 @@ class TestEvaluatorFunctions:
         mock_response.raise_for_status.side_effect = Exception("Not found")
         mock_get.return_value = mock_response
 
-        result = get_repo_data("test", "nonexistent")
-
-        assert result is None
+        # get_repo_data 会抛出异常，因为 raise_for_status() 会抛出异常
+        with pytest.raises(Exception, match="Not found"):
+            get_repo_data("test", "nonexistent")
 
     def test_analyze_recency_recent_activity(self):
         """Test recency analysis with recent activity."""

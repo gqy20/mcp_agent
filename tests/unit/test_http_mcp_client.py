@@ -21,11 +21,13 @@ class TestHttpMCPClient:
 
     def test_init_with_required_params(self):
         """测试：必需参数初始化."""
-        # 这个测试会失败，因为 HttpMCPClient 还不存在
         client = HttpMCPClient(url="https://api.example.com/mcp")
 
         assert client.url == "https://api.example.com/mcp"
-        assert client.headers == {}
+        # HttpMCPClient 自动添加默认 headers
+        assert "Content-Type" in client.headers
+        assert "Accept" in client.headers
+        assert "User-Agent" in client.headers
         assert client.timeout == 30
 
     def test_init_with_all_params(self):
@@ -36,7 +38,12 @@ class TestHttpMCPClient:
         )
 
         assert client.url == "https://api.example.com/mcp"
-        assert client.headers == headers
+        # 默认 headers 加上用户提供的 headers
+        assert "Authorization" in client.headers
+        assert client.headers["Authorization"] == "Bearer token123"
+        # 默认 headers 也应该存在
+        assert "Content-Type" in client.headers
+        assert "Accept" in client.headers
         assert client.timeout == 60
 
     @pytest.mark.asyncio

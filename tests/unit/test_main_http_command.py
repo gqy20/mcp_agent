@@ -8,8 +8,7 @@ Tests for the new test-http CLI command implementation.
 
 import sys
 from pathlib import Path
-from typing import Any
-from unittest.mock import Mock, patch
+from unittest.mock import ANY, Mock, patch
 
 import pytest
 from typer.testing import CliRunner
@@ -31,10 +30,12 @@ class TestHttpCommandTDD:
 
     @pytest.fixture
     def mock_cli_handler(self) -> Mock:
-        """Mock CLI handler fixture."""
-        with patch("src.batch_mcp.main.get_cli_handler") as mock_get_handler:
-            mock_handler = Mock()
-            mock_get_handler.return_value = mock_handler
+        """Mock CLI handler fixture.
+
+        我们需要 mock src.batch_mcp.main.handler 而不是 get_cli_handler，
+        因为 handler 是在模块级别创建的。
+        """
+        with patch("src.batch_mcp.main.handler") as mock_handler:
             yield mock_handler
 
     def test_test_http_command_exists(self, runner: CliRunner) -> None:
@@ -84,7 +85,7 @@ class TestHttpCommandTDD:
         # Verify the method was called with auth token
         mock_cli_handler.test_http_endpoint.assert_called_once_with(
             "http://api.example.com/mcp",
-            Any,  # TestConfig object
+            ANY,  # TestConfig object
             "test_token_123",
         )
 
@@ -307,6 +308,6 @@ class TestHttpCommandTDD:
         assert result.exit_code == 0
         mock_cli_handler.test_http_endpoint.assert_called_once_with(
             "https://secure.example.com/mcp",
-            Any,
+            ANY,
             None,  # No auth token
         )
