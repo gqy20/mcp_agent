@@ -7,7 +7,8 @@
 4. 边界情况和特殊情况
 """
 
-from src.batch_mcp.core.input_type_detector import InputType
+from src.batch_mcp.core.input_type_detector import InputType, InputTypeDetector
+from src.batch_mcp.core.tester import TestConfig
 
 
 class TestInputTypeDetector:
@@ -15,8 +16,6 @@ class TestInputTypeDetector:
 
     def setup_method(self):
         """每个测试前的设置."""
-        from src.batch_mcp.core.input_type_detector import InputTypeDetector
-
         self.detector = InputTypeDetector()
 
     # ===== 输入类型检测测试 =====
@@ -133,8 +132,6 @@ class TestInputTypeDetector:
 
     def test_adapt_config_for_http_endpoint(self):
         """测试HTTP端点配置自适应."""
-        from src.batch_mcp.core.tester import TestConfig
-
         original_config = TestConfig(timeout=600, evaluate=False, cleanup=False)
         adapted = self.detector.adapt_config(InputType.HTTP_ENDPOINT, original_config)
 
@@ -147,8 +144,6 @@ class TestInputTypeDetector:
 
     def test_adapt_config_for_github_url(self):
         """测试GitHub URL配置自适应."""
-        from src.batch_mcp.core.tester import TestConfig
-
         original_config = TestConfig(timeout=120, evaluate=False)
         adapted = self.detector.adapt_config(InputType.GITHUB_URL, original_config)
 
@@ -159,8 +154,6 @@ class TestInputTypeDetector:
 
     def test_adapt_config_for_package_name(self):
         """测试包名配置自适应."""
-        from src.batch_mcp.core.tester import TestConfig
-
         original_config = TestConfig(timeout=120, evaluate=False)
         adapted = self.detector.adapt_config(InputType.PACKAGE_NAME, original_config)
 
@@ -169,8 +162,6 @@ class TestInputTypeDetector:
 
     def test_adapt_config_does_not_modify_original(self):
         """测试配置自适应不修改原配置."""
-        from src.batch_mcp.core.tester import TestConfig
-
         original_config = TestConfig(timeout=600, evaluate=False)
         original_timeout = original_config.timeout
 
@@ -218,3 +209,32 @@ class TestInputTypeDetector:
         assert self.detector.detect("@user/package") == InputType.PACKAGE_NAME
         # 其他作为搜索查询
         assert self.detector.detect("search term") == InputType.SEARCH_QUERY
+
+    # ===== 真实世界综合测试 =====
+
+    def test_complex_real_world_urls(self):
+        """测试真实世界中的复杂URL案例 - 端到端综合测试."""
+        real_world_cases = [
+            # HTTP MCP端点
+            (
+                "https://ai.sitianai.com/api/proxy/mcp?api_key=d4v8kgl26lc8ggculk9g",
+                InputType.HTTP_ENDPOINT,
+            ),
+            ("https://api.openai.com/v1/mcp-server", InputType.HTTP_ENDPOINT),
+            ("https://gateway.anthropic.com/mcp-endpoint", InputType.HTTP_ENDPOINT),
+            # GitHub URLs
+            ("https://github.com/upstash/context7-mcp-server", InputType.GITHUB_URL),
+            ("https://github.com/microsoft/autogen", InputType.GITHUB_URL),
+            # 包名
+            ("@anthropic-ai/claude-mcp", InputType.PACKAGE_NAME),
+            ("@openai/gpt-mcp-tools", InputType.PACKAGE_NAME),
+            # 搜索查询
+            ("claude mcp tools", InputType.SEARCH_QUERY),
+            ("autogen multi-agent", InputType.SEARCH_QUERY),
+        ]
+
+        for url, expected_type in real_world_cases:
+            result = self.detector.detect(url)
+            assert result == expected_type, (
+                f"真实世界URL检测错误: {url} -> {result} (期望: {expected_type})"
+            )
