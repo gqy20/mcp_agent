@@ -7,6 +7,7 @@ import pytest
 from src.batch_mcp.core.evaluator import (
     analyze_frequency,
     analyze_recency,
+    calculate_functionality_score,
     evaluate_full_repository_profile,
     evaluate_popularity,
     evaluate_sustainability,
@@ -217,3 +218,200 @@ class TestEvaluatorFunctions:
 
         assert result["status"] == "error"
         assert "message" in result
+
+
+class TestCalculateFunctionalityScoreFix:
+    """Test calculate_functionality_score function type safety and edge cases."""
+
+    def test_normal_confidence_values(self):
+        """Test normal confidence values."""
+        tool_tests = [
+            {
+                "test_name": "测试1",
+                "success": True,
+                "ai_confidence": 0.85,
+                "test_category": "功能测试",
+            },
+            {
+                "test_name": "测试2",
+                "success": False,
+                "ai_confidence": 0.75,
+                "test_category": "功能测试",
+            },
+            {
+                "test_name": "测试3",
+                "success": True,
+                "ai_confidence": 0.90,
+                "test_category": "功能测试",
+            },
+        ]
+
+        score = calculate_functionality_score(tool_tests)
+
+        assert isinstance(score, (int, float))
+        assert 70 <= score <= 75
+
+    def test_missing_confidence_values(self):
+        """Test missing confidence field."""
+        tool_tests = [
+            {
+                "test_name": "测试1",
+                "success": True,
+                "test_category": "功能测试",
+            },
+            {
+                "test_name": "测试2",
+                "success": False,
+                "test_category": "功能测试",
+            },
+        ]
+
+        score = calculate_functionality_score(tool_tests)
+
+        assert isinstance(score, (int, float))
+        assert score == 35.0
+
+    def test_none_confidence_values(self):
+        """Test confidence is None."""
+        tool_tests = [
+            {
+                "test_name": "测试1",
+                "success": True,
+                "ai_confidence": None,
+                "test_category": "功能测试",
+            },
+            {
+                "test_name": "测试2",
+                "success": True,
+                "ai_confidence": None,
+                "test_category": "功能测试",
+            },
+        ]
+
+        score = calculate_functionality_score(tool_tests)
+
+        assert isinstance(score, (int, float))
+        assert score == 70.0
+
+    def test_list_confidence_values(self):
+        """Test confidence as list type."""
+        tool_tests = [
+            {
+                "test_name": "测试1",
+                "success": True,
+                "ai_confidence": [0.8, 0.9, 0.7],
+                "test_category": "功能测试",
+            },
+            {
+                "test_name": "测试2",
+                "success": False,
+                "ai_confidence": [0.6, 0.7],
+                "test_category": "功能测试",
+            },
+        ]
+
+        score = calculate_functionality_score(tool_tests)
+
+        assert isinstance(score, (int, float))
+        assert abs(score - 56.75) < 1e-10
+
+    def test_mixed_confidence_types(self):
+        """Test mixed confidence types."""
+        tool_tests = [
+            {
+                "test_name": "正常数值",
+                "success": True,
+                "ai_confidence": 0.85,
+                "test_category": "功能测试",
+            },
+            {
+                "test_name": "整数类型",
+                "success": True,
+                "ai_confidence": 1,
+                "test_category": "功能测试",
+            },
+            {
+                "test_name": "列表类型",
+                "success": False,
+                "ai_confidence": [0.7, 0.8, 0.6],
+                "test_category": "功能测试",
+            },
+            {
+                "test_name": "缺失字段",
+                "success": True,
+                "test_category": "功能测试",
+            },
+            {
+                "test_name": "None值",
+                "success": False,
+                "ai_confidence": None,
+                "test_category": "功能测试",
+            },
+        ]
+
+        score = calculate_functionality_score(tool_tests)
+
+        assert isinstance(score, (int, float))
+        assert 57 <= score <= 58
+
+    def test_empty_list_with_numeric_elements(self):
+        """Test list with mixed elements."""
+        tool_tests = [
+            {
+                "test_name": "混合列表测试",
+                "success": True,
+                "ai_confidence": [0.8, "invalid", 0.9, None, 0.7],
+                "test_category": "功能测试",
+            },
+        ]
+
+        score = calculate_functionality_score(tool_tests)
+
+        assert isinstance(score, (int, float))
+        assert score == 94.0
+
+    def test_empty_list_confidence(self):
+        """Test empty list confidence."""
+        tool_tests = [
+            {
+                "test_name": "空列表测试",
+                "success": True,
+                "ai_confidence": [],
+                "test_category": "功能测试",
+            },
+        ]
+
+        score = calculate_functionality_score(tool_tests)
+
+        assert isinstance(score, (int, float))
+        assert score == 70.0
+
+    def test_empty_tool_tests(self):
+        """Test empty tool tests list."""
+        tool_tests = []
+
+        score = calculate_functionality_score(tool_tests)
+
+        assert score == 0.0
+
+    def test_all_failed_tests(self):
+        """Test all tests failed."""
+        tool_tests = [
+            {
+                "test_name": "失败测试1",
+                "success": False,
+                "ai_confidence": 0.8,
+                "test_category": "功能测试",
+            },
+            {
+                "test_name": "失败测试2",
+                "success": False,
+                "ai_confidence": 0.9,
+                "test_category": "功能测试",
+            },
+        ]
+
+        score = calculate_functionality_score(tool_tests)
+
+        assert isinstance(score, (int, float))
+        assert abs(score - 25.5) < 1e-10
