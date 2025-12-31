@@ -1,6 +1,10 @@
-"""保护性测试 - 确保 agent 清理后功能正常.
+"""AI 功能测试 - 确保 AI 模式正常工作.
 
-这些测试确保在移除 AI 配置代码后，agent 的核心 fallback 功能仍然正常工作。
+这些测试确保 TestGeneratorAgent 的 AI 功能正常工作：
+1. 可以在没有 AI 配置时创建实例（agent 为 None）
+2. 调用 generate_test_cases 时需要 API key
+3. ValidationAgent 的基础分析功能正常
+4. agentscope 兼容性
 """
 
 import os
@@ -14,22 +18,23 @@ from src.batch_mcp.agents.validation_agent import ValidationAgent
 from src.batch_mcp.utils.csv_parser import MCPToolInfo
 
 
-class TestTestGeneratorAgentCoreFunctionality:
-    """测试 TestGeneratorAgent 核心功能（不依赖 AI 配置）."""
+class TestTestGeneratorAgentAIFunctionality:
+    """测试 TestGeneratorAgent AI 功能."""
 
     def test_can_create_instance_without_ai_config(self):
-        """验证没有 AI 配置时可以创建实例."""
+        """验证没有 AI 配置时可以创建实例（agent 为 None）."""
         with patch.dict(os.environ, {}, clear=True):
             agent = TestGeneratorAgent()
 
         assert agent is not None
-        # 在 fallback 模式下 agent 应该为 None
+        # 没有 AI 配置时 agent 应该为 None
         assert agent.agent is None
 
     @pytest.mark.asyncio
-    async def test_generate_test_cases_works_in_fallback_mode(self):
-        """验证 fallback 模式下测试用例生成正常工作."""
-        agent = TestGeneratorAgent()
+    async def test_generate_test_cases_requires_api_key(self):
+        """验证 generate_test_cases 需要 API key."""
+        with patch.dict(os.environ, {}, clear=True):
+            agent = TestGeneratorAgent()
 
         tool_info = MCPToolInfo(
             name="测试工具",
@@ -52,39 +57,9 @@ class TestTestGeneratorAgentCoreFunctionality:
             }
         ]
 
-        # Act
-        test_cases = await agent.generate_test_cases(tool_info, available_tools)
-
-        # Assert - 应该生成基础测试用例
-        assert isinstance(test_cases, list)
-        assert len(test_cases) > 0
-        assert all(isinstance(tc, TestCase) for tc in test_cases)
-
-    @pytest.mark.asyncio
-    async def test_fallback_includes_basic_connectivity_test(self):
-        """验证 fallback 模式包含基础连通性测试."""
-        agent = TestGeneratorAgent()
-
-        tool_info = MCPToolInfo(
-            name="测试工具",
-            url="https://example.com/test",
-            author="test",
-            github_url="https://github.com/test/test-tool",
-            description="一个测试工具",
-            deployment_method="npx",
-            category="test",
-            package_name="test-tool",
-            requires_api_key=False,
-            api_requirements=[],
-        )
-
-        available_tools = [{"name": "test_tool", "description": "测试"}]
-
-        test_cases = await agent.generate_test_cases(tool_info, available_tools)
-
-        # 应该包含基础连通性测试
-        connectivity_tests = [tc for tc in test_cases if "连通性" in tc.name]
-        assert len(connectivity_tests) > 0, "应该包含基础连通性测试"
+        # Act & Assert - 没有 API key 应该抛出异常
+        with pytest.raises(RuntimeError, match="AI API key not configured"):
+            await agent.generate_test_cases(tool_info, available_tools)
 
 
 class TestValidationAgentCoreFunctionality:
