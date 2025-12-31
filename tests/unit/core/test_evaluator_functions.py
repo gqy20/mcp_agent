@@ -40,7 +40,7 @@ class TestEvaluatorFunctions:
         assert owner is None
         assert repo is None
 
-    @patch("src.core.evaluator.requests.get")
+    @patch("src.batch_mcp.core.evaluator.requests.get")
     def test_get_repo_data_success(self, mock_get):
         """Test successful repository data retrieval."""
         mock_response = Mock()
@@ -61,7 +61,7 @@ class TestEvaluatorFunctions:
         assert result["stargazers_count"] == 100
         assert result["forks_count"] == 50
 
-    @patch("src.core.evaluator.requests.get")
+    @patch("src.batch_mcp.core.evaluator.requests.get")
     def test_get_repo_data_not_found(self, mock_get):
         """Test repository data retrieval with 404 error."""
         mock_response = Mock()
@@ -170,10 +170,10 @@ class TestEvaluatorFunctions:
         assert result["score"] == 0
         assert result["level"] == "N/A"
 
-    @patch("src.core.evaluator.get_repo_data")
-    @patch("src.core.evaluator.get_commit_data")
-    @patch("src.core.evaluator.get_issue_data")
-    @patch("src.core.evaluator.get_closed_issues_count")
+    @patch("src.batch_mcp.core.evaluator.get_repo_data")
+    @patch("src.batch_mcp.core.evaluator.get_commit_data")
+    @patch("src.batch_mcp.core.evaluator.get_issue_data")
+    @patch("src.batch_mcp.core.evaluator.get_closed_issues_count")
     def test_evaluate_full_repository_profile_success(
         self, mock_closed_count, mock_issues, mock_commits, mock_repo
     ):

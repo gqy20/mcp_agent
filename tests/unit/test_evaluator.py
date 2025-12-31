@@ -40,7 +40,7 @@ class TestEvaluatorFunctions:
         assert owner is None
         assert repo is None
 
-    @patch("src.core.evaluator.requests.get")
+    @patch("src.batch_mcp.core.evaluator.requests.get")
     def test_get_repo_data_success(self, mock_get):
         """Test successful repository data retrieval."""
         mock_response = Mock()
@@ -61,7 +61,7 @@ class TestEvaluatorFunctions:
         assert result["stargazers_count"] == 100
         assert result["forks_count"] == 50
 
-    @patch("src.core.evaluator.requests.get")
+    @patch("src.batch_mcp.core.evaluator.requests.get")
     def test_get_repo_data_not_found(self, mock_get):
         """Test repository data retrieval with 404 error."""
         mock_response = Mock()

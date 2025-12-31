@@ -4,8 +4,7 @@
 测试根据不同输入类型自动调整测试配置的功能
 """
 
-from src.batch_mcp.core.cli_handlers import CLIHandler
-from src.batch_mcp.core.input_type_detector import InputType
+from src.batch_mcp.core.input_type_detector import InputType, get_input_type_detector
 from src.batch_mcp.core.tester import TestConfig
 
 
@@ -14,7 +13,7 @@ class TestConfigAdaptation:
 
     def setup_method(self):
         """每个测试方法前的设置"""
-        self.handler = CLIHandler()
+        self.detector = get_input_type_detector()
         self.base_config = TestConfig(
             timeout=600,
             verbose=False,
@@ -27,9 +26,7 @@ class TestConfigAdaptation:
 
     def test_adapt_config_for_http_endpoint(self):
         """测试HTTP端点的配置适配"""
-        adapted = self.handler._adapt_config_for_input_type(
-            InputType.HTTP_ENDPOINT, self.base_config
-        )
+        adapted = self.detector.adapt_config(InputType.HTTP_ENDPOINT, self.base_config)
 
         # HTTP端点特定的适配
         assert adapted.timeout == 300, "HTTP端点应该有较短的超时时间"
@@ -44,9 +41,7 @@ class TestConfigAdaptation:
 
     def test_adapt_config_for_github_url(self):
         """测试GitHub URL的配置适配"""
-        adapted = self.handler._adapt_config_for_input_type(
-            InputType.GITHUB_URL, self.base_config
-        )
+        adapted = self.detector.adapt_config(InputType.GITHUB_URL, self.base_config)
 
         # GitHub URL特定的适配
         assert adapted.timeout == 600, "GitHub URL应该保持较长超时时间"
@@ -61,9 +56,7 @@ class TestConfigAdaptation:
 
     def test_adapt_config_for_package_name(self):
         """测试包名的配置适配"""
-        adapted = self.handler._adapt_config_for_input_type(
-            InputType.PACKAGE_NAME, self.base_config
-        )
+        adapted = self.detector.adapt_config(InputType.PACKAGE_NAME, self.base_config)
 
         # 包名特定的适配
         assert adapted.timeout == 600, "包名应该有足够的时间进行安装和测试"
@@ -78,9 +71,7 @@ class TestConfigAdaptation:
 
     def test_adapt_config_for_search_query(self):
         """测试搜索查询的配置适配"""
-        adapted = self.handler._adapt_config_for_input_type(
-            InputType.SEARCH_QUERY, self.base_config
-        )
+        adapted = self.detector.adapt_config(InputType.SEARCH_QUERY, self.base_config)
 
         # 搜索查询不需要特殊适配
         assert adapted.timeout == self.base_config.timeout
@@ -97,9 +88,7 @@ class TestConfigAdaptation:
         original_evaluate = self.base_config.evaluate
 
         # 适配配置
-        adapted = self.handler._adapt_config_for_input_type(
-            InputType.HTTP_ENDPOINT, self.base_config
-        )
+        adapted = self.detector.adapt_config(InputType.HTTP_ENDPOINT, self.base_config)
 
         # 原配置应该保持不变
         assert self.base_config.timeout == original_timeout
@@ -118,9 +107,7 @@ class TestConfigAdaptation:
         ]
 
         for base_config in base_configs:
-            adapted = self.handler._adapt_config_for_input_type(
-                InputType.HTTP_ENDPOINT, base_config
-            )
+            adapted = self.detector.adapt_config(InputType.HTTP_ENDPOINT, base_config)
 
             # HTTP端点的超时时间应该被限制在300秒
             assert adapted.timeout <= 300, f"超时时间应该被限制: {adapted.timeout}"
@@ -132,14 +119,14 @@ class TestConfigAdaptation:
         """测试边界情况的配置"""
         # 极小的超时时间
         small_timeout_config = TestConfig(timeout=30, evaluate=False)
-        adapted = self.handler._adapt_config_for_input_type(
+        adapted = self.detector.adapt_config(
             InputType.HTTP_ENDPOINT, small_timeout_config
         )
         assert adapted.timeout == 30, "极小超时时间应该保持原值"
 
         # 极大的超时时间
         large_timeout_config = TestConfig(timeout=3600, evaluate=False)
-        adapted = self.handler._adapt_config_for_input_type(
+        adapted = self.detector.adapt_config(
             InputType.HTTP_ENDPOINT, large_timeout_config
         )
         assert adapted.timeout == 300, "极大超时时间应该被限制到300秒"
@@ -161,9 +148,7 @@ class TestConfigAdaptation:
         extended_config.custom_attr = "test_value"
         extended_config.max_smart_tests = 5
 
-        adapted = self.handler._adapt_config_for_input_type(
-            InputType.HTTP_ENDPOINT, extended_config
-        )
+        adapted = self.detector.adapt_config(InputType.HTTP_ENDPOINT, extended_config)
 
         # 额外属性应该被保持
         assert hasattr(adapted, "custom_attr")
@@ -176,9 +161,7 @@ class TestConfigAdaptation:
 
     def test_unknown_input_type_handling(self):
         """测试未知输入类型的处理"""
-        adapted = self.handler._adapt_config_for_input_type(
-            InputType.UNKNOWN, self.base_config
-        )
+        adapted = self.detector.adapt_config(InputType.UNKNOWN, self.base_config)
 
         # 未知类型不应该改变任何配置
         assert adapted.timeout == self.base_config.timeout
@@ -192,14 +175,10 @@ class TestConfigAdaptation:
     def test_multiple_adaptation_calls(self):
         """测试多次适配调用的幂等性"""
         # 第一次适配
-        adapted1 = self.handler._adapt_config_for_input_type(
-            InputType.HTTP_ENDPOINT, self.base_config
-        )
+        adapted1 = self.detector.adapt_config(InputType.HTTP_ENDPOINT, self.base_config)
 
         # 第二次适配
-        adapted2 = self.handler._adapt_config_for_input_type(
-            InputType.HTTP_ENDPOINT, adapted1
-        )
+        adapted2 = self.detector.adapt_config(InputType.HTTP_ENDPOINT, adapted1)
 
         # 结果应该相同（幂等性）
         assert adapted1.timeout == adapted2.timeout
@@ -210,9 +189,7 @@ class TestConfigAdaptation:
         """测试配置上下文的有效性"""
         # 测试所有输入类型的适配
         for input_type in InputType:
-            adapted = self.handler._adapt_config_for_input_type(
-                input_type, self.base_config
-            )
+            adapted = self.detector.adapt_config(input_type, self.base_config)
 
             # 适配后的配置应该仍然是有效的TestConfig
             assert isinstance(adapted, TestConfig), (
@@ -248,9 +225,7 @@ class TestConfigAdaptation:
 
         # 验证每个输入类型的适配规则
         for input_type, rules in adaptation_rules.items():
-            adapted = self.handler._adapt_config_for_input_type(
-                input_type, self.base_config
-            )
+            adapted = self.detector.adapt_config(input_type, self.base_config)
 
             # 验证预期的变化
             expected = rules["expected_changes"]

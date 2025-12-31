@@ -7,7 +7,7 @@
 
 import pytest
 
-from src.batch_mcp.core.cli_handlers import CLIHandler
+from src.batch_mcp.core.input_type_detector import get_input_type_detector
 
 
 class TestHTTPEndpointDetection:
@@ -15,7 +15,7 @@ class TestHTTPEndpointDetection:
 
     def setup_method(self):
         """每个测试方法前的设置"""
-        self.handler = CLIHandler()
+        self.detector = get_input_type_detector()
 
     def test_basic_path_indicators(self):
         """测试基础路径指示器的检测"""
@@ -29,7 +29,7 @@ class TestHTTPEndpointDetection:
         ]
 
         for url in path_indicator_cases:
-            result = self.handler._is_http_mcp_endpoint(url)
+            result = self.detector.is_http_mcp_endpoint(url)
             assert result, f"应该通过路径指示器检测为HTTP MCP: {url}"
 
     def test_case_insensitive_path_detection(self):
@@ -43,7 +43,7 @@ class TestHTTPEndpointDetection:
         ]
 
         for url in case_variations:
-            result = self.handler._is_http_mcp_endpoint(url)
+            result = self.detector.is_http_mcp_endpoint(url)
             assert result, f"路径检测应该大小写不敏感: {url}"
 
     def test_query_parameter_indicators(self):
@@ -58,7 +58,7 @@ class TestHTTPEndpointDetection:
         ]
 
         for url in query_param_cases:
-            result = self.handler._is_http_mcp_endpoint(url)
+            result = self.detector.is_http_mcp_endpoint(url)
             assert result, f"应该通过查询参数检测为HTTP MCP: {url}"
 
     def test_development_port_detection(self):
@@ -76,7 +76,7 @@ class TestHTTPEndpointDetection:
         ]
 
         for url in dev_port_cases:
-            result = self.handler._is_http_mcp_endpoint(url)
+            result = self.detector.is_http_mcp_endpoint(url)
             assert result, f"应该通过开发端口检测为HTTP MCP: {url}"
 
     def test_domain_feature_detection(self):
@@ -93,7 +93,7 @@ class TestHTTPEndpointDetection:
         ]
 
         for url in domain_feature_cases:
-            result = self.handler._is_http_mcp_endpoint(url)
+            result = self.detector.is_http_mcp_endpoint(url)
             assert result, f"应该通过域名特征检测为HTTP MCP: {url}"
 
     def test_github_url_exclusion(self):
@@ -106,7 +106,7 @@ class TestHTTPEndpointDetection:
         ]
 
         for url in github_urls:
-            result = self.handler._is_http_mcp_endpoint(url)
+            result = self.detector.is_http_mcp_endpoint(url)
             assert not result, f"GitHub URL应该被排除: {url}"
 
     def test_protocol_validation(self):
@@ -122,7 +122,7 @@ class TestHTTPEndpointDetection:
         ]
 
         for invalid_url in invalid_protocols:
-            result = self.handler._is_http_mcp_endpoint(invalid_url)
+            result = self.detector.is_http_mcp_endpoint(invalid_url)
             assert not result, f"无效协议应该被排除: {invalid_url}"
 
     def test_edge_cases_and_boundary_conditions(self):
@@ -141,7 +141,7 @@ class TestHTTPEndpointDetection:
         ]
 
         for url, expected in edge_cases:
-            result = self.handler._is_http_mcp_endpoint(url)
+            result = self.detector.is_http_mcp_endpoint(url)
             assert result == expected, (
                 f"边界条件处理错误: {url} -> {result} (期望: {expected})"
             )
@@ -164,7 +164,7 @@ class TestHTTPEndpointDetection:
         ]
 
         for url in combination_cases:
-            result = self.handler._is_http_mcp_endpoint(url)
+            result = self.detector.is_http_mcp_endpoint(url)
             assert result, f"组合特征检测失败: {url}"
 
     def test_real_world_http_mcp_endpoints(self):
@@ -182,7 +182,7 @@ class TestHTTPEndpointDetection:
         ]
 
         for url in real_world_cases:
-            result = self.handler._is_http_mcp_endpoint(url)
+            result = self.detector.is_http_mcp_endpoint(url)
             assert result, f"真实世界HTTP MCP端点检测失败: {url}"
 
     def test_negative_cases_and_false_positives(self):
@@ -206,7 +206,7 @@ class TestHTTPEndpointDetection:
         ]
 
         for url in negative_cases:
-            result = self.handler._is_http_mcp_endpoint(url)
+            result = self.detector.is_http_mcp_endpoint(url)
             assert not result, f"不应该检测为HTTP MCP端点: {url}"
 
     def test_url_parsing_robustness(self):
@@ -226,7 +226,7 @@ class TestHTTPEndpointDetection:
 
         for url in robustness_cases:
             try:
-                result = self.handler._is_http_mcp_endpoint(url)
+                result = self.detector.is_http_mcp_endpoint(url)
                 # 如果URL解析失败，不应该抛出异常
                 assert isinstance(result, bool), f"应该返回布尔值: {url}"
             except Exception as e:
@@ -246,7 +246,7 @@ class TestHTTPEndpointDetection:
             # 即使对于很长的URL，检测也应该快速完成
             # 这里我们只验证不会因为长度而崩溃
             try:
-                result = self.handler._is_http_mcp_endpoint(url)
+                result = self.detector.is_http_mcp_endpoint(url)
                 assert isinstance(result, bool)
             except Exception as e:
                 pytest.fail(f"长URL处理不应该失败: {len(url)}字符 -> {e}")

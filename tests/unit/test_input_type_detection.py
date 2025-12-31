@@ -5,8 +5,7 @@
 测试覆盖各种输入类型的准确检测和边界情况
 """
 
-from src.batch_mcp.core.cli_handlers import CLIHandler
-from src.batch_mcp.core.input_type_detector import InputType
+from src.batch_mcp.core.input_type_detector import InputType, get_input_type_detector
 
 
 class TestInputTypeDetection:
@@ -14,7 +13,7 @@ class TestInputTypeDetection:
 
     def setup_method(self):
         """每个测试方法前的设置"""
-        self.handler = CLIHandler()
+        self.detector = get_input_type_detector()
 
     def test_detect_github_url(self):
         """测试GitHub URL的正确识别"""
@@ -26,7 +25,7 @@ class TestInputTypeDetection:
         ]
 
         for url in github_urls:
-            result = self.handler._detect_input_type(url)
+            result = self.detector.detect(url)
             assert result == InputType.GITHUB_URL, f"应该识别为GitHub URL: {url}"
 
     def test_detect_http_mcp_endpoint(self):
@@ -45,7 +44,7 @@ class TestInputTypeDetection:
         ]
 
         for endpoint in http_endpoints:
-            result = self.handler._detect_input_type(endpoint)
+            result = self.detector.detect(endpoint)
             assert result == InputType.HTTP_ENDPOINT, (
                 f"应该识别为HTTP MCP端点: {endpoint}"
             )
@@ -61,7 +60,7 @@ class TestInputTypeDetection:
         ]
 
         for package in package_names:
-            result = self.handler._detect_input_type(package)
+            result = self.detector.detect(package)
             assert result == InputType.PACKAGE_NAME, f"应该识别为包名: {package}"
 
     def test_detect_search_query(self):
@@ -76,7 +75,7 @@ class TestInputTypeDetection:
         ]
 
         for query in search_queries:
-            result = self.handler._detect_input_type(query)
+            result = self.detector.detect(query)
             assert result == InputType.SEARCH_QUERY, f"应该识别为搜索查询: {query}"
 
     def test_priority_github_over_http(self):
@@ -89,7 +88,7 @@ class TestInputTypeDetection:
         ]
 
         for url in github_mcp_urls:
-            result = self.handler._detect_input_type(url)
+            result = self.detector.detect(url)
             assert result == InputType.GITHUB_URL, (
                 f"GitHub URL应该优先于HTTP检测: {url}"
             )
@@ -104,7 +103,7 @@ class TestInputTypeDetection:
         ]
 
         for url in case_variations:
-            result = self.handler._detect_input_type(url)
+            result = self.detector.detect(url)
             assert result == InputType.HTTP_ENDPOINT, f"HTTP检测应该大小写不敏感: {url}"
 
     def test_input_sanitization(self):
@@ -124,7 +123,7 @@ class TestInputTypeDetection:
         ]
 
         for input_str, expected_type in zip(inputs_with_whitespace, expected_types):
-            result = self.handler._detect_input_type(input_str)
+            result = self.detector.detect(input_str)
             assert result == expected_type, f"应该正确处理空白字符: {input_str!r}"
 
     def test_edge_cases(self):
@@ -138,7 +137,7 @@ class TestInputTypeDetection:
         ]
 
         for input_str, expected_type in edge_cases:
-            result = self.handler._detect_input_type(input_str)
+            result = self.detector.detect(input_str)
             assert result == expected_type, (
                 f"边界情况处理错误: {input_str!r} -> {result} (期望: {expected_type})"
             )
@@ -153,7 +152,7 @@ class TestInputTypeDetection:
         ]
 
         for endpoint in port_based_endpoints:
-            result = self.handler._detect_input_type(endpoint)
+            result = self.detector.detect(endpoint)
             assert result == InputType.HTTP_ENDPOINT, (
                 f"应该通过端口识别HTTP MCP: {endpoint}"
             )
@@ -168,7 +167,7 @@ class TestInputTypeDetection:
         ]
 
         for endpoint in query_param_endpoints:
-            result = self.handler._detect_input_type(endpoint)
+            result = self.detector.detect(endpoint)
             assert result == InputType.HTTP_ENDPOINT, (
                 f"应该通过查询参数识别HTTP MCP: {endpoint}"
             )
@@ -195,7 +194,7 @@ class TestInputTypeDetection:
         ]
 
         for url, expected_type in real_world_cases:
-            result = self.handler._detect_input_type(url)
+            result = self.detector.detect(url)
             assert result == expected_type, (
                 f"真实世界URL检测错误: {url} -> {result} (期望: {expected_type})"
             )
