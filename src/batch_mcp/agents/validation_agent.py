@@ -115,39 +115,15 @@ class ValidationAgent:
         return factory.create_config("validation_agent", config_options)
 
     def _initialize_agent(self) -> None:
-        """初始化AgentScope代理."""
-        try:
-            # 初始化AgentScope
-            agentscope.init(
-                model_configs=[self.model_config],
-                project="MCP_Test_Validator",
-                save_dir="./logs",
-                save_log=True,
-                save_api_invoke=True,
-            )
+        """初始化AgentScope代理.
 
-            # 创建验证代理 - 使用可用的代理类
-            sys_prompt = self._get_validation_prompt()
-
-            try:
-                from agentscope.agents import DialogAgent
-
-                self.agent = DialogAgent(
-                    name="mcp_test_validator",
-                    model_config_name=self.model_config["config_name"],
-                    sys_prompt=sys_prompt,
-                )
-            except TypeError:
-                # 处理AgentScope版本兼容性问题，移除不支持的参数
-                from agentscope.agents import DialogAgent
-
-                self.agent = DialogAgent(
-                    name="mcp_test_validator",
-                    sys_prompt=sys_prompt,
-                )
-
-        except Exception:
-            self.agent = None
+        注意：在 agentscope 1.0.9 中，DialogAgent 已被弃用。
+        对于纯文本生成场景（不需要工具调用），当前使用 fallback 模式。
+        将来可以考虑使用 UserAgent 或直接调用 model API。
+        """
+        # 当前版本使用 fallback 模式进行测试结果分析
+        # DialogAgent 在 agentscope 1.0.9 中已不存在
+        self.agent = None
 
     def _get_validation_prompt(self) -> str:
         """获取验证代理的系统提示词."""
