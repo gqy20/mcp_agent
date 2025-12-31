@@ -22,9 +22,8 @@ class TestConfigThreadSafety:
         # 检查函数源代码中是否有锁相关的代码
         source = inspect.getsource(get_config)
 
-        # 应该有 threading.Lock 或类似机制
-        # 这个测试会失败，因为当前实现没有锁
-        has_lock = "Lock" in source or "threading" in source
+        # 检查是否有 with 语句（锁的典型用法）或 _lock 变量
+        has_lock = "with _" in source and "lock" in source.lower()
         assert has_lock, "get_config 应该使用锁来保护全局变量"
 
     def test_get_config_is_threadsafe(self):
@@ -99,9 +98,8 @@ class TestCSVParserThreadSafety:
         # 检查函数源代码中是否有锁相关的代码
         source = inspect.getsource(get_mcp_parser)
 
-        # 应该有 threading.Lock 或类似机制
-        # 这个测试会失败，因为当前实现没有锁
-        has_lock = "Lock" in source or "threading" in source
+        # 检查是否有 with 语句（锁的典型用法）或 _lock 变量
+        has_lock = "with _" in source and "lock" in source.lower()
         assert has_lock, "get_mcp_parser 应该使用锁来保护全局变量"
 
     def test_get_mcp_parser_is_threadsafe(self):

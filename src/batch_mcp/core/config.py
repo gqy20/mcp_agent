@@ -10,6 +10,7 @@
 """
 
 import os
+import threading
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -245,22 +246,28 @@ class AppConfig:
 
 # 全局配置实例
 _config = None
+_config_lock = threading.Lock()
 
 
 def get_config() -> AppConfig:
-    """获取全局配置实例."""
+    """获取全局配置实例（线程安全）."""
     global _config
+    # 双重检查锁定模式
     if _config is None:
-        _config = AppConfig()
-        # 自动创建必要的目录
-        _config.create_directories()
+        with _config_lock:
+            # 再次检查，防止多个线程同时创建实例
+            if _config is None:
+                _config = AppConfig()
+                # 自动创建必要的目录
+                _config.create_directories()
     return _config
 
 
 def reset_config() -> None:
     """重置全局配置（主要用于测试）."""
     global _config
-    _config = None
+    with _config_lock:
+        _config = None
 
 
 # 快速访问常用配置的便捷函数

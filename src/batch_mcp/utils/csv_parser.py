@@ -9,6 +9,7 @@
 
 import json
 import re
+import threading
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -393,8 +394,9 @@ class MCPDataParser:
         return results
 
 
-# 全局解析器实例
+# 全局解析器实例和锁
 _parser_instance = None
+_parser_lock = threading.Lock()
 
 
 # 向后兼容别名
@@ -402,11 +404,15 @@ CSVParser = MCPDataParser
 
 
 def get_mcp_parser() -> MCPDataParser:
-    """获取全局MCP解析器实例."""
+    """获取全局MCP解析器实例（线程安全）."""
     global _parser_instance
+    # 双重检查锁定模式
     if _parser_instance is None:
-        from src.batch_mcp.core.config import get_mcp_csv_path
+        with _parser_lock:
+            # 再次检查，防止多个线程同时创建实例
+            if _parser_instance is None:
+                from src.batch_mcp.core.config import get_mcp_csv_path
 
-        csv_path = get_mcp_csv_path()
-        _parser_instance = MCPDataParser(str(csv_path))
+                csv_path = get_mcp_csv_path()
+                _parser_instance = MCPDataParser(str(csv_path))
     return _parser_instance
