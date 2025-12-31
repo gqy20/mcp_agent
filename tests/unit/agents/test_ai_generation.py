@@ -21,7 +21,8 @@ from src.batch_mcp.utils.csv_parser import MCPToolInfo
 class TestTestGeneratorAIFallback:
     """测试没有 API key 时的 fallback 行为（确保当前功能不破坏）."""
 
-    def test_no_api_key_uses_fallback(self):
+    @pytest.mark.asyncio
+    async def test_no_api_key_uses_fallback(self):
         """验证没有 API key 时使用 fallback 规则引擎."""
         # 清除所有 AI 相关环境变量
         with patch.dict(os.environ, {}, clear=True):
@@ -45,7 +46,7 @@ class TestTestGeneratorAIFallback:
         ]
 
         # Act - 应该使用 fallback，不会尝试调用 AI
-        test_cases = agent.generate_test_cases(tool_info, available_tools)
+        test_cases = await agent.generate_test_cases(tool_info, available_tools)
 
         # Assert - 应该返回 fallback 生成的测试用例
         assert isinstance(test_cases, list)
@@ -56,7 +57,8 @@ class TestTestGeneratorAIFallback:
         connectivity_tests = [tc for tc in test_cases if "连通性" in tc.name]
         assert len(connectivity_tests) > 0
 
-    def test_fallback_includes_all_test_types(self):
+    @pytest.mark.asyncio
+    async def test_fallback_includes_all_test_types(self):
         """验证 fallback 模式包含所有测试类型."""
         with patch.dict(os.environ, {}, clear=True):
             agent = TestGeneratorAgent()
@@ -76,7 +78,7 @@ class TestTestGeneratorAIFallback:
 
         available_tools = [{"name": "test_tool", "description": "测试"}]
 
-        test_cases = agent.generate_test_cases(tool_info, available_tools)
+        test_cases = await agent.generate_test_cases(tool_info, available_tools)
 
         # 验证包含不同类型的测试
         test_names = [tc.name for tc in test_cases]
@@ -98,7 +100,8 @@ class TestTestGeneratorAIGeneration:
         os.getenv("OPENAI_API_KEY") is None,
         reason="需要 OPENAI_API_KEY 环境变量",
     )
-    def test_with_api_key_uses_ai_generation(self):
+    @pytest.mark.asyncio
+    async def test_with_api_key_uses_ai_generation(self):
         """验证有 API key 时使用 AI 生成测试用例."""
         # 这个测试需要真实的 API key
         # 仅在有 API key 时运行
@@ -127,7 +130,7 @@ class TestTestGeneratorAIGeneration:
         ]
 
         # Act
-        test_cases = agent.generate_test_cases(tool_info, available_tools)
+        test_cases = await agent.generate_test_cases(tool_info, available_tools)
 
         # Assert - 应该返回 AI 生成的测试用例
         assert isinstance(test_cases, list)

@@ -44,7 +44,8 @@ class TestTestGeneratorAgentInitialization:
         # 在没有 AI 配置时，agent 应该为 None（降级模式）
         assert agent.agent is None, "没有 AI 配置时应该降级到 fallback 模式"
 
-    def test_test_generator_agent_generate_fallback_test_cases(self):
+    @pytest.mark.asyncio
+    async def test_test_generator_agent_generate_fallback_test_cases(self):
         """验证 fallback 测试用例生成功能正常工作."""
         from src.batch_mcp.agents.test_agent import TestCase, TestGeneratorAgent
 
@@ -73,7 +74,7 @@ class TestTestGeneratorAgentInitialization:
         ]
 
         # Act
-        test_cases = agent.generate_test_cases(tool_info, available_tools)
+        test_cases = await agent.generate_test_cases(tool_info, available_tools)
 
         # Assert
         assert isinstance(test_cases, list), "应该返回测试用例列表"

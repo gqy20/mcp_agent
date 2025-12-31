@@ -162,14 +162,16 @@ class MCPTester:
             test_generator = get_test_generator()
             validation_agent = get_validation_agent()
 
-            # 生成测试用例
-            test_cases = test_generator.generate_test_cases(
+            # 生成测试用例（AI 或 fallback）
+            test_cases = await test_generator.generate_test_cases(
                 tool_info,
                 server_info.available_tools,
             )
 
             if not test_cases:
-                return self.run_basic_test(server_info)
+                # 如果没有生成测试用例，运行基础测试
+                success, results = self.run_basic_test(server_info)
+                return success, results
 
             # 执行智能验证
             mcp_client = AsyncMCPClient(server_info.communicator)

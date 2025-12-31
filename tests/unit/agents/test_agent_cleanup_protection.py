@@ -6,6 +6,7 @@
 import os
 from unittest.mock import patch
 
+import pytest
 from agentscope import agent as agentscope_agent
 
 from src.batch_mcp.agents.test_agent import TestCase, TestGeneratorAgent
@@ -25,7 +26,8 @@ class TestTestGeneratorAgentCoreFunctionality:
         # 在 fallback 模式下 agent 应该为 None
         assert agent.agent is None
 
-    def test_generate_test_cases_works_in_fallback_mode(self):
+    @pytest.mark.asyncio
+    async def test_generate_test_cases_works_in_fallback_mode(self):
         """验证 fallback 模式下测试用例生成正常工作."""
         agent = TestGeneratorAgent()
 
@@ -51,14 +53,15 @@ class TestTestGeneratorAgentCoreFunctionality:
         ]
 
         # Act
-        test_cases = agent.generate_test_cases(tool_info, available_tools)
+        test_cases = await agent.generate_test_cases(tool_info, available_tools)
 
         # Assert - 应该生成基础测试用例
         assert isinstance(test_cases, list)
         assert len(test_cases) > 0
         assert all(isinstance(tc, TestCase) for tc in test_cases)
 
-    def test_fallback_includes_basic_connectivity_test(self):
+    @pytest.mark.asyncio
+    async def test_fallback_includes_basic_connectivity_test(self):
         """验证 fallback 模式包含基础连通性测试."""
         agent = TestGeneratorAgent()
 
@@ -77,7 +80,7 @@ class TestTestGeneratorAgentCoreFunctionality:
 
         available_tools = [{"name": "test_tool", "description": "测试"}]
 
-        test_cases = agent.generate_test_cases(tool_info, available_tools)
+        test_cases = await agent.generate_test_cases(tool_info, available_tools)
 
         # 应该包含基础连通性测试
         connectivity_tests = [tc for tc in test_cases if "连通性" in tc.name]
