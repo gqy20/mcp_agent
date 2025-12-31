@@ -7,6 +7,8 @@ from typing import Any
 
 import requests
 
+from src.batch_mcp.utils.database_manager import get_database_manager
+
 # --- 综合评分权重配置 ---
 
 # 最终综合评分权重 (成功率:evaluator评分 = 1:2)
@@ -369,15 +371,9 @@ def get_test_success_rate(
 
     """
     if not supabase_client:
-        try:
-            from supabase import create_client
-
-            supabase_url = os.getenv("SUPABASE_URL")
-            supabase_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
-            if not supabase_url or not supabase_key:
-                return None
-            supabase_client = create_client(supabase_url, supabase_key)
-        except Exception:
+        db_manager = get_database_manager()
+        supabase_client = db_manager.get_client()
+        if not supabase_client:
             return None
 
     try:
@@ -469,19 +465,9 @@ def calculate_comprehensive_score_from_tests(
 
     """
     if not supabase_client:
-        try:
-            from dotenv import load_dotenv
-
-            load_dotenv()
-
-            from supabase import create_client
-
-            supabase_url = os.getenv("SUPABASE_URL")
-            supabase_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
-            if not supabase_url or not supabase_key:
-                return None
-            supabase_client = create_client(supabase_url, supabase_key)
-        except Exception:
+        db_manager = get_database_manager()
+        supabase_client = db_manager.get_client()
+        if not supabase_client:
             return None
 
     try:
