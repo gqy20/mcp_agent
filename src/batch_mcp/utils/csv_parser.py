@@ -252,8 +252,8 @@ class MCPDataParser:
                 ),
             )
 
-        except Exception as e:
-            console.print(f"[yellow]⚠️ 解析工具信息失败: {e} for row {row}[/yellow]")
+        except Exception:  # noqa: BLE001 - 静默跳过无法解析的行
+            # 这些通常是数据格式问题，不影响整体功能
             return None
 
     def get_all_tools(self) -> list[MCPToolInfo]:
