@@ -1,36 +1,19 @@
 #!/usr/bin/env python3
 """智能测试生成代理.
 
-基于AgentScope实现的智能测试用例生成器
+基于规则的测试用例生成器
 根据MCP工具的功能和参数自动生成测试用例
 
 作者: AI Assistant
 日期: 2025-08-15
 """
 
-import json
-import re
+# ruff: noqa: PLR0911,PLW0603
+
 from dataclasses import dataclass
 from typing import Any
 
-try:
-    import agentscope
-    from agentscope.message import Msg
-except ImportError:
-    pass
-
-from src.batch_mcp.utils.ai_config_factory import get_ai_config_factory
 from src.batch_mcp.utils.csv_parser import MCPToolInfo
-
-# 导入配置系统
-try:
-    from src.batch_mcp.core.config import get_config
-
-    CONFIG_AVAILABLE = True
-    config = get_config() if CONFIG_AVAILABLE else None
-except ImportError:
-    CONFIG_AVAILABLE = False
-    config = None
 
 # 常量定义
 _MAX_FALLBACK_TEST_CASES = 15
@@ -52,209 +35,20 @@ class TestCase:
 class TestGeneratorAgent:
     """智能测试用例生成代理."""
 
-    def __init__(self, model_config: dict | None = None) -> None:
-        """初始化测试生成代理.
-
-        Args:
-            model_config: 可选的模型配置，如果未提供则使用默认配置
-
-        """
-        self.model_config = model_config or self._load_default_config()
+    def __init__(self) -> None:
+        """初始化测试生成代理."""
         self.agent = None
-        self._initialize_agent()
-
-    def _load_default_config(self) -> dict:
-        """加载默认模型配置 - 使用 AIConfigFactory."""
-        factory = get_ai_config_factory()
-
-        # 构建配置选项
-        config_options: dict[str, Any] = {
-            "has_any_ai_config": (
-                CONFIG_AVAILABLE and config.ai.has_any_ai_config
-                if CONFIG_AVAILABLE
-                else False
-            ),
-            "has_openai_config": (
-                config.ai.has_openai_config if CONFIG_AVAILABLE else False
-            ),
-            "has_dashscope_config": (
-                config.ai.has_dashscope_config if CONFIG_AVAILABLE else False
-            ),
-        }
-
-        # 添加 OpenAI 配置（如果可用）
-        if CONFIG_AVAILABLE and config.ai.has_openai_config:
-            config_options.update(
-                {
-                    "openai_model": config.ai.openai_model,
-                    "openai_api_key": config.ai.openai_api_key,
-                    "openai_base_url": config.ai.openai_base_url,
-                }
-            )
-
-        # 添加 DashScope 配置（如果可用）
-        if CONFIG_AVAILABLE and config.ai.has_dashscope_config:
-            config_options.update(
-                {
-                    "dashscope_model": config.ai.dashscope_model,
-                    "dashscope_api_key": config.ai.dashscope_api_key,
-                    "dashscope_base_url": config.ai.dashscope_base_url,
-                }
-            )
-
-        return factory.create_config("test_generator", config_options)
-
-    def _initialize_agent(self) -> None:
-        """初始化AgentScope代理.
-
-        注意：在 agentscope 1.0.9 中，DialogAgent 已被弃用。
-        对于纯文本生成场景（不需要工具调用），当前使用 fallback 模式。
-        将来可以考虑使用 UserAgent 或直接调用 model API。
-        """
-        # 当前版本使用 fallback 模式进行测试用例生成
-        # DialogAgent 在 agentscope 1.0.9 中已不存在
-        self.agent = None
-
-    def _get_test_generator_prompt(self) -> str:
-        """获取测试生成代理的系统提示词."""
-        return """你是一个专业的MCP(Model Context Protocol)工具测试用例生成专家。
-
-你的任务是根据MCP工具的信息生成实用、现实的测试用例，重点验证工具的核心功能是否正常工作。
-
-## 工具信息输入格式:
-- 工具名称: [name]
-- 作者: [author]
-- 描述: [description]
-- 类别: [category]
-- 包名: [package_name]
-- 可用工具列表: [available_tools]
-- API密钥需求: [requires_api_key]
-
-## 测试用例生成原则（最多4个测试用例）:
-1. **基础功能测试** - 验证主要工具能否正常响应（使用常见、有效的参数）
-2. **实际使用场景测试** - 测试工具在真实环境下的表现
-3. **容错能力测试** - 测试工具对不完美输入的处理（但不必期望严格的错误返回）
-4. **边界情况测试**（可选） - 测试工具在特殊情况下是否仍能工作
-
-## 重要测试设计原则:
-- **宽松的成功标准**: 只要工具响应了且返回结构化数据，通常认为成功
-- **实际的参数选择**: 使用真实存在、常用的参数值（如popular libraries, common queries）
-- **合理的期望**: 工具返回相关信息即可，不必完全匹配期望格式
-- **避免过度严格**: 错误处理测试应该宽松，工具返回任何信息都比崩溃好
-
-## 具体建议:
-- 对于搜索类工具：使用热门、真实存在的搜索词
-- 对于文档获取工具：使用知名库/项目ID
-- 对于API工具：使用简单、不需要复杂配置的调用
-- 错误测试：重点验证工具不会崩溃，而非期望特定错误格式
-
-## 输出格式要求:
-请以JSON格式输出测试用例列表，每个测试用例包含:
-```json
-{
-  "test_cases": [
-    {
-      "name": "测试用例名称",
-      "description": "详细描述，说明测试目标",
-      "tool_name": "要调用的工具名称",
-      "parameters": {"param1": "realistic_value", "param2": "common_value"},
-      "expected_type": "success|error|any_response",
-      "expected_result": "宽松的期望描述，重点是工具能响应",
-      "priority": "high|normal|low"
-    }
-  ]
-}
-```
-
-## expected_type说明:
-- "success": 期望工具返回有用信息（最常用）
-- "any_response": 只要工具响应且不崩溃即可（用于容错测试）
-- "error": 仅在明确应该失败的情况使用（如恶意输入）
-
-现在请为给定的MCP工具生成实用、容易通过的测试用例。"""
 
     def generate_test_cases(
         self,
         tool_info: MCPToolInfo,
         available_tools: list[dict[str, Any]],
     ) -> list[TestCase]:
-        """为指定MCP工具生成测试用例."""
-        try:
-            if self.agent is None:
-                return self._generate_fallback_test_cases(tool_info, available_tools)
+        """为指定MCP工具生成测试用例.
 
-            # 构建工具信息提示
-            tool_info_text = f"""
-请为以下MCP工具生成测试用例:
-
-工具名称: {tool_info.name}
-作者: {tool_info.author}
-描述: {tool_info.description}
-类别: {tool_info.category}
-包名: {tool_info.package_name}
-API密钥需求: {"是" if tool_info.requires_api_key else "否"}
-API密钥列表: {tool_info.api_requirements if tool_info.requires_api_key else "无"}
-
-可用工具列表:
-{json.dumps(available_tools, indent=2, ensure_ascii=False)}
-
-请生成3-5个最重要的测试用例来验证这个MCP工具的核心功能（严格不要超过5个）。优先选择最具代表性的测试场景。
-"""
-
-            # 调用代理生成测试用例 - 使用真实的大模型API
-            user_msg = Msg("user", tool_info_text, role="user")
-            response = self.agent(user_msg)
-
-            # 解析响应并生成测试用例
-            test_cases = self._parse_test_cases_response(
-                response.content,
-                tool_info,
-                available_tools,
-            )
-
-            if test_cases:
-                return test_cases
-            return self._generate_fallback_test_cases(tool_info, available_tools)
-
-        except Exception:
-            # 返回基于真实工具信息的推断测试用例（非模拟）
-            return self._generate_fallback_test_cases(tool_info, available_tools)
-
-    def _parse_test_cases_response(
-        self,
-        response: str,
-        tool_info: MCPToolInfo,
-        available_tools: list[dict[str, Any]],
-    ) -> list[TestCase]:
-        """解析代理响应并转换为测试用例."""
-        test_cases = []
-
-        try:
-            # 尝试从响应中提取JSON
-            json_match = re.search(r"```json\s*(.*?)\s*```", response, re.DOTALL)
-            json_str = json_match.group(1) if json_match else response
-
-            # 解析JSON
-            data = json.loads(json_str)
-
-            if isinstance(data, dict) and "test_cases" in data:
-                for tc_data in data["test_cases"]:
-                    test_case = TestCase(
-                        name=tc_data.get("name", "未命名测试"),
-                        description=tc_data.get("description", ""),
-                        tool_name=tc_data.get("tool_name", ""),
-                        parameters=tc_data.get("parameters", {}),
-                        expected_type=tc_data.get("expected_type", "success"),
-                        expected_result=tc_data.get("expected_result"),
-                        priority=tc_data.get("priority", "normal"),
-                    )
-                    test_cases.append(test_case)
-
-        except (json.JSONDecodeError, KeyError):
-            # 返回基础测试用例
-            return self._generate_fallback_test_cases(tool_info, available_tools)
-
-        return test_cases
+        使用基于规则的模式生成测试用例。
+        """
+        return self._generate_fallback_test_cases(tool_info, available_tools)
 
     def _generate_fallback_test_cases(
         self,
@@ -449,10 +243,6 @@ API密钥列表: {tool_info.api_requirements if tool_info.requires_api_key else 
         if any(keyword in tool_name for keyword in ["resolve", "identify", "lookup"]):
             return {"target": "a"}  # 最短目标
         return {"input": "minimal"}  # 最小输入
-
-    def _generate_basic_parameters(self, tool: dict[str, Any]) -> dict[str, Any]:
-        """为工具生成基础参数 - 保持向后兼容."""
-        return self._generate_smart_parameters(tool)
 
 
 # 全局测试生成器实例
