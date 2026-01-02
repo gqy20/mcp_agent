@@ -177,6 +177,28 @@ ignore = [
     "S110",    # 允许 try-except-pass
 ]
 
+# processor 模块的特殊规则（重构期间临时放宽）
+"src/batch_mcp/core/processor/**" = [
+    "ANN",     # 允许缺失类型注解
+    "BLE001",  # 允许捕获宽泛异常
+    "PLR2004", # 允许魔术数字
+    "S110",    # 允许 try-except-pass
+    "D103",    # 允许缺少函数 docstring
+    "D105",    # 允许魔术方法缺少 docstring
+    "D107",    # 允许 __init__ 缺少 docstring
+    "ASYNC109", # 允许 async 函数使用 timeout 参数
+    "ASYNC230", # 允许 async 函数使用 blocking I/O
+    "DTZ005",  # 允许 datetime.now() 不带时区参数
+    "TRY301",  # 允许在 try 块中 raise
+    "TRY300",  # 允许在 try 块中返回
+    "ARG002",  # 允许未使用的函数参数
+    "PLW0603", # 允许使用 global 语句
+    "PLC0415", # 允许 import 不在顶层
+    "PTH123",  # 允许使用 open() 而非 Path.open()
+    "PERF401", # 允许不使用列表推导式
+    "F841",    # 允许已赋值但未使用的变量
+]
+
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

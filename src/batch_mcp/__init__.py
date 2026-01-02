@@ -22,8 +22,8 @@ __all__ = [
 try:
     from .core.async_mcp_client import AsyncMCPClient
     from .core.deployer import SimpleMCPDeployer
+    from .core.processor import URLMCPProcessor
     from .core.tester import MCPTester
-    from .core.url_mcp_processor import URLMCPProcessor
     from .main import app
 except ImportError:
     # 如果导入失败，可能是模块还没有迁移完成
