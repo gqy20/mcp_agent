@@ -159,6 +159,15 @@ ignore = [
     "S101",    # 允许使用 assert
 ]
 
+# evaluator 模块的特殊规则（重构期间临时放宽）
+"src/batch_mcp/core/evaluator/**" = [
+    "ANN",     # 允许缺失类型注解
+    "RUF022",  # 允许 __all__ 未排序
+    "BLE001",   # 允许捕获宽泛异常
+    "PLC0415", # 允许 import 不在顶层
+    "D205",    # 允许文档字符串格式
+]
+
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
