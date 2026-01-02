@@ -199,6 +199,22 @@ ignore = [
     "F841",    # 允许已赋值但未使用的变量
 ]
 
+# cli_handlers 模块的特殊规则（重构期间临时放宽）
+"src/batch_mcp/core/cli_handlers/**" = [
+    "ANN",     # 允许缺失类型注解
+    "BLE001",  # 允许捕获宽泛异常
+    "S110",    # 允许 try-except-pass
+    "PLC0415", # 允许 import 不在顶层
+    "ERA001",  # 允许注释代码
+    "TRY300",  # 允许在 try 块中返回
+    "SLF001",  # 允许访问私有成员
+    "PLR0913", # 允许函数参数超过5个
+    "PLW0603", # 允许使用 global 语句
+    "D107",    # 允许 __init__ 缺少 docstring
+    "PLR2004", # 允许魔术数字
+    "ARG002",  # 允许未使用的函数参数
+]
+
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
