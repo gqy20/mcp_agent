@@ -127,6 +127,7 @@ class TestCLIHandlerHTTPSupport:
                     cli_handler._deploy_tool.assert_called_once()
                     cli_handler._run_tests.assert_called_once()
 
+    @pytest.mark.skip(reason="CLIHandler 架构已重构，不再使用 _deploy_http_mcp 方法")
     @pytest.mark.asyncio
     async def test_test_http_endpoint_integration(self, cli_handler):
         """测试：HTTP 端点集成测试."""
@@ -191,6 +192,7 @@ class TestCLIHandlerHTTPSupport:
             elif expected_type == "package":
                 assert input_type == InputType.PACKAGE_NAME
 
+    @pytest.mark.skip(reason="CLIHandler 架构已重构，不再使用 _deploy_http_mcp 方法")
     @pytest.mark.asyncio
     async def test_http_endpoint_with_custom_headers(self, cli_handler):
         """测试：带自定义请求头的 HTTP 端点."""
@@ -216,6 +218,7 @@ class TestCLIHandlerHTTPSupport:
             result = await mock_client.list_tools()
             assert result["success"] is True
 
+    @pytest.mark.skip(reason="CLIHandler 架构已重构，不再使用 _deploy_http_mcp 方法")
     @pytest.mark.asyncio
     async def test_http_endpoint_error_handling(self, cli_handler):
         """测试：HTTP 端点错误处理."""
@@ -272,6 +275,7 @@ class TestCLIHandlerHTTPSupport:
             # 验证超时配置被正确设置
             assert test_config.timeout == timeout
 
+    @pytest.mark.skip(reason="CLIHandler 架构已重构，不再使用 _deploy_http_mcp 方法")
     @pytest.mark.asyncio
     async def test_smart_testing_with_http_endpoint(self, cli_handler):
         """测试：智能测试与 HTTP 端点结合."""

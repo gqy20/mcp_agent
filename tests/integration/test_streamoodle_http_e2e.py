@@ -25,7 +25,7 @@ class TestStreamoodleHTTPEndToEnd:
         """测试：streamoodle HTTP 完整测试工作流"""
         # 模拟部署器
         with patch(
-            "src.batch_mcp.core.simple_mcp_deployer.SimpleMCPDeployer"
+            "src.batch_mcp.core.deployer.SimpleMCPDeployer"
         ) as mock_deployer_class:
             mock_deployer = MagicMock()
             mock_deployer_class.return_value = mock_deployer
@@ -129,7 +129,7 @@ class TestStreamoodleHTTPEndToEnd:
         """测试：streamoodle 错误处理"""
         # 模拟部署错误
         with patch(
-            "src.batch_mcp.core.simple_mcp_deployer.SimpleMCPDeployer"
+            "src.batch_mcp.core.deployer.SimpleMCPDeployer"
         ) as mock_deployer_class:
             mock_deployer = MagicMock()
             mock_deployer_class.return_value = mock_deployer

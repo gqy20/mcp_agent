@@ -28,7 +28,7 @@ class TestHTTPMCPHandler:
 
     # ===== deploy_http_mcp() 测试 =====
 
-    @patch("src.batch_mcp.core.simple_mcp_deployer.SimpleMCPDeployer")
+    @patch("src.batch_mcp.core.deployer.SimpleMCPDeployer")
     def test_deploy_http_mcp_success(self, mock_deployer_class):
         """测试成功部署 HTTP MCP 端点."""
         # 准备测试数据
@@ -61,7 +61,7 @@ class TestHTTPMCPHandler:
         assert hasattr(result, "client")
         assert result.available_tools == []
 
-    @patch("src.batch_mcp.core.simple_mcp_deployer.SimpleMCPDeployer")
+    @patch("src.batch_mcp.core.deployer.SimpleMCPDeployer")
     def test_deploy_http_mcp_failure(self, mock_deployer_class):
         """测试部署 HTTP MCP 失败."""
         tool_info = MCPToolInfo(

@@ -40,7 +40,7 @@ def test_cli_handler_has_expected_methods():
     expected_methods = [
         "test_url",
         "test_package",
-        "evaluate_tools",
+        "test_http_endpoint",
     ]
 
     for method in expected_methods:
