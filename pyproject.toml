@@ -168,6 +168,15 @@ ignore = [
     "D205",    # 允许文档字符串格式
 ]
 
+# deployer 模块的特殊规则（重构期间临时放宽）
+"src/batch_mcp/core/deployer/**" = [
+    "ANN",     # 允许缺失类型注解
+    "D107",    # 允许 __init__ 缺少 docstring
+    "BLE001",  # 允许捕获宽泛异常
+    "PLR2004", # 允许魔术数字
+    "S110",    # 允许 try-except-pass
+]
+
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

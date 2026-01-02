@@ -1,6 +1,7 @@
 """Basic functionality tests that should pass."""
 
 from src.batch_mcp.core.async_mcp_client import AsyncMCPClient
+from src.batch_mcp.core.deployer import SimpleMCPDeployer
 from src.batch_mcp.core.error_handler import (
     CommunicationError,
     DeploymentError,
@@ -11,7 +12,6 @@ from src.batch_mcp.core.evaluator import (
     evaluate_sustainability,
     parse_github_url,
 )
-from src.batch_mcp.core.simple_mcp_deployer import SimpleMCPDeployer
 
 
 class TestBasicImports:

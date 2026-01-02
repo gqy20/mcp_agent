@@ -42,7 +42,7 @@ class MCPTester:
     def _get_services(self):
         """延迟加载服务 - 避免循环导入."""
         if not self.parser:
-            from src.batch_mcp.core.simple_mcp_deployer import get_simple_mcp_deployer
+            from src.batch_mcp.core.deployer import get_simple_mcp_deployer
             from src.batch_mcp.utils.csv_parser import get_mcp_parser
 
             self.parser = get_mcp_parser()

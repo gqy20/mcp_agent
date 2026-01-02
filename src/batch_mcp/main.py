@@ -301,7 +301,7 @@ def init_environment() -> None:
     rprint("[bold green]🔧 初始化测试环境...[/bold green]")
     # 简化的环境检查
     try:
-        from src.batch_mcp.core.simple_mcp_deployer import get_simple_mcp_deployer
+        from src.batch_mcp.core.deployer import get_simple_mcp_deployer
         from src.batch_mcp.utils.csv_parser import get_mcp_parser
 
         parser = get_mcp_parser()

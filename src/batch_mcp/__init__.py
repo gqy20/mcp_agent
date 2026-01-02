@@ -21,7 +21,7 @@ __all__ = [
 
 try:
     from .core.async_mcp_client import AsyncMCPClient
-    from .core.simple_mcp_deployer import SimpleMCPDeployer
+    from .core.deployer import SimpleMCPDeployer
     from .core.tester import MCPTester
     from .core.url_mcp_processor import URLMCPProcessor
     from .main import app

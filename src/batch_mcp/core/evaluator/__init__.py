@@ -35,7 +35,6 @@ from .score_calculator import (
     SUSTAINABILITY_WEIGHTS,
     analyze_forks,
     analyze_frequency,
-    analyze_health,
     analyze_issue_health,
     analyze_issue_responsiveness,
     analyze_recency,
@@ -59,7 +58,6 @@ __all__ = [
     "POPULARITY_WEIGHTS",
     "SUSTAINABILITY_WEIGHTS",
     # 可持续性分析函数
-    "analyze_health",
     "analyze_recency",
     "analyze_frequency",
     "analyze_stability",

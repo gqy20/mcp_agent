@@ -43,7 +43,7 @@ class HTTPMCPHandler:
         rprint("[blue]🚀 正在部署 HTTP MCP 端点...[/blue]")
 
         try:
-            from .simple_mcp_deployer import SimpleMCPDeployer
+            from .deployer import SimpleMCPDeployer
 
             deployer = SimpleMCPDeployer()
 
