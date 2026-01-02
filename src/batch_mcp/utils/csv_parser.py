@@ -17,7 +17,7 @@ from typing import Any
 import pandas as pd
 from rich.console import Console
 
-from src.batch_mcp.core.github_mcp_analyzer import GitHubMCPAnalyzer
+from src.batch_mcp.core.analyzer import GitHubMCPAnalyzer
 
 console = Console()
 
@@ -253,7 +253,7 @@ class MCPDataParser:
                 ),
             )
 
-        except Exception:  # noqa: BLE001 - 静默跳过无法解析的行
+        except Exception:
             # 这些通常是数据格式问题，不影响整体功能
             return None
 

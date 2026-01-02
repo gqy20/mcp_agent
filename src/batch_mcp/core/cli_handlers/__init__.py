@@ -16,11 +16,15 @@ from .http_cli import HTTPCLIHandler
 from .stdio_cli import STDIOCLIHandler
 from .utils import convert_test_results_to_dict
 
+# 为了向后兼容，导出私有版本
+_convert_test_results_to_dict = convert_test_results_to_dict
+
 # 为了向后兼容，导出所有公开接口
 __all__ = [
     "CLIHandler",
     "HTTPCLIHandler",
     "STDIOCLIHandler",
+    "_convert_test_results_to_dict",
     "convert_test_results_to_dict",
     "get_cli_handler",
 ]

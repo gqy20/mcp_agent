@@ -12,7 +12,7 @@ from pathlib import Path
 
 from rich.console import Console
 
-from .github_mcp_analyzer import GitHubMCPAnalyzer
+from .analyzer import GitHubMCPAnalyzer
 
 console = Console()
 

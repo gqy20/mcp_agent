@@ -215,6 +215,42 @@ ignore = [
     "ARG002",  # 允许未使用的函数参数
 ]
 
+# analyzer 模块的特殊规则（重构期间临时放宽）
+"src/batch_mcp/core/analyzer/**" = [
+    "ANN",     # 允许缺失类型注解
+    "BLE001",  # 允许捕获宽泛异常
+    "PLR2004", # 允许魔术数字
+    "S110",    # 允许 try-except-pass
+    "D107",    # 允许 __init__ 缺少 docstring
+    "ARG001",  # 允许未使用的函数参数
+    "PERF203", # 允许 try-except 在循环中
+    "RUF022",  # 允许 __all__ 未排序
+]
+
+# csv_parser 模块的特殊规则（重构期间临时放宽）
+"src/batch_mcp/utils/csv_parser.py" = [
+    "ANN",     # 允许缺失类型注解
+    "BLE001",  # 允许捕获宽泛异常
+    "PLR2004", # 允许魔术数字
+    "D107",    # 允许 __init__ 缺少 docstring
+    "D205",    # 允许文档字符串格式
+    "PERF401", # 允许不使用列表推导式
+    "PLW0603", # 允许使用 global 语句
+    "PLC0415", # 允许 import 不在顶层
+    "TRY300",  # 允许在 try 块中返回
+    "PLR0912", # 允许过多分支
+]
+
+# mcp_table_updater 模块的特殊规则（重构期间临时放宽）
+"src/batch_mcp/core/mcp_table_updater.py" = [
+    "ANN",     # 允许缺失类型注解
+    "BLE001",  # 允许捕获宽泛异常
+    "S110",    # 允许 try-except-pass
+    "PLC0415", # 允许 import 不在顶层
+    "PTH123",  # 允许使用 open() 而非 Path.open()
+    "TRY300",  # 允许在 try 块中返回
+]
+
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
