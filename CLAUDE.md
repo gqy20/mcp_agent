@@ -93,9 +93,6 @@ uv run python -m src.batch_mcp test-package "@upstash/context7-mcp" --no-evaluat
 
 # Test HTTP MCP endpoint
 uv run python -m src.batch_mcp test-http http://localhost:8080/mcp
-
-# Batch testing with parallel execution
-uv run python -m src.batch_mcp test-batch --parallel 4
 ```
 
 
@@ -235,12 +232,24 @@ OPENAI_MODEL=gpt-4o
 
 # Alternative AI Configuration
 DASHSCOPE_API_KEY=your_dashscope_key
-DASHSCOPE_BASE_URL=https://dashscope.aliyuncs.com/api/v1
+DASHSCOPE_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
 DASHSCOPE_MODEL=qwen-plus
 
 # Supabase Database (optional)
-SUPABASE_URL=your_supabase_url
+SUPABASE_URL=https://your-project-id.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=your_supabase_key
+
+# GitHub API (for MCP tools that require GitHub access)
+GITHUB_TOKEN=your_github_token_here
+
+# Testing Configuration
+DEFAULT_TEST_TIMEOUT=600
+MAX_CONCURRENT_TESTS=3
+REPORT_FORMATS=json,html,database
+
+# Proxy (if needed)
+# HTTP_PROXY=http://proxy.company.com:8080
+# HTTPS_PROXY=http://proxy.company.com:8080
 ```
 
 ### Default Parameters
@@ -257,7 +266,7 @@ Use `--no-smart`, `--no-db-export`, `--no-evaluate` to disable them.
 - **single-mcp-test.yml**: Manual testing of individual MCP tools
 - **parallel-stress-test.yml**: Batch testing with parallel execution
 - **http-mcp-test.yml**: HTTP MCP endpoint testing
-- **code-quality.yml**: Automated code quality checks
+- **code-quality.yml**: Automated code quality checks (ruff, mypy, bandit, safety)
 - **auto-release.yml**: Automatic release workflow
 
 ### Runtime Requirements
@@ -294,6 +303,11 @@ CREATE TABLE mcp_test_results (
     error_messages TEXT[],
     test_details JSONB,
     quality_score JSONB,
+    final_score FLOAT,                    -- 综合评分 (0-100)
+    sustainability_score FLOAT,           -- 可持续性评分 (0-100)
+    popularity_score FLOAT,               -- 流行度评分 (0-100)
+    sustainability_details JSONB,         -- 可持续性详细分析
+    popularity_details JSONB,             -- 流行度详细分析
     environment_info JSONB,
     created_at TIMESTAMP WITH TIME ZONE
 );
@@ -413,11 +427,8 @@ uv run python scripts/update_csv_package_names.py
 
 ## ⚡ 性能优化建议
 
-### 批量测试优化
+### 测试优化
 ```bash
-# 控制并发数（推荐 2-4）
-uv run python -m src.batch_mcp test-batch --parallel 3
-
 # 限制单工具超时时间
 uv run python -m src.batch_mcp test-url <url> --timeout 300
 
